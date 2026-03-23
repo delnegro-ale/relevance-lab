@@ -4,7 +4,7 @@ import { searchBaseline, searchElasticsearch } from '@/lib/search-api';
 import { calculateKeywordMetrics, aggregateMetrics } from '@/lib/metrics';
 import { saveLastConfig, loadLastConfig } from '@/lib/experiment-persistence';
 
-function buildInitialExperiment(): Experiment {
+const initialExperiment: Experiment = (() => {
   const saved = loadLastConfig();
   return {
     testCases: saved.testCases || [],
@@ -13,13 +13,13 @@ function buildInitialExperiment(): Experiment {
       { id: 'variant-1', name: 'OpenSearch Default', type: 'elasticsearch', endpoint: DEFAULT_ES_ENDPOINT, payload: DEFAULT_ES_PAYLOAD, color: VARIANT_COLORS[1] },
     ],
     results: [],
-    status: 'setup',
+    status: 'setup' as const,
     progress: { current: 0, total: 0, keyword: '' },
   };
-}
+})();
 
 export function useExperiment() {
-  const [experiment, setExperiment] = useState<Experiment>(buildInitialExperiment);
+  const [experiment, setExperiment] = useState<Experiment>(initialExperiment);
   const stateRef = useRef(experiment);
   stateRef.current = experiment;
 
