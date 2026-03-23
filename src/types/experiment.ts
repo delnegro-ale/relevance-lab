@@ -17,6 +17,9 @@ export interface SearchHit {
   title?: string;
   position: number;
   score?: number;
+  publisher?: string;
+  format?: string;
+  coverUrl?: string;
 }
 
 export interface KeywordResult {
@@ -56,12 +59,12 @@ export interface Experiment {
 }
 
 export const VARIANT_COLORS = [
-  '172 66% 50%',
-  '38 92% 50%',
   '262 80% 60%',
+  '200 80% 55%',
+  '38 92% 50%',
   '350 80% 60%',
   '142 70% 45%',
-  '200 80% 55%',
+  '172 66% 50%',
 ];
 
 export const DEFAULT_BASELINE_ENDPOINT = 'https://api.ubook.com/search/real-time';

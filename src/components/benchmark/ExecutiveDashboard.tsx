@@ -1,7 +1,7 @@
-import { VariantResult, VariantMetrics } from '@/types/experiment';
+import { VariantResult } from '@/types/experiment';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Trophy, Target, Crosshair, TrendingUp, TrendingDown, Award, Percent, AlertTriangle } from 'lucide-react';
+import { Trophy, Target, Crosshair, TrendingUp, TrendingDown, Award, Percent, AlertTriangle, Crown } from 'lucide-react';
 import { MetricTooltip, METRIC_EXPLANATIONS } from './MetricTooltip';
 import { HowToReadReport } from './HowToReadReport';
 
@@ -14,7 +14,6 @@ const METRIC_DEFS = [
   { key: 'mrr' as const, label: 'MRR', icon: Crosshair, pct: false, higherBetter: true },
   { key: 'coverage' as const, label: 'Cobertura', icon: TrendingUp, pct: true, higherBetter: true },
   { key: 'avgPosition' as const, label: 'Posição Média', icon: Award, pct: false, higherBetter: false },
-  { key: 'perfectMatchRate' as const, label: 'Match Perfeito', icon: Percent, pct: true, higherBetter: true },
 ];
 
 function fmt(val: number, pct: boolean) {
@@ -25,8 +24,12 @@ export function ExecutiveDashboard({ results }: Props) {
   if (results.length === 0) return null;
 
   const hasErrors = results.some(r => r.errorCount > 0);
-  const winner = results.reduce((best, r) => r.metrics.hitRate > best.metrics.hitRate ? r : best);
   const baseline = results[0];
+
+  // Winner by perfectMatchRate
+  const perfectMatchWinner = results.reduce((best, r) =>
+    r.metrics.perfectMatchRate > best.metrics.perfectMatchRate ? r : best
+  );
 
   const chartData = METRIC_DEFS.filter(m => m.key !== 'avgPosition').map(m => ({
     name: m.label,
@@ -53,35 +56,79 @@ export function ExecutiveDashboard({ results }: Props) {
                   </p>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Possíveis causas: restrição de IP/VPC, CORS, endpoint inacessível. Configure o proxy via Edge Function para resolver.
-              </p>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Winner */}
-      <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="p-6 flex items-center gap-4">
-          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-            <Trophy className="h-6 w-6 text-primary" />
+      {/* Perfect Match - Hero KPI Section */}
+      <Card className="border-primary/20 overflow-hidden">
+        <CardHeader className="pb-2">
+          <div className="flex items-center gap-2">
+            <Crown className="h-5 w-5 text-accent" />
+            <CardTitle className="text-sm">Match Perfeito — Critério de Vitória</CardTitle>
+            <MetricTooltip
+              label="Match Perfeito"
+              description={METRIC_EXPLANATIONS.perfectMatchRate?.description || ''}
+              interpretation={METRIC_EXPLANATIONS.perfectMatchRate?.interpretation || ''}
+            />
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Melhor performance geral</p>
-            <p className="text-xl font-bold mt-0.5" style={{ color: `hsl(${winner.variant.color})` }}>
-              {winner.variant.name}
-              {winner.errorCount > 0 && <span className="text-xs text-danger font-normal ml-2">⚠ com erros</span>}
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              Hit Rate: {fmt(winner.metrics.hitRate, true)} · MRR: {fmt(winner.metrics.mrr, false)} · Cobertura: {fmt(winner.metrics.coverage, true)}
-            </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Porcentagem de buscas em que <strong>todos</strong> os produtos esperados apareceram no top 10. Quanto maior, melhor.
+          </p>
+        </CardHeader>
+        <CardContent className="pb-6">
+          <div className={`grid gap-4 ${results.length <= 3 ? `grid-cols-${results.length}` : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'}`}
+            style={{ gridTemplateColumns: `repeat(${Math.min(results.length, 4)}, 1fr)` }}
+          >
+            {results.map(r => {
+              const isWinner = r === perfectMatchWinner;
+              const pct = (r.metrics.perfectMatchRate * 100).toFixed(1);
+              const perfectCount = r.keywordResults.filter(kr => kr.perfectMatch).length;
+              const totalCount = r.keywordResults.length;
+
+              return (
+                <div
+                  key={r.variant.id}
+                  className={`relative rounded-xl p-5 text-center transition-all ${
+                    isWinner
+                      ? 'bg-accent/10 ring-2 ring-accent/40 shadow-lg shadow-accent/10'
+                      : 'bg-muted/30 ring-1 ring-border'
+                  }`}
+                >
+                  {isWinner && (
+                    <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
+                      <span className="bg-accent text-accent-foreground text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
+                        Vencedora
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-center gap-1.5 mb-3 mt-1">
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color})` }} />
+                    <span className="text-xs font-medium truncate">{r.variant.name}</span>
+                  </div>
+                  <p className={`text-4xl font-bold font-mono-data ${isWinner ? 'text-accent' : 'text-foreground'}`}>
+                    {pct}%
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {perfectCount} de {totalCount} keywords
+                  </p>
+                  {/* Progress bar */}
+                  <div className="mt-3 h-2 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${isWinner ? 'bg-accent' : 'bg-muted-foreground/30'}`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
 
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      {/* Other Metrics Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {METRIC_DEFS.map(m => {
           const explanation = METRIC_EXPLANATIONS[m.key];
           return (
@@ -179,6 +226,14 @@ function generateInsights(results: VariantResult[]) {
       insights.push({
         positive: hitDelta > 0,
         text: `${r.variant.name} teve ${hitDelta > 0 ? '+' : ''}${(hitDelta * 100).toFixed(1)}pp de hit rate vs baseline`,
+      });
+    }
+
+    const pmDelta = r.metrics.perfectMatchRate - baseline.metrics.perfectMatchRate;
+    if (Math.abs(pmDelta) > 0.001) {
+      insights.push({
+        positive: pmDelta > 0,
+        text: `${r.variant.name} teve ${pmDelta > 0 ? '+' : ''}${(pmDelta * 100).toFixed(1)}pp de match perfeito vs baseline`,
       });
     }
 
