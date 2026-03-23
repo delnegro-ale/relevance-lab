@@ -17,7 +17,6 @@ export async function searchBaseline(keyword: string): Promise<SearchHit[]> {
 }
 
 function parseBaselineResponse(data: any): SearchHit[] {
-  // The Ubook API returns { success, message, data: { count, products: [...] } }
   let items: any[] = [];
 
   if (data?.data?.products && Array.isArray(data.data.products)) {
@@ -32,12 +31,20 @@ function parseBaselineResponse(data: any): SearchHit[] {
     items = data.items;
   }
 
-  return items.map((item: any, i: number) => ({
-    productId: String(item.catalog_id || item.id || item.product_id || item.productId || item._id || ''),
-    title: item.title || item.name || '',
-    position: i + 1,
-    score: item.score || item._score || null,
-  }));
+  return items.map((item: any, i: number) => {
+    const productId = String(item.catalog_id || item.id || item.product_id || item.productId || item._id || '');
+    const imageUrl = item.image_url || item.imageUrl || item.cover_url || item.coverUrl || '';
+    
+    return {
+      productId,
+      title: item.title || item.name || '',
+      position: i + 1,
+      score: item.score || item._score || null,
+      publisher: item.publisher || item.publisher_name || item.editora || '',
+      format: item.format || item.content_type || item.type || item.formato || '',
+      coverUrl: imageUrl || `https://media3.ubook.com/catalog/book-cover-image/${productId}/400x600/`,
+    };
+  });
 }
 
 export async function searchElasticsearch(keyword: string, endpoint: string, payloadTemplate: string): Promise<SearchHit[]> {
@@ -56,13 +63,7 @@ export async function searchElasticsearch(keyword: string, endpoint: string, pay
       throw new Error(`Proxy error ${response.status}: ${errBody}`);
     }
     const data = await response.json();
-    const hits = data.hits?.hits || [];
-    return hits.map((hit: any, i: number) => ({
-      productId: String(hit._source?.catalog_id || hit._source?.id || hit._id || ''),
-      title: hit._source?.title || '',
-      position: i + 1,
-      score: hit._score || null,
-    }));
+    return parseEsResponse(data);
   }
 
   // Direct call (may fail due to CORS/VPC)
@@ -74,13 +75,24 @@ export async function searchElasticsearch(keyword: string, endpoint: string, pay
   if (!response.ok) throw new Error(`ES API error: ${response.status}`);
 
   const data = await response.json();
+  return parseEsResponse(data);
+}
+
+function parseEsResponse(data: any): SearchHit[] {
   const hits = data.hits?.hits || [];
-  return hits.map((hit: any, i: number) => ({
-    productId: String(hit._source?.catalog_id || hit._source?.id || hit._id || ''),
-    title: hit._source?.title || '',
-    position: i + 1,
-    score: hit._score || null,
-  }));
+  return hits.map((hit: any, i: number) => {
+    const src = hit._source || {};
+    const productId = String(src.catalog_id || src.id || hit._id || '');
+    return {
+      productId,
+      title: src.title || '',
+      position: i + 1,
+      score: hit._score || null,
+      publisher: src.publisher || src.publisher_name || src.editora || '',
+      format: src.format || src.content_type || src.type || '',
+      coverUrl: src.image_url || src.cover_url || `https://media3.ubook.com/catalog/book-cover-image/${productId}/400x600/`,
+    };
+  });
 }
 
 function getProxyUrl(): string | null {

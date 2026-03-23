@@ -1,6 +1,11 @@
+import { useState, useEffect } from 'react';
 import { TestCase } from '@/types/experiment';
 import { parseCsv } from '@/lib/csv-parser';
-import { Upload, FileText } from 'lucide-react';
+import { loadKeywordDatabase, saveKeywordDatabase, removeKeywordsFromDatabase, clearKeywordDatabase } from '@/lib/keyword-database';
+import { Upload, FileText, Database, Trash2, CheckSquare, Square, MinusSquare } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 
 interface Props {
   onUpload: (tc: TestCase[]) => void;
@@ -8,11 +13,33 @@ interface Props {
 }
 
 export function CsvUploader({ onUpload, testCases }: Props) {
+  const [database, setDatabase] = useState<TestCase[]>(loadKeywordDatabase);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [search, setSearch] = useState('');
+  const [showDb, setShowDb] = useState(false);
+
+  useEffect(() => {
+    // If there's a database but no test cases loaded, auto-show the database
+    if (database.length > 0 && testCases.length === 0) {
+      setShowDb(true);
+      // Auto-select all
+      setSelected(new Set(database.map(tc => tc.keyword)));
+    }
+  }, []);
+
   const handleFile = (file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
-      onUpload(parseCsv(text));
+      const parsed = parseCsv(text);
+      // Save to database
+      saveKeywordDatabase(parsed);
+      setDatabase(loadKeywordDatabase());
+      // Select all and load
+      const allKeywords = new Set(loadKeywordDatabase().map(tc => tc.keyword));
+      setSelected(allKeywords);
+      onUpload(loadKeywordDatabase());
+      setShowDb(true);
     };
     reader.readAsText(file);
   };
@@ -23,44 +50,145 @@ export function CsvUploader({ onUpload, testCases }: Props) {
     if (file) handleFile(file);
   };
 
+  const toggleKeyword = (keyword: string) => {
+    const next = new Set(selected);
+    if (next.has(keyword)) {
+      next.delete(keyword);
+    } else {
+      next.add(keyword);
+    }
+    setSelected(next);
+    // Update test cases with selected keywords
+    const selectedCases = database.filter(tc => next.has(tc.keyword));
+    onUpload(selectedCases);
+  };
+
+  const selectAll = () => {
+    const filtered = getFiltered();
+    const next = new Set(selected);
+    filtered.forEach(tc => next.add(tc.keyword));
+    setSelected(next);
+    onUpload(database.filter(tc => next.has(tc.keyword)));
+  };
+
+  const deselectAll = () => {
+    const filtered = getFiltered();
+    const next = new Set(selected);
+    filtered.forEach(tc => next.delete(tc.keyword));
+    setSelected(next);
+    onUpload(database.filter(tc => next.has(tc.keyword)));
+  };
+
+  const handleClearDb = () => {
+    clearKeywordDatabase();
+    setDatabase([]);
+    setSelected(new Set());
+    onUpload([]);
+  };
+
+  const handleRemoveKeyword = (keyword: string) => {
+    removeKeywordsFromDatabase([keyword]);
+    setDatabase(loadKeywordDatabase());
+    const next = new Set(selected);
+    next.delete(keyword);
+    setSelected(next);
+    onUpload(loadKeywordDatabase().filter(tc => next.has(tc.keyword)));
+  };
+
+  const getFiltered = () => {
+    return database.filter(tc => tc.keyword.toLowerCase().includes(search.toLowerCase()));
+  };
+
+  const filtered = getFiltered();
+  const allFilteredSelected = filtered.length > 0 && filtered.every(tc => selected.has(tc.keyword));
+  const someFilteredSelected = filtered.some(tc => selected.has(tc.keyword));
+
   return (
     <div className="space-y-4">
+      {/* Upload area */}
       <div
         onDrop={handleDrop}
         onDragOver={e => e.preventDefault()}
         onClick={() => document.getElementById('csv-input')?.click()}
-        className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer group"
+        className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer group"
       >
-        <Upload className="mx-auto h-8 w-8 text-muted-foreground group-hover:text-primary transition-colors mb-3" />
+        <Upload className="mx-auto h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors mb-2" />
         <p className="text-sm text-muted-foreground">Arraste um CSV ou clique para selecionar</p>
         <p className="text-xs text-muted-foreground/60 mt-1">Formato: keyword,product_ids</p>
         <input id="csv-input" type="file" accept=".csv" className="hidden" onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
       </div>
 
-      {testCases.length > 0 && (
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <FileText className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium">{testCases.length} keywords carregadas</span>
+      {/* Database section */}
+      {database.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setShowDb(!showDb)}
+              className="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
+            >
+              <Database className="h-4 w-4 text-primary" />
+              Banco de Keywords
+              <Badge variant="secondary" className="text-[10px]">{database.length} total</Badge>
+              <Badge variant="outline" className="text-[10px]">{selected.size} selecionadas</Badge>
+            </button>
+            <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-danger gap-1" onClick={handleClearDb}>
+              <Trash2 className="h-3 w-3" /> Limpar banco
+            </Button>
           </div>
-          <div className="max-h-52 overflow-y-auto rounded-md border border-border">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="p-2 text-left text-xs text-muted-foreground font-medium">Keyword</th>
-                  <th className="p-2 text-left text-xs text-muted-foreground font-medium">IDs Esperados</th>
-                </tr>
-              </thead>
-              <tbody>
-                {testCases.map((tc, i) => (
-                  <tr key={i} className="border-b border-border/50 last:border-0">
-                    <td className="p-2 font-medium">{tc.keyword}</td>
-                    <td className="p-2 text-muted-foreground font-mono-data text-xs">{tc.expectedIds.join(', ')}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+
+          {showDb && (
+            <div className="border border-border rounded-md overflow-hidden">
+              {/* Search + actions */}
+              <div className="flex items-center gap-2 p-2 bg-muted/30 border-b border-border">
+                <Input
+                  placeholder="Filtrar keywords..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="h-7 text-xs flex-1"
+                />
+                <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={selectAll}>
+                  Selecionar todas
+                </Button>
+                <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={deselectAll}>
+                  Limpar seleção
+                </Button>
+              </div>
+
+              {/* Keyword list */}
+              <div className="max-h-64 overflow-y-auto">
+                {filtered.map(tc => {
+                  const isSelected = selected.has(tc.keyword);
+                  return (
+                    <div
+                      key={tc.keyword}
+                      className={`flex items-center gap-2 px-3 py-2 border-b border-border/50 last:border-0 cursor-pointer transition-colors group ${
+                        isSelected ? 'bg-primary/5' : 'hover:bg-muted/20'
+                      }`}
+                      onClick={() => toggleKeyword(tc.keyword)}
+                    >
+                      <div className="shrink-0">
+                        {isSelected ? (
+                          <CheckSquare className="h-4 w-4 text-primary" />
+                        ) : (
+                          <Square className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </div>
+                      <span className={`text-sm flex-1 ${isSelected ? 'font-medium' : 'text-muted-foreground'}`}>{tc.keyword}</span>
+                      <span className="text-[10px] font-mono-data text-muted-foreground">{tc.expectedIds.length} IDs</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-danger"
+                        onClick={(e) => { e.stopPropagation(); handleRemoveKeyword(tc.keyword); }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
