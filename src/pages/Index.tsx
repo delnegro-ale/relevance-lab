@@ -62,11 +62,12 @@ export default function Index() {
   };
 
   const handleLoadHistory = (entry: HistoryEntry) => {
+    const safeResults = sanitizeResults(entry.results);
     setExperiment(prev => ({
       ...prev,
-      testCases: entry.testCases,
-      variants: entry.variants,
-      results: entry.results,
+      testCases: entry.testCases || [],
+      variants: entry.variants || [],
+      results: safeResults,
       status: 'complete' as const,
     }));
     setActiveView('results');
