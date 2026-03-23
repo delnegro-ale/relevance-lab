@@ -91,7 +91,7 @@ function VariantCard({ variant, onUpdate, onRemove, onDuplicate, canRemove }: {
             </div>
           )}
 
-          {variant.type === 'elasticsearch' && variant.payload && (
+          {variant.payload && (
             <div className="bg-muted/30 rounded-md p-2 border border-border/50">
               <pre className="text-[10px] text-muted-foreground font-mono-data line-clamp-3 overflow-hidden">
                 {variant.payload.slice(0, 200)}...
@@ -101,15 +101,13 @@ function VariantCard({ variant, onUpdate, onRemove, onDuplicate, canRemove }: {
         </div>
       </Card>
 
-      {variant.type === 'elasticsearch' && (
-        <JsonEditorPanel
-          open={jsonEditorOpen}
-          onOpenChange={setJsonEditorOpen}
-          value={variant.payload || '{}'}
-          onChange={(val) => onUpdate(variant.id, { payload: val })}
-          defaultValue={DEFAULT_ES_PAYLOAD}
-        />
-      )}
+      <JsonEditorPanel
+        open={jsonEditorOpen}
+        onOpenChange={setJsonEditorOpen}
+        value={variant.payload || '{}'}
+        onChange={(val) => onUpdate(variant.id, { payload: val })}
+        defaultValue={DEFAULT_ES_PAYLOAD}
+      />
     </>
   );
 }
