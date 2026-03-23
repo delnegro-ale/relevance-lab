@@ -1,9 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, AlertTriangle, BookOpen, ChevronDown, ChevronRight, Copy, RotateCcw } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import Editor from 'react-simple-code-editor';
+import Prism from 'prismjs';
+import 'prismjs/components/prism-json';
+import 'prismjs/themes/prism-tomorrow.css';
 
 interface Props {
   open: boolean;
@@ -47,30 +51,10 @@ const PARAM_DOCS = [
   },
 ];
 
-function highlightJson(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    // Strings
-    .replace(/"([^"\\]*(\\.[^"\\]*)*)"/g, (match) => {
-      // Check if it looks like a key (followed by :)
-      return `<span class="json-string">${match}</span>`;
-    })
-    // Numbers
-    .replace(/\b(-?\d+\.?\d*([eE][+-]?\d+)?)\b/g, '<span class="json-number">$1</span>')
-    // Booleans & null
-    .replace(/\b(true|false|null)\b/g, '<span class="json-bool">$1</span>')
-    // Then fix keys (strings before colons)
-    .replace(/<span class="json-string">("(?:[^"\\]|\\.)*")<\/span>\s*:/g, '<span class="json-key">$1</span>:');
-}
-
 export function JsonEditorPanel({ open, onOpenChange, value, onChange, defaultValue }: Props) {
   const [localValue, setLocalValue] = useState(value);
   const [isValid, setIsValid] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const preRef = useRef<HTMLPreElement>(null);
 
   useEffect(() => {
     setLocalValue(value);
@@ -91,13 +75,6 @@ export function JsonEditorPanel({ open, onOpenChange, value, onChange, defaultVa
   const handleChange = (text: string) => {
     setLocalValue(text);
     validateJson(text);
-  };
-
-  const syncScroll = () => {
-    if (textareaRef.current && preRef.current) {
-      preRef.current.scrollTop = textareaRef.current.scrollTop;
-      preRef.current.scrollLeft = textareaRef.current.scrollLeft;
-    }
   };
 
   const handleApply = () => {
@@ -126,6 +103,9 @@ export function JsonEditorPanel({ open, onOpenChange, value, onChange, defaultVa
     navigator.clipboard.writeText(localValue);
   };
 
+  const highlight = (code: string) =>
+    Prism.highlight(code, Prism.languages.json, 'json');
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-2xl lg:max-w-3xl p-0 flex flex-col">
@@ -148,23 +128,21 @@ export function JsonEditorPanel({ open, onOpenChange, value, onChange, defaultVa
         </SheetHeader>
 
         <div className="flex-1 overflow-hidden flex flex-col">
-          {/* Editor with syntax highlighting overlay */}
-          <div className="flex-1 overflow-hidden relative">
-            <pre
-              ref={preRef}
-              className="absolute inset-0 p-4 font-mono-data text-xs leading-relaxed overflow-auto pointer-events-none whitespace-pre-wrap break-words m-0"
-              aria-hidden="true"
-              dangerouslySetInnerHTML={{ __html: highlightJson(localValue) + '\n' }}
-              style={{ background: 'transparent' }}
-            />
-            <textarea
-              ref={textareaRef}
+          {/* Code Editor */}
+          <div className="flex-1 overflow-auto bg-[#1d1f21]">
+            <Editor
               value={localValue}
-              onChange={e => handleChange(e.target.value)}
-              onScroll={syncScroll}
-              spellCheck={false}
-              className="absolute inset-0 w-full h-full p-4 bg-card font-mono-data text-xs leading-relaxed resize-none focus:outline-none border-none caret-foreground text-transparent selection:bg-primary/30"
-              style={{ WebkitTextFillColor: 'transparent' }}
+              onValueChange={handleChange}
+              highlight={highlight}
+              padding={16}
+              className="json-code-editor"
+              style={{
+                fontFamily: 'var(--font-mono-data, "JetBrains Mono", monospace)',
+                fontSize: 12,
+                lineHeight: 1.6,
+                minHeight: '100%',
+              }}
+              textareaClassName="focus:outline-none"
             />
           </div>
 
