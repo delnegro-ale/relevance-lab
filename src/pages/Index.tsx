@@ -48,7 +48,7 @@ export default function Index() {
   };
 
   const handleLoadDemo = () => {
-    const demoResults = generateDemoResults();
+    const demoResults = sanitizeResults(generateDemoResults());
     setExperiment(prev => ({
       ...prev,
       testCases: DEMO_TEST_CASES,
