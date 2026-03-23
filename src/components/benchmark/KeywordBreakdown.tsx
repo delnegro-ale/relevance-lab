@@ -89,9 +89,11 @@ export function KeywordBreakdown({ results }: Props) {
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  if (results.length === 0) return null;
+  // Defensive: ensure results array is valid and has keywordResults
+  const safeResults = results.filter(r => r && r.variant && Array.isArray(r.keywordResults));
+  if (safeResults.length === 0) return null;
 
-  const keywords = results[0].keywordResults.map(kr => kr.keyword);
+  const keywords = (safeResults[0].keywordResults || []).map(kr => kr?.keyword).filter(Boolean) as string[];
   const filtered = keywords.filter(k => k.toLowerCase().includes(search.toLowerCase()));
 
   const toggle = (k: string) => {
