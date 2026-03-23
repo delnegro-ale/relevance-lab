@@ -33,7 +33,11 @@ function parseBaselineResponse(data: any): SearchHit[] {
 
   return items.map((item: any, i: number) => {
     const productId = String(item.catalog_id || item.id || item.product_id || item.productId || item._id || '');
-    const imageUrl = item.image_url || item.imageUrl || item.cover_url || item.coverUrl || '';
+    const coverImage = item.cover_image || item.cover_url || item.coverUrl || item.image_url || item.imageUrl || '';
+    const imagesUrl = '//media3.ubook.com/catalog/book-cover-image/replaced_product_id/400x600/';
+    const resolvedCover = coverImage
+      ? (coverImage.startsWith('http') || coverImage.startsWith('//') ? coverImage : imagesUrl.replace('replaced_product_id', coverImage))
+      : imagesUrl.replace('replaced_product_id', productId);
     
     return {
       productId,
@@ -42,7 +46,7 @@ function parseBaselineResponse(data: any): SearchHit[] {
       score: item.score || item._score || null,
       publisher: item.publisher || item.publisher_name || item.editora || '',
       format: item.format || item.content_type || item.type || item.formato || '',
-      coverUrl: imageUrl || `https://media3.ubook.com/catalog/book-cover-image/${productId}/400x600/`,
+      coverUrl: resolvedCover.startsWith('//') ? `https:${resolvedCover}` : resolvedCover,
     };
   });
 }
