@@ -227,8 +227,12 @@ export default function Index() {
 
         {activeView === 'results' && experiment.status === 'complete' && (
           <div className="space-y-6">
-            <ExecutiveDashboard results={experiment.results} />
-            <KeywordBreakdown results={experiment.results} />
+            <ErrorBoundary fallbackTitle="Erro ao renderizar o dashboard de resultados">
+              <ExecutiveDashboard results={experiment.results} />
+            </ErrorBoundary>
+            <ErrorBoundary fallbackTitle="Erro ao renderizar a análise por keyword">
+              <KeywordBreakdown results={experiment.results} />
+            </ErrorBoundary>
           </div>
         )}
       </main>
