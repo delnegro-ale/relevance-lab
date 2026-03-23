@@ -67,7 +67,7 @@ function ProductCard({ hit, isExpected }: {
               {hit.format}
             </span>
           )}
-          {hit.score != null && (
+          {typeof hit.score === 'number' && !isNaN(hit.score) && (
             <span className="text-[10px] font-mono-data text-muted-foreground/50">score: {hit.score.toFixed(1)}</span>
           )}
         </div>
@@ -89,9 +89,11 @@ export function KeywordBreakdown({ results }: Props) {
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  if (results.length === 0) return null;
+  // Defensive: ensure results array is valid and has keywordResults
+  const safeResults = results.filter(r => r && r.variant && Array.isArray(r.keywordResults));
+  if (safeResults.length === 0) return null;
 
-  const keywords = results[0].keywordResults.map(kr => kr.keyword);
+  const keywords = (safeResults[0].keywordResults || []).map(kr => kr?.keyword).filter(Boolean) as string[];
   const filtered = keywords.filter(k => k.toLowerCase().includes(search.toLowerCase()));
 
   const toggle = (k: string) => {
@@ -100,7 +102,7 @@ export function KeywordBreakdown({ results }: Props) {
     setExpanded(next);
   };
 
-  const colTemplate = `2fr ${results.map(() => '1fr').join(' ')}`;
+  const colTemplate = `2fr ${safeResults.map(() => '1fr').join(' ')}`;
 
   return (
     <Card>
@@ -128,9 +130,9 @@ export function KeywordBreakdown({ results }: Props) {
           {/* Header */}
           <div className="grid bg-muted/50 p-3 text-xs text-muted-foreground font-medium min-w-[600px]" style={{ gridTemplateColumns: colTemplate }}>
             <span>Keyword</span>
-            {results.map(r => (
+            {safeResults.map(r => (
               <span key={r.variant.id} className="text-center flex items-center justify-center gap-1.5">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color})` }} />
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color || '0 0% 50%'})` }} />
                 <span className="truncate">{r.variant.name}</span>
               </span>
             ))}
@@ -151,8 +153,8 @@ export function KeywordBreakdown({ results }: Props) {
                     {isExpanded ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
                     <span className="font-medium">{keyword}</span>
                   </div>
-                  {results.map(r => {
-                    const kr = r.keywordResults.find(k => k.keyword === keyword);
+                  {safeResults.map(r => {
+                    const kr = (r.keywordResults || []).find(k => k?.keyword === keyword);
                     if (!kr) return <div key={r.variant.id} className="text-center text-xs text-muted-foreground">—</div>;
                     if (kr.error) {
                       return (
@@ -163,10 +165,11 @@ export function KeywordBreakdown({ results }: Props) {
                         </div>
                       );
                     }
+                    const hitRate = typeof kr.hitRate === 'number' && !isNaN(kr.hitRate) ? kr.hitRate : 0;
                     return (
                       <div key={r.variant.id} className="text-center">
-                        <span className={`font-mono-data text-sm font-semibold ${kr.hitRate === 1 ? 'text-success' : kr.hitRate > 0 ? 'text-warning' : 'text-danger'}`}>
-                          {(kr.hitRate * 100).toFixed(0)}%
+                        <span className={`font-mono-data text-sm font-semibold ${hitRate === 1 ? 'text-success' : hitRate > 0 ? 'text-warning' : 'text-danger'}`}>
+                          {(hitRate * 100).toFixed(0)}%
                         </span>
                         <span className="text-[10px] text-muted-foreground ml-1">
                           ({(kr.foundIds || []).length}/{(kr.expectedIds || []).length})
@@ -178,16 +181,16 @@ export function KeywordBreakdown({ results }: Props) {
 
                 {isExpanded && (
                   <div className="border-t border-border bg-muted/20 p-4">
-                    <div className="grid gap-6" style={{ gridTemplateColumns: `repeat(${results.length}, 1fr)` }}>
-                      {results.map(r => {
-                        const kr = r.keywordResults.find(k => k.keyword === keyword);
+                    <div className="grid gap-6" style={{ gridTemplateColumns: `repeat(${safeResults.length}, 1fr)` }}>
+                      {safeResults.map(r => {
+                        const kr = (r.keywordResults || []).find(k => k?.keyword === keyword);
                         if (!kr) return <div key={r.variant.id} className="text-xs text-muted-foreground">Sem dados</div>;
                         if (kr.error) {
                           return (
                             <div key={r.variant.id} className="space-y-3">
                               <div className="flex items-center gap-2 pb-2 border-b border-border">
-                                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color})` }} />
-                                <span className="text-xs font-semibold">{r.variant.name}</span>
+                                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color || '0 0% 50%'})` }} />
+                                <span className="text-xs font-semibold">{r.variant.name || 'Sem nome'}</span>
                               </div>
                               <div className="bg-danger/10 border border-danger/20 rounded-md p-3">
                                 <div className="flex items-center gap-2 text-danger text-xs font-medium mb-1">
@@ -205,10 +208,10 @@ export function KeywordBreakdown({ results }: Props) {
                         return (
                           <div key={r.variant.id} className="space-y-3">
                             <div className="flex items-center gap-2 pb-2 border-b border-border">
-                              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color})` }} />
-                              <span className="text-xs font-semibold">{r.variant.name}</span>
-                              <Badge variant={kr.hitRate === 1 ? 'default' : 'secondary'} className="text-[9px] ml-auto">
-                                {(kr.hitRate * 100).toFixed(0)}% hit rate
+                              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color || '0 0% 50%'})` }} />
+                              <span className="text-xs font-semibold">{r.variant.name || 'Sem nome'}</span>
+                              <Badge variant={(kr.hitRate ?? 0) === 1 ? 'default' : 'secondary'} className="text-[9px] ml-auto">
+                                {((kr.hitRate ?? 0) * 100).toFixed(0)}% hit rate
                               </Badge>
                             </div>
 

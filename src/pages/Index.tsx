@@ -5,8 +5,10 @@ import { VariantEditor } from '@/components/benchmark/VariantEditor';
 import { ExecutiveDashboard } from '@/components/benchmark/ExecutiveDashboard';
 import { KeywordBreakdown } from '@/components/benchmark/KeywordBreakdown';
 import { HistoryPanel } from '@/components/benchmark/HistoryPanel';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { DEMO_TEST_CASES, DEMO_VARIANTS, generateDemoResults } from '@/lib/demo-data';
 import { saveToHistory, createHistoryEntry, HistoryEntry } from '@/lib/history';
+import { sanitizeResults } from '@/lib/sanitize-results';
 import { SavedVariant } from '@/lib/variant-library';
 import { VARIANT_COLORS, DEFAULT_ES_ENDPOINT, DEFAULT_ES_PAYLOAD } from '@/types/experiment';
 import { Button } from '@/components/ui/button';
@@ -46,7 +48,7 @@ export default function Index() {
   };
 
   const handleLoadDemo = () => {
-    const demoResults = generateDemoResults();
+    const demoResults = sanitizeResults(generateDemoResults());
     setExperiment(prev => ({
       ...prev,
       testCases: DEMO_TEST_CASES,
@@ -60,11 +62,12 @@ export default function Index() {
   };
 
   const handleLoadHistory = (entry: HistoryEntry) => {
+    const safeResults = sanitizeResults(entry.results);
     setExperiment(prev => ({
       ...prev,
-      testCases: entry.testCases,
-      variants: entry.variants,
-      results: entry.results,
+      testCases: entry.testCases || [],
+      variants: entry.variants || [],
+      results: safeResults,
       status: 'complete' as const,
     }));
     setActiveView('results');
@@ -224,8 +227,12 @@ export default function Index() {
 
         {activeView === 'results' && experiment.status === 'complete' && (
           <div className="space-y-6">
-            <ExecutiveDashboard results={experiment.results} />
-            <KeywordBreakdown results={experiment.results} />
+            <ErrorBoundary fallbackTitle="Erro ao renderizar o dashboard de resultados">
+              <ExecutiveDashboard results={experiment.results} />
+            </ErrorBoundary>
+            <ErrorBoundary fallbackTitle="Erro ao renderizar a análise por keyword">
+              <KeywordBreakdown results={experiment.results} />
+            </ErrorBoundary>
           </div>
         )}
       </main>
