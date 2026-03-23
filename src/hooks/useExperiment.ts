@@ -4,7 +4,7 @@ import { searchBaseline, searchElasticsearch } from '@/lib/search-api';
 import { calculateKeywordMetrics, aggregateMetrics } from '@/lib/metrics';
 import { saveLastConfig, loadLastConfig } from '@/lib/experiment-persistence';
 
-const initialExperiment: Experiment = (() => {
+function createInitialExperiment(): Experiment {
   const saved = loadLastConfig();
   return {
     testCases: saved.testCases || [],
@@ -16,10 +16,10 @@ const initialExperiment: Experiment = (() => {
     status: 'setup' as const,
     progress: { current: 0, total: 0, keyword: '' },
   };
-})();
+}
 
 export function useExperiment() {
-  const [experiment, setExperiment] = useState<Experiment>(initialExperiment);
+  const [experiment, setExperiment] = useState<Experiment>(createInitialExperiment);
   const stateRef = useRef(experiment);
   stateRef.current = experiment;
 
