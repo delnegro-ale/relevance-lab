@@ -67,7 +67,7 @@ function ProductCard({ hit, isExpected }: {
               {hit.format}
             </span>
           )}
-          {hit.score != null && (
+          {typeof hit.score === 'number' && !isNaN(hit.score) && (
             <span className="text-[10px] font-mono-data text-muted-foreground/50">score: {hit.score.toFixed(1)}</span>
           )}
         </div>
