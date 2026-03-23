@@ -119,7 +119,7 @@ export function useExperiment() {
       allResults.push({ variant, keywordResults, metrics: aggregateMetrics(keywordResults), errorCount });
     }
 
-    setExperiment(e => ({ ...e, status: 'complete', results: allResults }));
+    setExperiment(e => ({ ...e, status: 'complete', results: sanitizeResults(allResults) }));
   }, []);
 
   return { experiment, setTestCases, addVariant, updateVariant, removeVariant, duplicateVariant, runBenchmark, setExperiment };
