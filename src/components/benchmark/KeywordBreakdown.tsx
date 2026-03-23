@@ -169,7 +169,7 @@ export function KeywordBreakdown({ results }: Props) {
                           {(kr.hitRate * 100).toFixed(0)}%
                         </span>
                         <span className="text-[10px] text-muted-foreground ml-1">
-                          ({kr.foundIds.length}/{kr.expectedIds.length})
+                          ({(kr.foundIds || []).length}/{(kr.expectedIds || []).length})
                         </span>
                       </div>
                     );
@@ -199,6 +199,9 @@ export function KeywordBreakdown({ results }: Props) {
                             </div>
                           );
                         }
+                        const hits = kr.hits || [];
+                        const expectedIds = kr.expectedIds || [];
+                        const missingIds = kr.missingIds || [];
                         return (
                           <div key={r.variant.id} className="space-y-3">
                             <div className="flex items-center gap-2 pb-2 border-b border-border">
@@ -213,7 +216,7 @@ export function KeywordBreakdown({ results }: Props) {
                             <div className="grid grid-cols-2 gap-2 text-xs">
                               <div className="flex items-center gap-1">
                                 <span className="text-muted-foreground">MRR:</span>
-                                <span className="font-mono-data font-medium">{kr.mrr.toFixed(3)}</span>
+                                <span className="font-mono-data font-medium">{(kr.mrr ?? 0).toFixed(3)}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <span className="text-muted-foreground">Pos. Média:</span>
@@ -225,8 +228,8 @@ export function KeywordBreakdown({ results }: Props) {
                             <div className="space-y-1">
                               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Top 10 resultados</p>
                               <div className="space-y-1">
-                                {kr.hits.slice(0, 10).map((hit, i) => {
-                                  const isExpected = kr.expectedIds.includes(hit.productId);
+                                {hits.slice(0, 10).map((hit, i) => {
+                                  const isExpected = expectedIds.includes(hit.productId);
                                   return (
                                     <ProductCard
                                       key={i}
@@ -239,13 +242,13 @@ export function KeywordBreakdown({ results }: Props) {
                             </div>
 
                             {/* Missing */}
-                            {kr.missingIds.length > 0 && (
+                            {missingIds.length > 0 && (
                               <div className="mt-2 pt-2 border-t border-border/50">
                                 <p className="text-[10px] text-danger flex items-center gap-1 mb-1.5">
                                   <X className="h-3 w-3" /> Não encontrados no top 10
                                 </p>
                                 <div className="space-y-1">
-                                  {kr.missingIds.map(id => (
+                                  {missingIds.map(id => (
                                     <div key={id} className="flex items-center gap-2 p-1.5 rounded bg-danger/5">
                                       <div className="w-6 h-9 rounded overflow-hidden bg-muted/50 shrink-0 relative">
                                         <img

@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { VariantResult } from '@/types/experiment';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Trophy, Target, Crosshair, TrendingUp, TrendingDown, Award, Percent, AlertTriangle, Crown } from 'lucide-react';
+import { Trophy, Target, Crosshair, TrendingUp, TrendingDown, Award, Percent, AlertTriangle, Crown, Code2 } from 'lucide-react';
 import { MetricTooltip, METRIC_EXPLANATIONS } from './MetricTooltip';
 import { HowToReadReport } from './HowToReadReport';
 
@@ -21,6 +23,8 @@ function fmt(val: number, pct: boolean) {
 }
 
 export function ExecutiveDashboard({ results }: Props) {
+  const [payloadVariant, setPayloadVariant] = useState<VariantResult | null>(null);
+
   if (results.length === 0) return null;
 
   const hasErrors = results.some(r => r.errorCount > 0);
@@ -106,6 +110,15 @@ export function ExecutiveDashboard({ results }: Props) {
                   <div className="flex items-center justify-center gap-1.5 mb-3 mt-1">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color})` }} />
                     <span className="text-xs font-medium truncate">{r.variant.name}</span>
+                    {(r.variant.type === 'elasticsearch' && r.variant.payload) && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setPayloadVariant(r); }}
+                        className="ml-1 p-0.5 rounded hover:bg-muted-foreground/20 transition-colors"
+                        title="Ver query payload"
+                      >
+                        <Code2 className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                      </button>
+                    )}
                   </div>
                   <p className={`text-4xl font-bold font-mono-data ${isWinner ? 'text-accent' : 'text-foreground'}`}>
                     {pct}%
@@ -210,6 +223,32 @@ export function ExecutiveDashboard({ results }: Props) {
           ))}
         </CardContent>
       </Card>
+
+      {/* Payload Viewer Dialog */}
+      <Dialog open={!!payloadVariant} onOpenChange={(open) => !open && setPayloadVariant(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-sm">
+              <Code2 className="h-4 w-4" />
+              Query Payload — {payloadVariant?.variant.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">Endpoint</p>
+              <code className="text-xs font-mono-data text-muted-foreground bg-muted/50 px-2 py-1 rounded block break-all">
+                {payloadVariant?.variant.endpoint}
+              </code>
+            </div>
+            <div>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">Payload</p>
+              <pre className="text-xs font-mono-data bg-muted/50 p-3 rounded-md overflow-auto max-h-[50vh] border border-border">
+                {payloadVariant?.variant.payload || 'Nenhum payload configurado'}
+              </pre>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
