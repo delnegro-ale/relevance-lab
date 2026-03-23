@@ -7,11 +7,13 @@ import { KeywordBreakdown } from '@/components/benchmark/KeywordBreakdown';
 import { HistoryPanel } from '@/components/benchmark/HistoryPanel';
 import { DEMO_TEST_CASES, DEMO_VARIANTS, generateDemoResults } from '@/lib/demo-data';
 import { saveToHistory, createHistoryEntry, HistoryEntry } from '@/lib/history';
+import { SavedVariant } from '@/lib/variant-library';
+import { VARIANT_COLORS, DEFAULT_ES_ENDPOINT, DEFAULT_ES_PAYLOAD } from '@/types/experiment';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { FlaskConical, Play, RotateCcw, Upload, Loader2, Beaker, Sparkles, Clock } from 'lucide-react';
+import { FlaskConical, Play, RotateCcw, Upload, Loader2, Beaker, Sparkles, Clock, Eraser } from 'lucide-react';
 
 export default function Index() {
   const { experiment, setTestCases, addVariant, updateVariant, removeVariant, duplicateVariant, runBenchmark, setExperiment } = useExperiment();
@@ -31,6 +33,14 @@ export default function Index() {
   }, [experiment.status, experiment.results, experiment.testCases, experiment.variants]);
 
   const handleRun = async () => {
+    // Assign colors by order before running
+    setExperiment(prev => ({
+      ...prev,
+      variants: prev.variants.map((v, i) => ({
+        ...v,
+        color: VARIANT_COLORS[i % VARIANT_COLORS.length],
+      })),
+    }));
     setActiveView('results');
     await runBenchmark();
   };
@@ -61,8 +71,42 @@ export default function Index() {
     setShowHistory(false);
   };
 
-  const handleReset = () => {
+  const handleNewTest = () => {
+    // "Novo Teste" keeps current config (copy of last state) but clears results
+    setExperiment(prev => ({
+      ...prev,
+      results: [],
+      status: 'setup' as const,
+      progress: { current: 0, total: 0, keyword: '' },
+    }));
     setActiveView('setup');
+  };
+
+  const handleClearConfig = () => {
+    setExperiment(prev => ({
+      ...prev,
+      variants: [prev.variants[0]], // Keep only baseline
+      results: [],
+      status: 'setup' as const,
+      progress: { current: 0, total: 0, keyword: '' },
+    }));
+  };
+
+  const handleLoadFromLibrary = (saved: SavedVariant) => {
+    setExperiment(prev => {
+      const idx = prev.variants.length;
+      return {
+        ...prev,
+        variants: [...prev.variants, {
+          id: `variant-${Date.now()}`,
+          name: saved.name,
+          type: 'elasticsearch' as const,
+          endpoint: saved.endpoint,
+          payload: saved.payload,
+          color: VARIANT_COLORS[idx % VARIANT_COLORS.length],
+        }],
+      };
+    });
   };
 
   const progress = experiment.progress.total > 0 ? (experiment.progress.current / experiment.progress.total) * 100 : 0;
@@ -89,7 +133,7 @@ export default function Index() {
               <Clock className="h-3.5 w-3.5 mr-1.5" /> Histórico
             </Button>
             {activeView === 'results' && (
-              <Button variant="outline" size="sm" onClick={handleReset}>
+              <Button variant="outline" size="sm" onClick={handleNewTest}>
                 <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Novo Teste
               </Button>
             )}
@@ -97,6 +141,9 @@ export default function Index() {
               <>
                 <Button variant="ghost" size="sm" onClick={handleLoadDemo} className="text-muted-foreground">
                   <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Demo
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleClearConfig} className="text-muted-foreground">
+                  <Eraser className="h-3.5 w-3.5 mr-1.5" /> Limpar Variantes
                 </Button>
                 <Button size="sm" onClick={handleRun} disabled={!canRun}>
                   <Play className="h-3.5 w-3.5 mr-1.5" /> Executar Benchmark
@@ -145,6 +192,7 @@ export default function Index() {
                     onRemove={removeVariant}
                     onDuplicate={duplicateVariant}
                     onAdd={addVariant}
+                    onLoadFromLibrary={handleLoadFromLibrary}
                   />
                 </CardContent>
               </Card>

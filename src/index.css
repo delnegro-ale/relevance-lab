@@ -59,3 +59,17 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+/* JSON Syntax Highlighting */
+.json-key {
+  color: hsl(172 66% 50%);
+}
+.json-string {
+  color: hsl(38 92% 60%);
+}
+.json-number {
+  color: hsl(262 80% 70%);
+}
+.json-bool {
+  color: hsl(350 80% 65%);
+}

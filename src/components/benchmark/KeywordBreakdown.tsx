@@ -3,19 +3,26 @@ import { VariantResult } from '@/types/experiment';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronRight, Check, X, Search, AlertTriangle, ImageOff } from 'lucide-react';
-import { MetricTooltip, METRIC_EXPLANATIONS } from './MetricTooltip';
+import { ChevronDown, ChevronRight, Check, X, Search, AlertTriangle, ImageOff, BookOpen, Headphones, FileText as FileIcon } from 'lucide-react';
+import { MetricTooltip } from './MetricTooltip';
 
 interface Props {
   results: VariantResult[];
 }
 
-function ProductCard({ hit, isExpected, keyword }: {
-  hit: { productId: string; title?: string; position: number; score?: number | null };
+function getFormatIcon(format: string) {
+  const f = (format || '').toLowerCase();
+  if (f.includes('audio') || f.includes('audiobook') || f.includes('mp3')) return Headphones;
+  if (f.includes('ebook') || f.includes('epub') || f.includes('pdf')) return FileIcon;
+  return BookOpen;
+}
+
+function ProductCard({ hit, isExpected }: {
+  hit: { productId: string; title?: string; position: number; score?: number | null; publisher?: string; format?: string; coverUrl?: string };
   isExpected: boolean;
-  keyword: string;
 }) {
-  const coverUrl = `https://media3.ubook.com/catalog/book-cover-image/${hit.productId}/400x600/`;
+  const coverUrl = hit.coverUrl || `https://media3.ubook.com/catalog/book-cover-image/${hit.productId}/400x600/`;
+  const FormatIcon = getFormatIcon(hit.format || '');
 
   return (
     <div className={`flex gap-2.5 p-2 rounded-lg transition-colors ${isExpected ? 'bg-success/10 ring-1 ring-success/30' : 'hover:bg-muted/20'}`}>
@@ -34,10 +41,12 @@ function ProductCard({ hit, isExpected, keyword }: {
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.style.display = 'none';
-            target.nextElementSibling?.classList.remove('hidden');
+            if (target.nextElementSibling) {
+              (target.nextElementSibling as HTMLElement).style.display = 'flex';
+            }
           }}
         />
-        <div className="hidden absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 items-center justify-center hidden">
           <ImageOff className="h-4 w-4 text-muted-foreground/40" />
         </div>
       </div>
@@ -47,8 +56,17 @@ function ProductCard({ hit, isExpected, keyword }: {
         <p className={`text-xs leading-tight truncate ${isExpected ? 'font-semibold text-success' : 'text-foreground'}`}>
           {hit.title || 'Sem título'}
         </p>
-        <div className="flex items-center gap-2 mt-0.5">
+        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
           <span className="text-[10px] font-mono-data text-muted-foreground">ID: {hit.productId}</span>
+          {hit.publisher && (
+            <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">{hit.publisher}</span>
+          )}
+          {hit.format && (
+            <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground/70">
+              <FormatIcon className="h-3 w-3" />
+              {hit.format}
+            </span>
+          )}
           {hit.score != null && (
             <span className="text-[10px] font-mono-data text-muted-foreground/50">score: {hit.score.toFixed(1)}</span>
           )}
@@ -212,7 +230,6 @@ export function KeywordBreakdown({ results }: Props) {
                                       key={i}
                                       hit={hit}
                                       isExpected={isExpected}
-                                      keyword={keyword}
                                     />
                                   );
                                 })}
@@ -228,7 +245,7 @@ export function KeywordBreakdown({ results }: Props) {
                                 <div className="space-y-1">
                                   {kr.missingIds.map(id => (
                                     <div key={id} className="flex items-center gap-2 p-1.5 rounded bg-danger/5">
-                                      <div className="w-6 h-9 rounded overflow-hidden bg-muted/50 shrink-0">
+                                      <div className="w-6 h-9 rounded overflow-hidden bg-muted/50 shrink-0 relative">
                                         <img
                                           src={`https://media3.ubook.com/catalog/book-cover-image/${id}/400x600/`}
                                           alt={id}
