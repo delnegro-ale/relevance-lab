@@ -47,30 +47,6 @@ const PARAM_DOCS = [
   },
 ];
 
-function syntaxHighlight(json: string): string {
-  return json
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(
-      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
-      (match) => {
-        let cls = 'text-accent'; // number
-        if (/^"/.test(match)) {
-          if (/:$/.test(match)) {
-            cls = 'text-primary'; // key
-          } else {
-            cls = 'text-success'; // string value
-          }
-        } else if (/true|false/.test(match)) {
-          cls = 'text-chart-4'; // boolean
-        } else if (/null/.test(match)) {
-          cls = 'text-muted-foreground'; // null
-        }
-        return `<span class="${cls}">${match}</span>`;
-      }
-    );
-}
 
 export function JsonEditorPanel({ open, onOpenChange, value, onChange, defaultValue }: Props) {
   const [localValue, setLocalValue] = useState(value);
@@ -124,13 +100,6 @@ export function JsonEditorPanel({ open, onOpenChange, value, onChange, defaultVa
     navigator.clipboard.writeText(localValue);
   };
 
-  let highlighted = '';
-  try {
-    const formatted = JSON.stringify(JSON.parse(localValue), null, 2);
-    highlighted = syntaxHighlight(formatted);
-  } catch {
-    highlighted = localValue.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -155,17 +124,12 @@ export function JsonEditorPanel({ open, onOpenChange, value, onChange, defaultVa
 
         <div className="flex-1 overflow-hidden flex flex-col">
           {/* Editor */}
-          <div className="flex-1 relative overflow-hidden">
+          <div className="flex-1 overflow-hidden">
             <textarea
               value={localValue}
               onChange={e => handleChange(e.target.value)}
               spellCheck={false}
-              className="absolute inset-0 w-full h-full p-4 bg-transparent text-transparent caret-foreground font-mono-data text-xs leading-relaxed resize-none focus:outline-none z-10"
-              style={{ caretColor: 'hsl(var(--foreground))' }}
-            />
-            <pre
-              className="absolute inset-0 w-full h-full p-4 font-mono-data text-xs leading-relaxed overflow-auto pointer-events-none"
-              dangerouslySetInnerHTML={{ __html: highlighted }}
+              className="w-full h-full p-4 bg-card text-foreground font-mono-data text-xs leading-relaxed resize-none focus:outline-none border-none"
             />
           </div>
 

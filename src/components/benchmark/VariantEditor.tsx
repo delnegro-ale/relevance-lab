@@ -2,17 +2,9 @@ import { useState } from 'react';
 import { VariantConfig, DEFAULT_ES_PAYLOAD } from '@/types/experiment';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Copy, Trash2, Code2, Settings2 } from 'lucide-react';
 import { JsonEditorPanel } from './JsonEditorPanel';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 
 interface Props {
   variants: VariantConfig[];
@@ -22,10 +14,6 @@ interface Props {
   onAdd: () => void;
 }
 
-const VARIANT_TYPE_OPTIONS = [
-  { value: 'baseline', label: 'API Produção', description: 'Usa a API de busca de produção da Ubook como referência.' },
-  { value: 'elasticsearch', label: 'Elasticsearch / OpenSearch', description: 'Consulta direta a um cluster ES/OS com payload customizado.' },
-];
 
 export function VariantEditor({ variants, onUpdate, onRemove, onDuplicate, onAdd }: Props) {
   return (
@@ -62,36 +50,6 @@ function VariantCard({ variant, onUpdate, onRemove, onDuplicate, canRemove }: {
               className="h-8 text-sm font-medium flex-1"
             />
 
-            {/* Type selector with tooltip */}
-            <TooltipProvider delayDuration={300}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <Select
-                      value={variant.type}
-                      onValueChange={(val: 'baseline' | 'elasticsearch') => onUpdate(variant.id, { type: val })}
-                    >
-                      <SelectTrigger className="h-8 w-[140px] text-[11px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {VARIANT_TYPE_OPTIONS.map(opt => (
-                          <SelectItem key={opt.value} value={opt.value}>
-                            <div>
-                              <span className="text-xs font-medium">{opt.label}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-xs text-[11px]">
-                  {VARIANT_TYPE_OPTIONS.find(o => o.value === variant.type)?.description}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onDuplicate(variant.id)}>
               <Copy className="h-3.5 w-3.5" />
             </Button>
@@ -100,19 +58,15 @@ function VariantCard({ variant, onUpdate, onRemove, onDuplicate, canRemove }: {
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
             )}
-            {variant.type === 'elasticsearch' && (
-              <>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowSettings(!showSettings)} title="Configurações">
-                  <Settings2 className="h-3.5 w-3.5" />
-                </Button>
-                <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => setJsonEditorOpen(true)}>
-                  <Code2 className="h-3.5 w-3.5" /> Editar Payload
-                </Button>
-              </>
-            )}
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowSettings(!showSettings)} title="Configurações">
+              <Settings2 className="h-3.5 w-3.5" />
+            </Button>
+            <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => setJsonEditorOpen(true)}>
+              <Code2 className="h-3.5 w-3.5" /> Editar Payload
+            </Button>
           </div>
 
-          {variant.type === 'elasticsearch' && showSettings && (
+          {showSettings && (
             <div className="space-y-3 pt-2 border-t border-border">
               <div>
                 <label className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Endpoint</label>
@@ -127,7 +81,7 @@ function VariantCard({ variant, onUpdate, onRemove, onDuplicate, canRemove }: {
             </div>
           )}
 
-          {variant.type === 'elasticsearch' && variant.payload && (
+          {variant.payload && (
             <div className="bg-muted/30 rounded-md p-2 border border-border/50">
               <pre className="text-[10px] text-muted-foreground font-mono-data line-clamp-3 overflow-hidden">
                 {variant.payload.slice(0, 200)}...
@@ -137,15 +91,13 @@ function VariantCard({ variant, onUpdate, onRemove, onDuplicate, canRemove }: {
         </div>
       </Card>
 
-      {variant.type === 'elasticsearch' && (
-        <JsonEditorPanel
-          open={jsonEditorOpen}
-          onOpenChange={setJsonEditorOpen}
-          value={variant.payload || '{}'}
-          onChange={(val) => onUpdate(variant.id, { payload: val })}
-          defaultValue={DEFAULT_ES_PAYLOAD}
-        />
-      )}
+      <JsonEditorPanel
+        open={jsonEditorOpen}
+        onOpenChange={setJsonEditorOpen}
+        value={variant.payload || '{}'}
+        onChange={(val) => onUpdate(variant.id, { payload: val })}
+        defaultValue={DEFAULT_ES_PAYLOAD}
+      />
     </>
   );
 }
