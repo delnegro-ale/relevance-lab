@@ -54,6 +54,6 @@ export function generateDemoResults(): VariantResult[] {
       };
     });
 
-    return { variant, keywordResults, metrics: aggregateMetrics(keywordResults) };
+    return { variant, keywordResults, metrics: aggregateMetrics(keywordResults), errorCount: 0 };
   });
 }
