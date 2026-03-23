@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { VariantResult } from '@/types/experiment';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { ChevronDown, ChevronRight, Check, X, Search } from 'lucide-react';
+import { ChevronDown, ChevronRight, Check, X, Search, AlertTriangle } from 'lucide-react';
 
 interface Props {
   results: VariantResult[];
