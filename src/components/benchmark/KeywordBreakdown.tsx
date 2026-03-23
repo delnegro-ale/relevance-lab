@@ -153,8 +153,8 @@ export function KeywordBreakdown({ results }: Props) {
                     {isExpanded ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
                     <span className="font-medium">{keyword}</span>
                   </div>
-                  {results.map(r => {
-                    const kr = r.keywordResults.find(k => k.keyword === keyword);
+                  {safeResults.map(r => {
+                    const kr = (r.keywordResults || []).find(k => k?.keyword === keyword);
                     if (!kr) return <div key={r.variant.id} className="text-center text-xs text-muted-foreground">—</div>;
                     if (kr.error) {
                       return (
@@ -165,10 +165,11 @@ export function KeywordBreakdown({ results }: Props) {
                         </div>
                       );
                     }
+                    const hitRate = typeof kr.hitRate === 'number' && !isNaN(kr.hitRate) ? kr.hitRate : 0;
                     return (
                       <div key={r.variant.id} className="text-center">
-                        <span className={`font-mono-data text-sm font-semibold ${kr.hitRate === 1 ? 'text-success' : kr.hitRate > 0 ? 'text-warning' : 'text-danger'}`}>
-                          {(kr.hitRate * 100).toFixed(0)}%
+                        <span className={`font-mono-data text-sm font-semibold ${hitRate === 1 ? 'text-success' : hitRate > 0 ? 'text-warning' : 'text-danger'}`}>
+                          {(hitRate * 100).toFixed(0)}%
                         </span>
                         <span className="text-[10px] text-muted-foreground ml-1">
                           ({(kr.foundIds || []).length}/{(kr.expectedIds || []).length})
