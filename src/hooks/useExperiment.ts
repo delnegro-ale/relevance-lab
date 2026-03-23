@@ -1,21 +1,25 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Experiment, TestCase, VariantConfig, VariantResult, KeywordResult, VARIANT_COLORS, DEFAULT_BASELINE_ENDPOINT, DEFAULT_ES_ENDPOINT, DEFAULT_ES_PAYLOAD } from '@/types/experiment';
 import { searchBaseline, searchElasticsearch } from '@/lib/search-api';
 import { calculateKeywordMetrics, aggregateMetrics } from '@/lib/metrics';
+import { saveLastConfig, loadLastConfig } from '@/lib/experiment-persistence';
 
-const initialExperiment: Experiment = {
-  testCases: [],
-  variants: [
-    { id: 'baseline', name: 'Baseline (Produção)', type: 'baseline', endpoint: DEFAULT_BASELINE_ENDPOINT, color: VARIANT_COLORS[0] },
-    { id: 'variant-1', name: 'OpenSearch Default', type: 'elasticsearch', endpoint: DEFAULT_ES_ENDPOINT, payload: DEFAULT_ES_PAYLOAD, color: VARIANT_COLORS[1] },
-  ],
-  results: [],
-  status: 'setup',
-  progress: { current: 0, total: 0, keyword: '' },
-};
+function buildInitialExperiment(): Experiment {
+  const saved = loadLastConfig();
+  return {
+    testCases: saved.testCases || [],
+    variants: saved.variants || [
+      { id: 'baseline', name: 'Baseline (Produção)', type: 'baseline', endpoint: DEFAULT_BASELINE_ENDPOINT, color: VARIANT_COLORS[0] },
+      { id: 'variant-1', name: 'OpenSearch Default', type: 'elasticsearch', endpoint: DEFAULT_ES_ENDPOINT, payload: DEFAULT_ES_PAYLOAD, color: VARIANT_COLORS[1] },
+    ],
+    results: [],
+    status: 'setup',
+    progress: { current: 0, total: 0, keyword: '' },
+  };
+}
 
 export function useExperiment() {
-  const [experiment, setExperiment] = useState<Experiment>(initialExperiment);
+  const [experiment, setExperiment] = useState<Experiment>(buildInitialExperiment);
   const stateRef = useRef(experiment);
   stateRef.current = experiment;
 
