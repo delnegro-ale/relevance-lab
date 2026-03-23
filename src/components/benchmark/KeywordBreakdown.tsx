@@ -248,7 +248,7 @@ export function KeywordBreakdown({ results }: Props) {
                                   <X className="h-3 w-3" /> Não encontrados no top 10
                                 </p>
                                 <div className="space-y-1">
-                                  {kr.missingIds.map(id => (
+                                  {missingIds.map(id => (
                                     <div key={id} className="flex items-center gap-2 p-1.5 rounded bg-danger/5">
                                       <div className="w-6 h-9 rounded overflow-hidden bg-muted/50 shrink-0 relative">
                                         <img
