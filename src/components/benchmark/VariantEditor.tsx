@@ -5,12 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Plus, Copy, Trash2, Code2, Settings2 } from 'lucide-react';
 import { JsonEditorPanel } from './JsonEditorPanel';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 
 interface Props {
   variants: VariantConfig[];
