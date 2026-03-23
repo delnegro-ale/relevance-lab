@@ -23,6 +23,8 @@ function fmt(val: number, pct: boolean) {
 }
 
 export function ExecutiveDashboard({ results }: Props) {
+  const [payloadVariant, setPayloadVariant] = useState<VariantResult | null>(null);
+
   if (results.length === 0) return null;
 
   const hasErrors = results.some(r => r.errorCount > 0);
