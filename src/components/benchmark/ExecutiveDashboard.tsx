@@ -1,7 +1,7 @@
 import { VariantResult, VariantMetrics } from '@/types/experiment';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Trophy, Target, Crosshair, TrendingUp, TrendingDown, Award, Percent } from 'lucide-react';
+import { Trophy, Target, Crosshair, TrendingUp, TrendingDown, Award, Percent, AlertTriangle } from 'lucide-react';
 
 interface Props {
   results: VariantResult[];
