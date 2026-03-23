@@ -62,36 +62,6 @@ function VariantCard({ variant, onUpdate, onRemove, onDuplicate, canRemove }: {
               className="h-8 text-sm font-medium flex-1"
             />
 
-            {/* Type selector with tooltip */}
-            <TooltipProvider delayDuration={300}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <Select
-                      value={variant.type}
-                      onValueChange={(val: 'baseline' | 'elasticsearch') => onUpdate(variant.id, { type: val })}
-                    >
-                      <SelectTrigger className="h-8 w-[140px] text-[11px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {VARIANT_TYPE_OPTIONS.map(opt => (
-                          <SelectItem key={opt.value} value={opt.value}>
-                            <div>
-                              <span className="text-xs font-medium">{opt.label}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-xs text-[11px]">
-                  {VARIANT_TYPE_OPTIONS.find(o => o.value === variant.type)?.description}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onDuplicate(variant.id)}>
               <Copy className="h-3.5 w-3.5" />
             </Button>
@@ -100,16 +70,12 @@ function VariantCard({ variant, onUpdate, onRemove, onDuplicate, canRemove }: {
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
             )}
-            {variant.type === 'elasticsearch' && (
-              <>
-                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowSettings(!showSettings)} title="Configurações">
-                  <Settings2 className="h-3.5 w-3.5" />
-                </Button>
-                <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => setJsonEditorOpen(true)}>
-                  <Code2 className="h-3.5 w-3.5" /> Editar Payload
-                </Button>
-              </>
-            )}
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowSettings(!showSettings)} title="Configurações">
+              <Settings2 className="h-3.5 w-3.5" />
+            </Button>
+            <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => setJsonEditorOpen(true)}>
+              <Code2 className="h-3.5 w-3.5" /> Editar Payload
+            </Button>
           </div>
 
           {variant.type === 'elasticsearch' && showSettings && (

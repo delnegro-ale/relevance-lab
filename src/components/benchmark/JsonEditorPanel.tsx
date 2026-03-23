@@ -155,17 +155,12 @@ export function JsonEditorPanel({ open, onOpenChange, value, onChange, defaultVa
 
         <div className="flex-1 overflow-hidden flex flex-col">
           {/* Editor */}
-          <div className="flex-1 relative overflow-hidden">
+          <div className="flex-1 overflow-hidden">
             <textarea
               value={localValue}
               onChange={e => handleChange(e.target.value)}
               spellCheck={false}
-              className="absolute inset-0 w-full h-full p-4 bg-transparent text-transparent caret-foreground font-mono-data text-xs leading-relaxed resize-none focus:outline-none z-10"
-              style={{ caretColor: 'hsl(var(--foreground))' }}
-            />
-            <pre
-              className="absolute inset-0 w-full h-full p-4 font-mono-data text-xs leading-relaxed overflow-auto pointer-events-none"
-              dangerouslySetInnerHTML={{ __html: highlighted }}
+              className="w-full h-full p-4 bg-card text-foreground font-mono-data text-xs leading-relaxed resize-none focus:outline-none border-none"
             />
           </div>
 
