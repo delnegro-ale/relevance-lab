@@ -47,30 +47,6 @@ const PARAM_DOCS = [
   },
 ];
 
-function syntaxHighlight(json: string): string {
-  return json
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(
-      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
-      (match) => {
-        let cls = 'text-accent'; // number
-        if (/^"/.test(match)) {
-          if (/:$/.test(match)) {
-            cls = 'text-primary'; // key
-          } else {
-            cls = 'text-success'; // string value
-          }
-        } else if (/true|false/.test(match)) {
-          cls = 'text-chart-4'; // boolean
-        } else if (/null/.test(match)) {
-          cls = 'text-muted-foreground'; // null
-        }
-        return `<span class="${cls}">${match}</span>`;
-      }
-    );
-}
 
 export function JsonEditorPanel({ open, onOpenChange, value, onChange, defaultValue }: Props) {
   const [localValue, setLocalValue] = useState(value);
