@@ -1,21 +1,34 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useExperiment } from '@/hooks/useExperiment';
 import { CsvUploader } from '@/components/benchmark/CsvUploader';
 import { VariantEditor } from '@/components/benchmark/VariantEditor';
 import { ExecutiveDashboard } from '@/components/benchmark/ExecutiveDashboard';
 import { KeywordBreakdown } from '@/components/benchmark/KeywordBreakdown';
+import { HistoryPanel } from '@/components/benchmark/HistoryPanel';
 import { DEMO_TEST_CASES, DEMO_VARIANTS, generateDemoResults } from '@/lib/demo-data';
+import { saveToHistory, createHistoryEntry, HistoryEntry } from '@/lib/history';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { FlaskConical, Play, RotateCcw, Upload, Loader2, Beaker, Sparkles } from 'lucide-react';
+import { FlaskConical, Play, RotateCcw, Upload, Loader2, Beaker, Sparkles, Clock } from 'lucide-react';
 
 export default function Index() {
   const { experiment, setTestCases, addVariant, updateVariant, removeVariant, duplicateVariant, runBenchmark, setExperiment } = useExperiment();
   const [activeView, setActiveView] = useState<'setup' | 'results'>('setup');
+  const [showHistory, setShowHistory] = useState(false);
+  const prevStatusRef = useRef(experiment.status);
 
   const canRun = experiment.testCases.length > 0 && experiment.variants.length > 0 && experiment.status !== 'running';
+
+  // Auto-save to history when benchmark completes
+  useEffect(() => {
+    if (experiment.status === 'complete' && prevStatusRef.current === 'running' && experiment.results.length > 0) {
+      const entry = createHistoryEntry(experiment.results, experiment.testCases, experiment.variants);
+      saveToHistory(entry);
+    }
+    prevStatusRef.current = experiment.status;
+  }, [experiment.status, experiment.results, experiment.testCases, experiment.variants]);
 
   const handleRun = async () => {
     setActiveView('results');
@@ -23,14 +36,29 @@ export default function Index() {
   };
 
   const handleLoadDemo = () => {
+    const demoResults = generateDemoResults();
     setExperiment(prev => ({
       ...prev,
       testCases: DEMO_TEST_CASES,
       variants: DEMO_VARIANTS,
-      results: generateDemoResults(),
+      results: demoResults,
       status: 'complete' as const,
     }));
     setActiveView('results');
+    const entry = createHistoryEntry(demoResults, DEMO_TEST_CASES, DEMO_VARIANTS);
+    saveToHistory(entry);
+  };
+
+  const handleLoadHistory = (entry: HistoryEntry) => {
+    setExperiment(prev => ({
+      ...prev,
+      testCases: entry.testCases,
+      variants: entry.variants,
+      results: entry.results,
+      status: 'complete' as const,
+    }));
+    setActiveView('results');
+    setShowHistory(false);
   };
 
   const handleReset = () => {
@@ -52,6 +80,14 @@ export default function Index() {
             <Badge variant="outline" className="text-[10px] font-normal border-border">Ubook</Badge>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant={showHistory ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setShowHistory(!showHistory)}
+              className="text-muted-foreground"
+            >
+              <Clock className="h-3.5 w-3.5 mr-1.5" /> Histórico
+            </Button>
             {activeView === 'results' && (
               <Button variant="outline" size="sm" onClick={handleReset}>
                 <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Novo Teste
@@ -72,7 +108,12 @@ export default function Index() {
       </header>
 
       <main className="max-w-7xl mx-auto p-6">
-        {/* Setup View */}
+        {showHistory && (
+          <div className="mb-6">
+            <HistoryPanel onLoad={handleLoadHistory} />
+          </div>
+        )}
+
         {activeView === 'setup' && (
           <div className="space-y-6">
             <div className="flex items-center gap-2 mb-2">
@@ -117,7 +158,6 @@ export default function Index() {
           </div>
         )}
 
-        {/* Running */}
         {activeView === 'results' && experiment.status === 'running' && (
           <Card className="max-w-md mx-auto mt-24">
             <CardContent className="p-8 text-center space-y-4">
@@ -134,7 +174,6 @@ export default function Index() {
           </Card>
         )}
 
-        {/* Results */}
         {activeView === 'results' && experiment.status === 'complete' && (
           <div className="space-y-6">
             <ExecutiveDashboard results={experiment.results} />

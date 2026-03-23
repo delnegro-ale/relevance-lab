@@ -2,6 +2,8 @@ import { VariantResult, VariantMetrics } from '@/types/experiment';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Trophy, Target, Crosshair, TrendingUp, TrendingDown, Award, Percent, AlertTriangle } from 'lucide-react';
+import { MetricTooltip, METRIC_EXPLANATIONS } from './MetricTooltip';
+import { HowToReadReport } from './HowToReadReport';
 
 interface Props {
   results: VariantResult[];
@@ -33,6 +35,9 @@ export function ExecutiveDashboard({ results }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* How to read */}
+      <HowToReadReport />
+
       {/* Error Banner */}
       {hasErrors && (
         <Card className="border-danger/30 bg-danger/5">
@@ -77,42 +82,48 @@ export function ExecutiveDashboard({ results }: Props) {
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {METRIC_DEFS.map(m => (
-          <Card key={m.key}>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <m.icon className="h-4 w-4 text-muted-foreground" />
-                <span className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">{m.label}</span>
-              </div>
-              <div className="space-y-2">
-                {results.map(r => {
-                  const val = r.metrics[m.key];
-                  const baseVal = baseline.metrics[m.key];
-                  const delta = val - baseVal;
-                  const isBaseline = r === baseline;
-                  const isPositive = m.higherBetter ? delta > 0 : delta < 0;
+        {METRIC_DEFS.map(m => {
+          const explanation = METRIC_EXPLANATIONS[m.key];
+          return (
+            <Card key={m.key}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <m.icon className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">{m.label}</span>
+                  {explanation && (
+                    <MetricTooltip label={m.label} description={explanation.description} interpretation={explanation.interpretation} />
+                  )}
+                </div>
+                <div className="space-y-2">
+                  {results.map(r => {
+                    const val = r.metrics[m.key];
+                    const baseVal = baseline.metrics[m.key];
+                    const delta = val - baseVal;
+                    const isBaseline = r === baseline;
+                    const isPositive = m.higherBetter ? delta > 0 : delta < 0;
 
-                  return (
-                    <div key={r.variant.id} className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: `hsl(${r.variant.color})` }} />
-                        <span className="text-xs truncate">{r.variant.name}</span>
+                    return (
+                      <div key={r.variant.id} className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: `hsl(${r.variant.color})` }} />
+                          <span className="text-xs truncate">{r.variant.name}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-sm font-mono-data font-semibold">{fmt(val, m.pct)}</span>
+                          {!isBaseline && Math.abs(delta) > 0.001 && (
+                            <span className={`text-[10px] font-mono-data ${isPositive ? 'text-success' : 'text-danger'}`}>
+                              {delta > 0 ? '+' : ''}{m.pct ? `${(delta * 100).toFixed(1)}` : delta.toFixed(2)}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="text-sm font-mono-data font-semibold">{fmt(val, m.pct)}</span>
-                        {!isBaseline && Math.abs(delta) > 0.001 && (
-                          <span className={`text-[10px] font-mono-data ${isPositive ? 'text-success' : 'text-danger'}`}>
-                            {delta > 0 ? '+' : ''}{m.pct ? `${(delta * 100).toFixed(1)}` : delta.toFixed(2)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Chart */}
