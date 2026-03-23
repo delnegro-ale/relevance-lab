@@ -3,6 +3,7 @@ import { Experiment, TestCase, VariantConfig, VariantResult, KeywordResult, VARI
 import { searchBaseline, searchElasticsearch } from '@/lib/search-api';
 import { calculateKeywordMetrics, aggregateMetrics } from '@/lib/metrics';
 import { saveLastConfig, loadLastConfig } from '@/lib/experiment-persistence';
+import { sanitizeResults } from '@/lib/sanitize-results';
 
 function createInitialExperiment(): Experiment {
   const saved = loadLastConfig();
