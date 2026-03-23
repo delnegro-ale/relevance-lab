@@ -23,6 +23,11 @@ export function useExperiment() {
   const stateRef = useRef(experiment);
   stateRef.current = experiment;
 
+  // Persist config on changes
+  useEffect(() => {
+    saveLastConfig(experiment.variants, experiment.testCases);
+  }, [experiment.variants, experiment.testCases]);
+
   const setTestCases = useCallback((testCases: TestCase[]) => {
     setExperiment(e => ({ ...e, testCases }));
   }, []);
