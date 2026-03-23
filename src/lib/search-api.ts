@@ -33,12 +33,10 @@ function parseBaselineResponse(data: any): SearchHit[] {
 
   return items.map((item: any, i: number) => {
     const productId = String(item.catalog_id || item.id || item.product_id || item.productId || item._id || '');
-    const coverImage = item.cover_image || item.cover_url || item.coverUrl || item.image_url || item.imageUrl || '';
-    const imagesUrl = '//media3.ubook.com/catalog/book-cover-image/replaced_product_id/400x600/';
-    const resolvedCover = coverImage
-      ? (coverImage.startsWith('http') || coverImage.startsWith('//') ? coverImage : imagesUrl.replace('replaced_product_id', coverImage))
-      : imagesUrl.replace('replaced_product_id', productId);
-    
+    const engine = item.engine || item.type || '';
+    const coverImage = item.cover_image || '';
+    const resolvedCover = buildCoverUrl(productId, coverImage, engine);
+
     return {
       productId,
       title: item.title || item.name || '',
@@ -46,7 +44,7 @@ function parseBaselineResponse(data: any): SearchHit[] {
       score: item.score || item._score || null,
       publisher: item.publisher || item.publisher_name || item.editora || '',
       format: item.format || item.content_type || item.type || item.formato || '',
-      coverUrl: resolvedCover.startsWith('//') ? `https:${resolvedCover}` : resolvedCover,
+      coverUrl: resolvedCover,
     };
   });
 }
@@ -87,10 +85,9 @@ function parseEsResponse(data: any): SearchHit[] {
   return hits.map((hit: any, i: number) => {
     const src = hit._source || {};
     const productId = String(src.catalog_id || src.id || hit._id || '');
-    const coverImage = src.cover_image || src.cover_url || src.image_url || '';
-    const resolvedCover = coverImage
-      ? (coverImage.startsWith('http') || coverImage.startsWith('//') ? coverImage : `https://media3.ubook.com/catalog/book-cover-image/${coverImage}/400x600/`)
-      : `https://media3.ubook.com/catalog/book-cover-image/${productId}/400x600/`;
+    const engine = src.engine || src.type || '';
+    const coverImage = src.cover_image || '';
+    const resolvedCover = buildCoverUrl(productId, coverImage, engine);
     return {
       productId,
       title: src.title || '',
@@ -101,6 +98,18 @@ function parseEsResponse(data: any): SearchHit[] {
       coverUrl: resolvedCover,
     };
   });
+}
+
+function buildCoverUrl(productId: string, coverImage: string, engine: string): string {
+  if (coverImage && (coverImage.startsWith('http') || coverImage.startsWith('//'))) {
+    return coverImage.startsWith('//') ? `https:${coverImage}` : coverImage;
+  }
+  const prefix = 'https://media3.ubook.com/catalog/';
+  const typeSegment = engine === 'audio-ubook' ? 'book-cover-image/' : 'ebook-cover-image/';
+  const sizeSegment = engine === 'podcast' ? '200x200/' : '200x300/';
+  const idSegment = `${productId}/`;
+  const fileName = coverImage || '';
+  return `${prefix}${typeSegment}${idSegment}${sizeSegment}${fileName}`;
 }
 
 function getProxyUrl(): string | null {
