@@ -102,7 +102,7 @@ export function KeywordBreakdown({ results }: Props) {
     setExpanded(next);
   };
 
-  const colTemplate = `2fr ${results.map(() => '1fr').join(' ')}`;
+  const colTemplate = `2fr ${safeResults.map(() => '1fr').join(' ')}`;
 
   return (
     <Card>
