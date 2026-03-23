@@ -223,6 +223,32 @@ export function ExecutiveDashboard({ results }: Props) {
           ))}
         </CardContent>
       </Card>
+
+      {/* Payload Viewer Dialog */}
+      <Dialog open={!!payloadVariant} onOpenChange={(open) => !open && setPayloadVariant(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-sm">
+              <Code2 className="h-4 w-4" />
+              Query Payload — {payloadVariant?.variant.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">Endpoint</p>
+              <code className="text-xs font-mono-data text-muted-foreground bg-muted/50 px-2 py-1 rounded block break-all">
+                {payloadVariant?.variant.endpoint}
+              </code>
+            </div>
+            <div>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1">Payload</p>
+              <pre className="text-xs font-mono-data bg-muted/50 p-3 rounded-md overflow-auto max-h-[50vh] border border-border">
+                {payloadVariant?.variant.payload || 'Nenhum payload configurado'}
+              </pre>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
