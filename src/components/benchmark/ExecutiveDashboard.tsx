@@ -22,6 +22,7 @@ function fmt(val: number, pct: boolean) {
 export function ExecutiveDashboard({ results }: Props) {
   if (results.length === 0) return null;
 
+  const hasErrors = results.some(r => r.errorCount > 0);
   const winner = results.reduce((best, r) => r.metrics.hitRate > best.metrics.hitRate ? r : best);
   const baseline = results[0];
 
@@ -32,6 +33,29 @@ export function ExecutiveDashboard({ results }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* Error Banner */}
+      {hasErrors && (
+        <Card className="border-danger/30 bg-danger/5">
+          <CardContent className="p-4 flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-danger mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-danger">Erros detectados na execução</p>
+              <div className="mt-1 space-y-0.5">
+                {results.filter(r => r.errorCount > 0).map(r => (
+                  <p key={r.variant.id} className="text-xs text-muted-foreground">
+                    <span className="font-medium" style={{ color: `hsl(${r.variant.color})` }}>{r.variant.name}</span>
+                    {': '}{r.errorCount} de {r.keywordResults.length} consultas falharam — os resultados desta variante podem estar incompletos.
+                  </p>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Possíveis causas: restrição de IP/VPC, CORS, endpoint inacessível. Configure o proxy via Edge Function para resolver.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Winner */}
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="p-6 flex items-center gap-4">
@@ -42,6 +66,7 @@ export function ExecutiveDashboard({ results }: Props) {
             <p className="text-xs text-muted-foreground uppercase tracking-wider">Melhor performance geral</p>
             <p className="text-xl font-bold mt-0.5" style={{ color: `hsl(${winner.variant.color})` }}>
               {winner.variant.name}
+              {winner.errorCount > 0 && <span className="text-xs text-danger font-normal ml-2">⚠ com erros</span>}
             </p>
             <p className="text-sm text-muted-foreground mt-1">
               Hit Rate: {fmt(winner.metrics.hitRate, true)} · MRR: {fmt(winner.metrics.mrr, false)} · Cobertura: {fmt(winner.metrics.coverage, true)}
