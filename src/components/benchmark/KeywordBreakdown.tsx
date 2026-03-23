@@ -208,10 +208,10 @@ export function KeywordBreakdown({ results }: Props) {
                         return (
                           <div key={r.variant.id} className="space-y-3">
                             <div className="flex items-center gap-2 pb-2 border-b border-border">
-                              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color})` }} />
-                              <span className="text-xs font-semibold">{r.variant.name}</span>
-                              <Badge variant={kr.hitRate === 1 ? 'default' : 'secondary'} className="text-[9px] ml-auto">
-                                {(kr.hitRate * 100).toFixed(0)}% hit rate
+                              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color || '0 0% 50%'})` }} />
+                              <span className="text-xs font-semibold">{r.variant.name || 'Sem nome'}</span>
+                              <Badge variant={(kr.hitRate ?? 0) === 1 ? 'default' : 'secondary'} className="text-[9px] ml-auto">
+                                {((kr.hitRate ?? 0) * 100).toFixed(0)}% hit rate
                               </Badge>
                             </div>
 
