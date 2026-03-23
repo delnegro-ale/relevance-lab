@@ -169,7 +169,7 @@ export function KeywordBreakdown({ results }: Props) {
                           {(kr.hitRate * 100).toFixed(0)}%
                         </span>
                         <span className="text-[10px] text-muted-foreground ml-1">
-                          ({kr.foundIds.length}/{kr.expectedIds.length})
+                          ({(kr.foundIds || []).length}/{(kr.expectedIds || []).length})
                         </span>
                       </div>
                     );
