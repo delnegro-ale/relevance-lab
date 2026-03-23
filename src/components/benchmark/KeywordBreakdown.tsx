@@ -180,7 +180,8 @@ export function KeywordBreakdown({ results }: Props) {
                   <div className="border-t border-border bg-muted/20 p-4">
                     <div className="grid gap-6" style={{ gridTemplateColumns: `repeat(${results.length}, 1fr)` }}>
                       {results.map(r => {
-                        const kr = r.keywordResults.find(k => k.keyword === keyword)!;
+                        const kr = r.keywordResults.find(k => k.keyword === keyword);
+                        if (!kr) return <div key={r.variant.id} className="text-xs text-muted-foreground">Sem dados</div>;
                         if (kr.error) {
                           return (
                             <div key={r.variant.id} className="space-y-3">
