@@ -130,9 +130,9 @@ export function KeywordBreakdown({ results }: Props) {
           {/* Header */}
           <div className="grid bg-muted/50 p-3 text-xs text-muted-foreground font-medium min-w-[600px]" style={{ gridTemplateColumns: colTemplate }}>
             <span>Keyword</span>
-            {results.map(r => (
+            {safeResults.map(r => (
               <span key={r.variant.id} className="text-center flex items-center justify-center gap-1.5">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color})` }} />
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color || '0 0% 50%'})` }} />
                 <span className="truncate">{r.variant.name}</span>
               </span>
             ))}
