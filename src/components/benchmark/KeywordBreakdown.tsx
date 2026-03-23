@@ -152,7 +152,8 @@ export function KeywordBreakdown({ results }: Props) {
                     <span className="font-medium">{keyword}</span>
                   </div>
                   {results.map(r => {
-                    const kr = r.keywordResults.find(k => k.keyword === keyword)!;
+                    const kr = r.keywordResults.find(k => k.keyword === keyword);
+                    if (!kr) return <div key={r.variant.id} className="text-center text-xs text-muted-foreground">—</div>;
                     if (kr.error) {
                       return (
                         <div key={r.variant.id} className="text-center">
