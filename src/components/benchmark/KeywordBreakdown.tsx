@@ -66,6 +66,15 @@ export function KeywordBreakdown({ results }: Props) {
                   </div>
                   {results.map(r => {
                     const kr = r.keywordResults.find(k => k.keyword === keyword)!;
+                    if (kr.error) {
+                      return (
+                        <div key={r.variant.id} className="text-center">
+                          <span className="inline-flex items-center gap-1 text-xs text-danger font-medium">
+                            <AlertTriangle className="h-3 w-3" /> Erro
+                          </span>
+                        </div>
+                      );
+                    }
                     return (
                       <div key={r.variant.id} className="text-center">
                         <span className={`font-mono-data text-sm font-semibold ${kr.hitRate === 1 ? 'text-success' : kr.hitRate > 0 ? 'text-warning' : 'text-danger'}`}>
