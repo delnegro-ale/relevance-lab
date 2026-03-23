@@ -44,6 +44,7 @@ export interface VariantResult {
   variant: VariantConfig;
   keywordResults: KeywordResult[];
   metrics: VariantMetrics;
+  errorCount: number;
 }
 
 export interface Experiment {
