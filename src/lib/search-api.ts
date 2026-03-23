@@ -87,6 +87,10 @@ function parseEsResponse(data: any): SearchHit[] {
   return hits.map((hit: any, i: number) => {
     const src = hit._source || {};
     const productId = String(src.catalog_id || src.id || hit._id || '');
+    const coverImage = src.cover_image || src.cover_url || src.image_url || '';
+    const resolvedCover = coverImage
+      ? (coverImage.startsWith('http') || coverImage.startsWith('//') ? coverImage : `https://media3.ubook.com/catalog/book-cover-image/${coverImage}/400x600/`)
+      : `https://media3.ubook.com/catalog/book-cover-image/${productId}/400x600/`;
     return {
       productId,
       title: src.title || '',
@@ -94,7 +98,7 @@ function parseEsResponse(data: any): SearchHit[] {
       score: hit._score || null,
       publisher: src.publisher || src.publisher_name || src.editora || '',
       format: src.format || src.content_type || src.type || '',
-      coverUrl: src.image_url || src.cover_url || `https://media3.ubook.com/catalog/book-cover-image/${productId}/400x600/`,
+      coverUrl: resolvedCover,
     };
   });
 }

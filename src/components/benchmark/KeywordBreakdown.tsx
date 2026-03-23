@@ -53,8 +53,11 @@ function ProductCard({ hit, isExpected }: {
 
       {/* Info */}
       <div className="flex-1 min-w-0 flex flex-col justify-center">
-        <p className={`text-xs leading-tight truncate ${isExpected ? 'font-semibold text-success' : 'text-foreground'}`}>
-          {hit.title || 'Sem título'}
+        <p
+          className={`text-xs leading-tight truncate ${isExpected ? 'font-semibold text-success' : 'text-foreground'}`}
+          title={hit.title || 'Sem título'}
+        >
+          {(hit.title || 'Sem título').length > 40 ? `${(hit.title || 'Sem título').slice(0, 40)}…` : (hit.title || 'Sem título')}
         </p>
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
           <span className="text-[10px] font-mono-data text-muted-foreground">ID: {hit.productId}</span>
