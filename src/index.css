@@ -60,16 +60,14 @@
   }
 }
 
-/* JSON Syntax Highlighting */
-.json-key {
-  color: hsl(172 66% 50%);
+/* JSON Code Editor */
+.json-code-editor {
+  background: transparent !important;
 }
-.json-string {
-  color: hsl(38 92% 60%);
+.json-code-editor textarea {
+  background: transparent !important;
+  caret-color: hsl(var(--foreground)) !important;
 }
-.json-number {
-  color: hsl(262 80% 70%);
-}
-.json-bool {
-  color: hsl(350 80% 65%);
+.json-code-editor pre {
+  background: transparent !important;
 }
