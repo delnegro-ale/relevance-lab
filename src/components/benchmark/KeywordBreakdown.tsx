@@ -189,8 +189,8 @@ export function KeywordBreakdown({ results }: Props) {
                           return (
                             <div key={r.variant.id} className="space-y-3">
                               <div className="flex items-center gap-2 pb-2 border-b border-border">
-                                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color})` }} />
-                                <span className="text-xs font-semibold">{r.variant.name}</span>
+                                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color || '0 0% 50%'})` }} />
+                                <span className="text-xs font-semibold">{r.variant.name || 'Sem nome'}</span>
                               </div>
                               <div className="bg-danger/10 border border-danger/20 rounded-md p-3">
                                 <div className="flex items-center gap-2 text-danger text-xs font-medium mb-1">
