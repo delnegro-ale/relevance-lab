@@ -100,13 +100,6 @@ export function JsonEditorPanel({ open, onOpenChange, value, onChange, defaultVa
     navigator.clipboard.writeText(localValue);
   };
 
-  let highlighted = '';
-  try {
-    const formatted = JSON.stringify(JSON.parse(localValue), null, 2);
-    highlighted = syntaxHighlight(formatted);
-  } catch {
-    highlighted = localValue.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>

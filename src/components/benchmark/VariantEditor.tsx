@@ -20,10 +20,6 @@ interface Props {
   onAdd: () => void;
 }
 
-const VARIANT_TYPE_OPTIONS = [
-  { value: 'baseline', label: 'API Produção', description: 'Usa a API de busca de produção da Ubook como referência.' },
-  { value: 'elasticsearch', label: 'Elasticsearch / OpenSearch', description: 'Consulta direta a um cluster ES/OS com payload customizado.' },
-];
 
 export function VariantEditor({ variants, onUpdate, onRemove, onDuplicate, onAdd }: Props) {
   return (
