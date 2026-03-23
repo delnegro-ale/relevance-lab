@@ -110,6 +110,15 @@ export function ExecutiveDashboard({ results }: Props) {
                   <div className="flex items-center justify-center gap-1.5 mb-3 mt-1">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color})` }} />
                     <span className="text-xs font-medium truncate">{r.variant.name}</span>
+                    {(r.variant.type === 'elasticsearch' && r.variant.payload) && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setPayloadVariant(r); }}
+                        className="ml-1 p-0.5 rounded hover:bg-muted-foreground/20 transition-colors"
+                        title="Ver query payload"
+                      >
+                        <Code2 className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                      </button>
+                    )}
                   </div>
                   <p className={`text-4xl font-bold font-mono-data ${isWinner ? 'text-accent' : 'text-foreground'}`}>
                     {pct}%
