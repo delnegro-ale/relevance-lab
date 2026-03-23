@@ -76,7 +76,7 @@ function VariantCard({ variant, onUpdate, onRemove, onDuplicate, canRemove }: {
             </Button>
           </div>
 
-          {variant.type === 'elasticsearch' && showSettings && (
+          {showSettings && (
             <div className="space-y-3 pt-2 border-t border-border">
               <div>
                 <label className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Endpoint</label>
