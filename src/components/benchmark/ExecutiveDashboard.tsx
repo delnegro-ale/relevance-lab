@@ -155,7 +155,11 @@ export function ExecutiveDashboard({ results }: Props) {
                   )}
                 </div>
                 <div className="space-y-2">
-                  {results.map(r => {
+                  {[...results].sort((a, b) => {
+                    const aVal = a.metrics[m.key];
+                    const bVal = b.metrics[m.key];
+                    return m.higherBetter ? bVal - aVal : aVal - bVal;
+                  }).map(r => {
                     const val = r.metrics[m.key];
                     const baseVal = baseline.metrics[m.key];
                     const delta = val - baseVal;
