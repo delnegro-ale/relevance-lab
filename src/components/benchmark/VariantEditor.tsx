@@ -2,9 +2,7 @@ import { useState } from 'react';
 import { VariantConfig, DEFAULT_ES_PAYLOAD } from '@/types/experiment';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Copy, Trash2, Code2, Settings2 } from 'lucide-react';
 import { JsonEditorPanel } from './JsonEditorPanel';
 import {
