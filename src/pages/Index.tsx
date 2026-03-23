@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useExperiment } from '@/hooks/useExperiment';
 import { CsvUploader } from '@/components/benchmark/CsvUploader';
 import { VariantEditor } from '@/components/benchmark/VariantEditor';
@@ -17,41 +17,23 @@ export default function Index() {
   const { experiment, setTestCases, addVariant, updateVariant, removeVariant, duplicateVariant, runBenchmark, setExperiment } = useExperiment();
   const [activeView, setActiveView] = useState<'setup' | 'results'>('setup');
   const [showHistory, setShowHistory] = useState(false);
+  const prevStatusRef = useRef(experiment.status);
 
   const canRun = experiment.testCases.length > 0 && experiment.variants.length > 0 && experiment.status !== 'running';
+
+  // Auto-save to history when benchmark completes
+  useEffect(() => {
+    if (experiment.status === 'complete' && prevStatusRef.current === 'running' && experiment.results.length > 0) {
+      const entry = createHistoryEntry(experiment.results, experiment.testCases, experiment.variants);
+      saveToHistory(entry);
+    }
+    prevStatusRef.current = experiment.status;
+  }, [experiment.status, experiment.results, experiment.testCases, experiment.variants]);
 
   const handleRun = async () => {
     setActiveView('results');
     await runBenchmark();
-    // Save to history after completion
-    const currentExp = experiment;
-    // We need to get the results after runBenchmark finishes, so we use a small timeout
-    setTimeout(() => {
-      const el = document.querySelector('[data-experiment-complete]');
-      // Save using the latest state
-    }, 100);
   };
-
-  // Save to history when results complete
-  const handleSaveHistory = () => {
-    if (experiment.status === 'complete' && experiment.results.length > 0) {
-      const entry = createHistoryEntry(experiment.results, experiment.testCases, experiment.variants);
-      saveToHistory(entry);
-    }
-  };
-
-  // Watch for completion and auto-save
-  const prevStatus = useState(experiment.status);
-  if (experiment.status === 'complete' && prevStatus[0] !== 'complete') {
-    prevStatus[1](experiment.status);
-    if (experiment.results.length > 0) {
-      const entry = createHistoryEntry(experiment.results, experiment.testCases, experiment.variants);
-      saveToHistory(entry);
-    }
-  }
-  if (experiment.status !== prevStatus[0]) {
-    prevStatus[1](experiment.status);
-  }
 
   const handleLoadDemo = () => {
     const demoResults = generateDemoResults();
@@ -63,7 +45,6 @@ export default function Index() {
       status: 'complete' as const,
     }));
     setActiveView('results');
-    // Save demo to history
     const entry = createHistoryEntry(demoResults, DEMO_TEST_CASES, DEMO_VARIANTS);
     saveToHistory(entry);
   };
@@ -127,14 +108,12 @@ export default function Index() {
       </header>
 
       <main className="max-w-7xl mx-auto p-6">
-        {/* History Panel */}
         {showHistory && (
           <div className="mb-6">
             <HistoryPanel onLoad={handleLoadHistory} />
           </div>
         )}
 
-        {/* Setup View */}
         {activeView === 'setup' && (
           <div className="space-y-6">
             <div className="flex items-center gap-2 mb-2">
@@ -179,7 +158,6 @@ export default function Index() {
           </div>
         )}
 
-        {/* Running */}
         {activeView === 'results' && experiment.status === 'running' && (
           <Card className="max-w-md mx-auto mt-24">
             <CardContent className="p-8 text-center space-y-4">
@@ -196,7 +174,6 @@ export default function Index() {
           </Card>
         )}
 
-        {/* Results */}
         {activeView === 'results' && experiment.status === 'complete' && (
           <div className="space-y-6">
             <ExecutiveDashboard results={experiment.results} />
