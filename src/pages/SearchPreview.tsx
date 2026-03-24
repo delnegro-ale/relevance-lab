@@ -137,7 +137,7 @@ export default function SearchPreview() {
               <Search className="h-12 w-12 text-muted-foreground/30 mx-auto" />
               <h2 className="text-lg font-semibold text-muted-foreground">Search Preview</h2>
               <p className="text-sm text-muted-foreground/70">
-                Visualize os resultados de busca em cada variante configurada.
+                Visualize os resultados de busca em cada motor configurado.
               </p>
             </div>
 
