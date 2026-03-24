@@ -105,7 +105,7 @@ export default function SearchPreview() {
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-4">
           <NavLink to="/" className="flex items-center gap-2 shrink-0 hover:opacity-80 transition-opacity">
             <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <FlaskConical className="h-4 w-4 text-primary" />
+              <SearchHeartFill className="h-4 w-4 text-primary" />
             </div>
             <span className="text-sm font-medium text-muted-foreground">← Voltar</span>
           </NavLink>
