@@ -1,5 +1,5 @@
-import { BookOpen, Headphones, FileText as FileIcon, ImageOff } from 'lucide-react';
-
+import { BookOpen, Headphones, FileText as FileIcon, ImageOff, ExternalLink } from 'lucide-react';
+import { buildProductUrl } from '@/lib/product-url';
 function getFormatIcon(format: string) {
   const f = (format || '').toLowerCase();
   if (f.includes('audio') || f.includes('audiobook') || f.includes('mp3')) return Headphones;
@@ -27,9 +27,15 @@ export function ProductCardSimple({ hit, isExpected = false }: Props) {
   const FormatIcon = getFormatIcon(hit.format || '');
   const fullTitle = hit.title || 'Sem título';
   const displayTitle = fullTitle.length > 40 ? `${fullTitle.slice(0, 40)}…` : fullTitle;
+  const productUrl = buildProductUrl(hit.productId, hit.format);
 
   return (
-    <div className={`flex gap-2.5 p-2 rounded-lg transition-colors ${isExpected ? 'bg-success/10 ring-1 ring-success/30' : 'hover:bg-muted/20'}`}>
+    <a
+      href={productUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`group flex gap-2.5 p-2 rounded-lg transition-colors no-underline ${isExpected ? 'bg-success/10 ring-1 ring-success/30' : 'hover:bg-muted/20'}`}
+    >
       {/* Position */}
       <div className="flex flex-col items-center justify-start pt-1 shrink-0 w-5">
         <span className="text-[10px] font-mono-data text-muted-foreground font-semibold">{hit.position}</span>
@@ -79,6 +85,11 @@ export function ProductCardSimple({ hit, isExpected = false }: Props) {
           )}
         </div>
       </div>
-    </div>
+
+      {/* External link icon - visible on hover */}
+      <div className="flex items-center shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+        <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+      </div>
+    </a>
   );
 }

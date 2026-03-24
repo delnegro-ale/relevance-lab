@@ -3,9 +3,10 @@ import { VariantResult } from '@/types/experiment';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronRight, X, Search, AlertTriangle, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { ChevronDown, ChevronRight, X, Search, AlertTriangle, ArrowUp, ArrowDown, ArrowUpDown, ExternalLink } from 'lucide-react';
 import { MetricTooltip } from './MetricTooltip';
 import { ProductCardSimple } from './ProductCardSimple';
+import { buildProductUrl } from '@/lib/product-url';
 
 interface Props {
   results: VariantResult[];
@@ -225,8 +226,14 @@ export function KeywordBreakdown({ results }: Props) {
                                   <X className="h-3 w-3" /> Não encontrados no top 10
                                 </p>
                                 <div className="space-y-1">
-                                  {missingIds.map(id => (
-                                    <div key={id} className="flex items-center gap-2 p-1.5 rounded bg-destructive/5">
+                                {missingIds.map(id => (
+                                    <a
+                                      key={id}
+                                      href={buildProductUrl(id)}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="group flex items-center gap-2 p-1.5 rounded bg-destructive/5 hover:bg-destructive/10 transition-colors no-underline"
+                                    >
                                       <div className="w-6 h-9 rounded overflow-hidden bg-muted/50 shrink-0 relative">
                                         <img
                                           src={`https://media3.ubook.com/catalog/book-cover-image/${id}/200x300/`}
@@ -237,7 +244,8 @@ export function KeywordBreakdown({ results }: Props) {
                                         />
                                       </div>
                                       <span className="text-xs font-mono-data text-destructive/70">{id}</span>
-                                    </div>
+                                      <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity ml-auto shrink-0" />
+                                    </a>
                                   ))}
                                 </div>
                               </div>
