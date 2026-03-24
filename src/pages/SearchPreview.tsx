@@ -3,13 +3,15 @@ import { VariantConfig, SearchHit, VARIANT_COLORS, DEFAULT_BASELINE_ENDPOINT, DE
 import { searchBaseline, searchElasticsearch } from '@/lib/search-api';
 import { loadLastConfig } from '@/lib/experiment-persistence';
 import { ProductCardSimple } from '@/components/benchmark/ProductCardSimple';
+import { ExportSearchPdfButton } from '@/components/benchmark/ExportSearchPdfButton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Loader2, Clock, X, ChevronDown, ChevronRight, List } from 'lucide-react';
+import { Search, Loader2, Clock, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { SearchHeartFill } from '@/components/icons/BootstrapIcons';
 import { NavLink } from '@/components/NavLink';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 
 const RECENT_KEY = 'search-preview-recent';
 const MAX_RECENT = 15;
@@ -31,7 +33,7 @@ interface VariantSearchResult {
   error?: string;
 }
 
-interface KeywordSearchGroup {
+export interface KeywordSearchGroup {
   keyword: string;
   results: VariantSearchResult[];
 }
@@ -44,6 +46,8 @@ export default function SearchPreview() {
   const [searchGroups, setSearchGroups] = useState<KeywordSearchGroup[]>([]);
   const [expandedKeyword, setExpandedKeyword] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [wasMultiSearch, setWasMultiSearch] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -77,16 +81,16 @@ export default function SearchPreview() {
   const executeSearch = useCallback(async (rawQuery: string) => {
     if (!rawQuery.trim() || variants.length === 0) return;
 
-    const keywords = rawQuery
-      .split('\n')
-      .map(l => l.trim())
-      .filter(Boolean);
+    const keywords = multiMode
+      ? rawQuery.split('\n').map(l => l.trim()).filter(Boolean)
+      : [rawQuery.trim()];
 
     if (keywords.length === 0) return;
 
     setIsSearching(true);
+    setWasMultiSearch(keywords.length > 1);
 
-    // Save to recent (unique, most recent first)
+    // Save to recent
     const updatedRecent = [
       ...keywords,
       ...recent.filter(r => !keywords.includes(r)),
@@ -100,9 +104,9 @@ export default function SearchPreview() {
       results: variants.map(v => ({ variant: v, hits: [], loading: true })),
     }));
     setSearchGroups(initialGroups);
-    setExpandedKeyword(keywords[0]);
+    // Single search: open first keyword. Multi-search: all closed.
+    setExpandedKeyword(keywords.length === 1 ? keywords[0] : null);
 
-    // Execute searches sequentially per keyword to avoid overwhelming APIs
     const completedGroups: KeywordSearchGroup[] = [];
     for (const kw of keywords) {
       const group = await searchSingleKeyword(kw);
@@ -111,7 +115,7 @@ export default function SearchPreview() {
     }
 
     setIsSearching(false);
-  }, [variants, recent, searchSingleKeyword]);
+  }, [variants, recent, searchSingleKeyword, multiMode]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,18 +132,11 @@ export default function SearchPreview() {
     saveRecent([]);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // In single mode, Enter submits; in multi mode, Enter adds a line
-    if (!multiMode && e.key === 'Enter' && !e.shiftKey) {
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
       e.preventDefault();
       executeSearch(query);
     }
-  };
-
-  const toggleMultiMode = () => {
-    setMultiMode(prev => !prev);
-    // Focus textarea after toggle
-    setTimeout(() => textareaRef.current?.focus(), 50);
   };
 
   const keywordCount = query.split('\n').map(l => l.trim()).filter(Boolean).length;
@@ -155,53 +152,63 @@ export default function SearchPreview() {
             <span className="text-sm font-medium text-muted-foreground">← Voltar</span>
           </NavLink>
 
-          <form onSubmit={handleSubmit} className="flex-1 max-w-2xl flex items-start gap-2">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
-              {multiMode ? (
-                <Textarea
-                  ref={textareaRef}
-                  placeholder="Uma keyword por linha..."
-                  value={query}
-                  onChange={e => setQuery(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="pl-9 min-h-[80px] max-h-[200px] text-sm resize-y"
-                  autoFocus
-                />
-              ) : (
-                <Textarea
-                  ref={textareaRef}
+          <form onSubmit={handleSubmit} className="flex-1 max-w-2xl flex items-center gap-2">
+            {!multiMode && (
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                <Input
+                  ref={inputRef}
                   placeholder="Digite uma keyword para buscar..."
                   value={query}
                   onChange={e => setQuery(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="pl-9 min-h-[40px] max-h-[40px] text-sm resize-none py-2"
-                  rows={1}
+                  onKeyDown={handleInputKeyDown}
+                  className="pl-9 h-9 text-sm"
                   autoFocus
                 />
-              )}
-            </div>
-            <div className="flex flex-col gap-1 shrink-0">
-              <Button
-                type="button"
-                variant={multiMode ? 'secondary' : 'outline'}
-                size="sm"
-                className="h-8 px-2"
-                onClick={toggleMultiMode}
-                title={multiMode ? 'Modo single' : 'Multi-search: buscar múltiplas keywords'}
-              >
-                <List className="h-3.5 w-3.5" />
-              </Button>
-              <Button type="submit" size="sm" className="h-8" disabled={!query.trim() || isSearching}>
-                {isSearching ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
-              </Button>
-            </div>
+              </div>
+            )}
+            <Button type="submit" size="sm" className="h-9 px-3" disabled={!query.trim() || isSearching}>
+              {isSearching ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
+            </Button>
+            <button
+              type="button"
+              className="text-xs text-primary hover:text-primary/80 transition-colors whitespace-nowrap underline-offset-2 hover:underline"
+              onClick={() => {
+                setMultiMode(prev => !prev);
+                setTimeout(() => {
+                  if (!multiMode) textareaRef.current?.focus();
+                  else inputRef.current?.focus();
+                }, 50);
+              }}
+            >
+              {multiMode ? 'Single search' : 'Multi-search'}
+            </button>
           </form>
+
+          {searchGroups.length > 0 && !isSearching && (
+            <ExportSearchPdfButton searchGroups={searchGroups} />
+          )}
 
           {multiMode && keywordCount > 1 && (
             <Badge variant="outline" className="text-[10px] shrink-0">{keywordCount} keywords</Badge>
           )}
         </div>
+
+        {/* Multi-search textarea below header */}
+        {multiMode && (
+          <div className="max-w-7xl mx-auto px-6 pb-3">
+            <div className="max-w-2xl ml-[calc(2rem+8px+1rem)]">
+              <Textarea
+                ref={textareaRef}
+                placeholder="Uma keyword por linha..."
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                className="min-h-[100px] max-h-[250px] text-sm resize-y"
+                autoFocus
+              />
+            </div>
+          </div>
+        )}
       </header>
 
       <main className="max-w-7xl mx-auto p-6">
@@ -215,7 +222,7 @@ export default function SearchPreview() {
                 Visualize os resultados de busca em cada motor configurado.
               </p>
               <p className="text-xs text-muted-foreground/50">
-                Clique em <List className="inline h-3 w-3" /> para ativar o modo multi-search (uma keyword por linha).
+                Clique em "Multi-search" para buscar múltiplas keywords (uma por linha).
               </p>
             </div>
 
@@ -247,7 +254,7 @@ export default function SearchPreview() {
           </div>
         )}
 
-        {/* Results - accordion style */}
+        {/* Results */}
         {searchGroups.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center gap-2 mb-4">
@@ -277,7 +284,6 @@ export default function SearchPreview() {
             {searchGroups.map(group => {
               const isOpen = expandedKeyword === group.keyword;
               const allLoading = group.results.every(r => r.loading);
-              const totalHits = group.results.reduce((sum, r) => sum + r.hits.length, 0);
 
               return (
                 <Card key={group.keyword} className="overflow-hidden">
@@ -288,11 +294,6 @@ export default function SearchPreview() {
                     {isOpen ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
                     <span className="text-sm font-semibold flex-1">{group.keyword}</span>
                     {allLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-                    {!allLoading && (
-                      <Badge variant="secondary" className="text-[10px]">
-                        {group.results.length} motores · {totalHits} resultados
-                      </Badge>
-                    )}
                   </button>
 
                   {isOpen && (
