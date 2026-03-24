@@ -30,9 +30,9 @@ export function ExecutiveDashboard({ results }: Props) {
   const hasErrors = results.some(r => r.errorCount > 0);
   const baseline = results[0];
 
-  // Winner by perfectMatchRate
-  const perfectMatchWinner = results.reduce((best, r) =>
-    r.metrics.perfectMatchRate > best.metrics.perfectMatchRate ? r : best
+  // Winner by hitRate
+  const hitRateWinner = results.reduce((best, r) =>
+    r.metrics.hitRate > best.metrics.hitRate ? r : best
   );
 
   const chartData = METRIC_DEFS.filter(m => m.key !== 'avgPosition').map(m => ({
