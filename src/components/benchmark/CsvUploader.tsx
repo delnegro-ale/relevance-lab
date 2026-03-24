@@ -16,7 +16,7 @@ export function CsvUploader({ onUpload, testCases }: Props) {
   const [database, setDatabase] = useState<TestCase[]>(loadKeywordDatabase);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
-  const [showDb, setShowDb] = useState(false);
+  const [showDb, setShowDb] = useState(true);
   const [manualKeyword, setManualKeyword] = useState('');
   const [manualIds, setManualIds] = useState('');
 
