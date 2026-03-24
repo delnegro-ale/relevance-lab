@@ -293,6 +293,113 @@ export function ExportPdfButton({ results }: Props) {
         pdf.text(new Date().toLocaleString('pt-BR'), W - margin, H - 8, { align: 'right' });
       }
 
+      // ===== KEYWORD DETAIL PAGES =====
+      keywords.forEach((kw) => {
+        pdf.addPage('a4', 'landscape');
+        drawBg();
+
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(14);
+        pdf.setTextColor(colors.primary);
+        pdf.text(`"${kw}"`, margin, margin + 8);
+
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(8);
+        pdf.setTextColor(colors.textMuted);
+        pdf.text('Detalhes dos resultados por motor', margin, margin + 14);
+
+        const variantCount = results.length;
+        const colW = (contentW - (variantCount - 1) * 4) / variantCount;
+        const detailStartY = margin + 22;
+
+        results.forEach((r, vi) => {
+          const kr = r.keywordResults.find(k => k.keyword === kw);
+          const x = margin + vi * (colW + 4);
+
+          // Variant header with color dot
+          const hslMatch = (r.variant.color || '').match(/(\d+)\s+(\d+)%\s+(\d+)%/);
+          if (hslMatch) {
+            pdf.setFillColor(hslToHex(parseInt(hslMatch[1]), parseInt(hslMatch[2]), parseInt(hslMatch[3])));
+          } else {
+            pdf.setFillColor(colors.textMuted);
+          }
+          pdf.circle(x + 3, detailStartY + 2, 1.5, 'F');
+
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(8);
+          pdf.setTextColor(colors.text);
+          pdf.text(r.variant.name, x + 7, detailStartY + 3);
+
+          if (!kr || kr.error) {
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(7);
+            pdf.setTextColor(colors.danger);
+            pdf.text(kr?.error ? `Erro: ${kr.error.slice(0, 80)}` : 'Sem dados', x + 3, detailStartY + 12);
+            return;
+          }
+
+          // Hit rate badge
+          const hitPct = `${(kr.hitRate * 100).toFixed(0)}% hit rate (${kr.foundIds.length}/${kr.expectedIds.length})`;
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(7);
+          pdf.setTextColor(colors.textMuted);
+          pdf.text(hitPct, x + colW - 3, detailStartY + 3, { align: 'right' });
+
+          // Product list
+          const hits = kr.hits || [];
+          hits.slice(0, 10).forEach((hit, hi) => {
+            const rowY = detailStartY + 10 + hi * 14;
+            if (rowY > H - 25) return;
+
+            // Position
+            pdf.setFont('helvetica', 'bold');
+            pdf.setFontSize(7);
+            pdf.setTextColor(colors.textMuted);
+            pdf.text(`${hit.position}`, x + 3, rowY + 4);
+
+            // Title
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(7);
+            const isExpected = kr.expectedIds.includes(hit.productId);
+            pdf.setTextColor(isExpected ? colors.success : colors.text);
+            const title = (hit.title || 'Sem título').slice(0, 45);
+            pdf.text(title, x + 10, rowY + 4);
+
+            // ID + format
+            pdf.setFontSize(6);
+            pdf.setTextColor(colors.textMuted);
+            const meta = `ID: ${hit.productId}${hit.format ? ` · ${hit.format}` : ''}`;
+            pdf.text(meta, x + 10, rowY + 9);
+
+            // Separator
+            if (hi < hits.length - 1) {
+              pdf.setDrawColor(colors.border);
+              pdf.setLineWidth(0.1);
+              pdf.line(x + 3, rowY + 12, x + colW - 3, rowY + 12);
+            }
+          });
+
+          // Missing IDs
+          const missingIds = kr.missingIds || [];
+          if (missingIds.length > 0) {
+            const missingY = detailStartY + 10 + Math.min(hits.length, 10) * 14 + 4;
+            if (missingY < H - 20) {
+              pdf.setFont('helvetica', 'bold');
+              pdf.setFontSize(6);
+              pdf.setTextColor(colors.danger);
+              pdf.text(`Não encontrados: ${missingIds.join(', ')}`, x + 3, missingY);
+            }
+          }
+        });
+
+        // Footer
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(6);
+        pdf.setTextColor(colors.textMuted);
+        pdf.text('Ubook Search Insights', margin, H - 8);
+        pdf.text(new Date().toLocaleString('pt-BR'), W - margin, H - 8, { align: 'right' });
+      });
+
       // Add footer to first page too
       pdf.setPage(1);
       pdf.setFont('helvetica', 'normal');
