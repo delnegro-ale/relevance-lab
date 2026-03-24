@@ -3,7 +3,7 @@ import { VariantResult } from '@/types/experiment';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Trophy, Target, Crosshair, TrendingUp, TrendingDown, Award, Percent, AlertTriangle, Crown, Code2 } from 'lucide-react';
+import { Trophy, Target, Crosshair, TrendingUp, Award, Percent, AlertTriangle, Crown, Code2 } from 'lucide-react';
 import { MetricTooltip, METRIC_EXPLANATIONS } from './MetricTooltip';
 import { HowToReadReport } from './HowToReadReport';
 
