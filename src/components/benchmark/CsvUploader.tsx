@@ -46,7 +46,7 @@ export function CsvUploader({ onUpload, testCases }: Props) {
     reader.readAsText(file);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (file) handleFile(file);
