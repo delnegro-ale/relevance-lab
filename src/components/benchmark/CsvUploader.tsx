@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { TestCase } from '@/types/experiment';
 import { parseCsv } from '@/lib/csv-parser';
 import { loadKeywordDatabase, saveKeywordDatabase, removeKeywordsFromDatabase, clearKeywordDatabase } from '@/lib/keyword-database';
-import { Upload, FileText, Database, Trash2, CheckSquare, Square, MinusSquare, Plus } from 'lucide-react';
+import { Upload, Database, Trash2, CheckSquare, Square, Plus, GripVertical, ArrowDownAZ } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -46,7 +46,7 @@ export function CsvUploader({ onUpload, testCases }: Props) {
     reader.readAsText(file);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (file) handleFile(file);
@@ -97,13 +97,47 @@ export function CsvUploader({ onUpload, testCases }: Props) {
     onUpload(loadKeywordDatabase().filter(tc => next.has(tc.keyword)));
   };
 
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
   const getFiltered = () => {
     return database.filter(tc => tc.keyword.toLowerCase().includes(search.toLowerCase()));
   };
 
+  const handleSortAlpha = () => {
+    const sorted = [...database].sort((a, b) => a.keyword.localeCompare(b.keyword, 'pt-BR', { sensitivity: 'base' }));
+    // Save sorted order
+    clearKeywordDatabase();
+    saveKeywordDatabase(sorted);
+    setDatabase(sorted);
+  };
+
+  const handleDragStart = (idx: number) => {
+    setDragIdx(idx);
+  };
+
+  const handleDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    setDragOverIdx(idx);
+  };
+
+  const handleDrop = (dropIdx: number) => {
+    if (dragIdx === null || dragIdx === dropIdx) {
+      setDragIdx(null);
+      setDragOverIdx(null);
+      return;
+    }
+    const arr = [...database];
+    const [moved] = arr.splice(dragIdx, 1);
+    arr.splice(dropIdx, 0, moved);
+    clearKeywordDatabase();
+    saveKeywordDatabase(arr);
+    setDatabase(arr);
+    setDragIdx(null);
+    setDragOverIdx(null);
+  };
+
   const filtered = getFiltered();
-  const allFilteredSelected = filtered.length > 0 && filtered.every(tc => selected.has(tc.keyword));
-  const someFilteredSelected = filtered.some(tc => selected.has(tc.keyword));
 
   const handleAddManual = () => {
     const keyword = manualKeyword.trim();
@@ -155,7 +189,7 @@ export function CsvUploader({ onUpload, testCases }: Props) {
 
       {/* Upload area */}
       <div
-        onDrop={handleDrop}
+        onDrop={handleFileDrop}
         onDragOver={e => e.preventDefault()}
         onClick={() => document.getElementById('csv-input')?.click()}
         className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary/50 transition-colors cursor-pointer group"
@@ -194,6 +228,9 @@ export function CsvUploader({ onUpload, testCases }: Props) {
                   onChange={e => setSearch(e.target.value)}
                   className="h-7 text-xs flex-1"
                 />
+                <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1" onClick={handleSortAlpha} title="Ordenar A-Z">
+                  <ArrowDownAZ className="h-3.5 w-3.5" /> A-Z
+                </Button>
                 <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={selectAll}>
                   Selecionar todas
                 </Button>
@@ -204,16 +241,27 @@ export function CsvUploader({ onUpload, testCases }: Props) {
 
               {/* Keyword list */}
               <div className="max-h-64 overflow-y-auto">
-                {filtered.map(tc => {
+                {filtered.map((tc, idx) => {
                   const isSelected = selected.has(tc.keyword);
+                  const globalIdx = database.findIndex(d => d.keyword === tc.keyword);
                   return (
                     <div
                       key={tc.keyword}
+                      draggable={!search}
+                      onDragStart={() => handleDragStart(globalIdx)}
+                      onDragOver={(e) => handleDragOver(e, globalIdx)}
+                      onDrop={() => handleDrop(globalIdx)}
+                      onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
                       className={`flex items-center gap-2 px-3 py-2 border-b border-border/50 last:border-0 cursor-pointer transition-colors group ${
                         isSelected ? 'bg-primary/5' : 'hover:bg-muted/20'
-                      }`}
+                      } ${dragOverIdx === globalIdx ? 'border-t-2 border-t-primary' : ''}`}
                       onClick={() => toggleKeyword(tc.keyword)}
                     >
+                      {!search && (
+                        <div className="shrink-0 cursor-grab opacity-0 group-hover:opacity-60 hover:opacity-100 transition-opacity" onMouseDown={e => e.stopPropagation()}>
+                          <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                        </div>
+                      )}
                       <div className="shrink-0">
                         {isSelected ? (
                           <CheckSquare className="h-4 w-4 text-primary" />
@@ -226,7 +274,7 @@ export function CsvUploader({ onUpload, testCases }: Props) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-5 w-5 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-danger"
+                        className="h-5 w-5 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
                         onClick={(e) => { e.stopPropagation(); handleRemoveKeyword(tc.keyword); }}
                       >
                         <Trash2 className="h-3 w-3" />

@@ -15,7 +15,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { FlaskConical, Play, RotateCcw, Upload, Loader2, Beaker, Sparkles, Clock, Eraser } from 'lucide-react';
+import { FlaskConical, Play, RotateCcw, Upload, Loader2, Beaker, Sparkles, Clock, Eraser, Search } from 'lucide-react';
+import { NavLink } from '@/components/NavLink';
 
 export default function Index() {
   const { experiment, setTestCases, addVariant, updateVariant, removeVariant, duplicateVariant, runBenchmark, setExperiment } = useExperiment();
@@ -127,6 +128,11 @@ export default function Index() {
             <Badge variant="outline" className="text-[10px] font-normal border-border">Ubook</Badge>
           </div>
           <div className="flex items-center gap-2">
+            <NavLink to="/search">
+              <Button variant="ghost" size="sm" className="text-muted-foreground">
+                <Search className="h-3.5 w-3.5 mr-1.5" /> Search Preview
+              </Button>
+            </NavLink>
             <Button
               variant={showHistory ? 'secondary' : 'ghost'}
               size="sm"

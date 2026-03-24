@@ -37,13 +37,25 @@ function parseBaselineResponse(data: any): SearchHit[] {
     const coverImage = item.cover_image || '';
     const resolvedCover = buildCoverUrl(productId, coverImage, engine);
 
+    // Safely extract publisher (may be object with .name)
+    const rawPublisher = item.publisher || item.publisher_name || item.editora || '';
+    const publisher = typeof rawPublisher === 'object' && rawPublisher !== null
+      ? (rawPublisher.name || rawPublisher.title || JSON.stringify(rawPublisher))
+      : String(rawPublisher);
+
+    // Safely extract format/type (may be object)
+    const rawFormat = item.format || item.content_type || item.type || item.formato || '';
+    const format = typeof rawFormat === 'object' && rawFormat !== null
+      ? (rawFormat.name || rawFormat.type || '')
+      : String(rawFormat);
+
     return {
       productId,
       title: item.title || item.name || '',
       position: i + 1,
       score: item.score || item._score || null,
-      publisher: item.publisher || item.publisher_name || item.editora || '',
-      format: item.format || item.content_type || item.type || item.formato || '',
+      publisher,
+      format,
       coverUrl: resolvedCover,
     };
   });
@@ -88,13 +100,24 @@ function parseEsResponse(data: any): SearchHit[] {
     const engine = src.engine || src.type || '';
     const coverImage = src.cover_image || '';
     const resolvedCover = buildCoverUrl(productId, coverImage, engine);
+
+    const rawPublisher = src.publisher || src.publisher_name || src.editora || '';
+    const publisher = typeof rawPublisher === 'object' && rawPublisher !== null
+      ? (rawPublisher.name || rawPublisher.title || '')
+      : String(rawPublisher);
+
+    const rawFormat = src.format || src.content_type || src.type || '';
+    const format = typeof rawFormat === 'object' && rawFormat !== null
+      ? (rawFormat.name || rawFormat.type || '')
+      : String(rawFormat);
+
     return {
       productId,
       title: src.title || '',
       position: i + 1,
       score: hit._score || null,
-      publisher: src.publisher || src.publisher_name || src.editora || '',
-      format: src.format || src.content_type || src.type || '',
+      publisher,
+      format,
       coverUrl: resolvedCover,
     };
   });
