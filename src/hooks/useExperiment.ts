@@ -122,5 +122,9 @@ export function useExperiment() {
     setExperiment(e => ({ ...e, status: 'complete', results: sanitizeResults(allResults) }));
   }, []);
 
-  return { experiment, setTestCases, addVariant, updateVariant, removeVariant, duplicateVariant, runBenchmark, setExperiment };
+  const reorderVariants = useCallback((newVariants: VariantConfig[]) => {
+    setExperiment(e => ({ ...e, variants: newVariants }));
+  }, []);
+
+  return { experiment, setTestCases, addVariant, updateVariant, removeVariant, duplicateVariant, reorderVariants, runBenchmark, setExperiment };
 }
