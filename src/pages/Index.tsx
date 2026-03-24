@@ -46,20 +46,6 @@ export default function Index() {
     await runBenchmark();
   };
 
-  const handleLoadDemo = () => {
-    const demoResults = sanitizeResults(generateDemoResults());
-    setExperiment(prev => ({
-      ...prev,
-      testCases: DEMO_TEST_CASES,
-      variants: DEMO_VARIANTS,
-      results: demoResults,
-      status: 'complete' as const,
-    }));
-    setActiveView('results');
-    const entry = createHistoryEntry(demoResults, DEMO_TEST_CASES, DEMO_VARIANTS);
-    saveToHistory(entry);
-  };
-
   const handleLoadHistory = (entry: HistoryEntry) => {
     const safeResults = sanitizeResults(entry.results);
     setExperiment(prev => ({
