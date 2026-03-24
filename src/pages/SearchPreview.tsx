@@ -7,7 +7,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Loader2, Clock, X, FlaskConical } from 'lucide-react';
+import { Search, Loader2, Clock, X } from 'lucide-react';
+import { SearchHeartFill } from '@/components/icons/BootstrapIcons';
 import { NavLink } from '@/components/NavLink';
 
 const RECENT_KEY = 'search-preview-recent';
