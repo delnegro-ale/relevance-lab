@@ -149,8 +149,8 @@ export default function Index() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card className="flex flex-col">
                 <CardHeader>
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <InputCursorText className="h-4 w-4 text-primary" />
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <InputCursorText className="h-5 w-5 text-primary" />
                     Keywords
                   </CardTitle>
                 </CardHeader>
