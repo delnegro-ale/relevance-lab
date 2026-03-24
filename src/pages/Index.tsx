@@ -13,7 +13,7 @@ import { VARIANT_COLORS } from '@/types/experiment';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { FlaskConical, Play, RotateCcw, Upload, Loader2, Beaker, Clock, Eraser, Search } from 'lucide-react';
+import { FlaskConical, Play, RotateCcw, Upload, Loader2, Beaker, Clock, Search } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 
 export default function Index() {
