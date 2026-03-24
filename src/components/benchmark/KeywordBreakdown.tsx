@@ -58,9 +58,11 @@ export function KeywordBreakdown({ results }: Props) {
 
   const toggle = (k: string) => {
     const next = new Set(expanded);
-    next.has(k) ? next.delete(k) : next.add(k);
+    if (next.has(k)) { next.delete(k); } else { next.add(k); }
     setExpanded(next);
   };
+
+  if (safeResults.length === 0) return null;
 
   const colTemplate = `2fr ${safeResults.map(() => '1fr').join(' ')}`;
 
