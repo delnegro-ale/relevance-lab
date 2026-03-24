@@ -82,9 +82,7 @@ export function ExecutiveDashboard({ results }: Props) {
           </p>
         </CardHeader>
         <CardContent className="pb-6">
-          <div className={`grid gap-4 ${results.length <= 3 ? `grid-cols-${results.length}` : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'}`}
-            style={{ gridTemplateColumns: `repeat(${Math.min(results.length, 4)}, 1fr)` }}
-          >
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {results.map(r => {
               const isWinner = r === perfectMatchWinner;
               const pct = (r.metrics.perfectMatchRate * 100).toFixed(1);
