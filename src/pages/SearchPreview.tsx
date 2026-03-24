@@ -1,15 +1,15 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { VariantConfig, SearchHit, VARIANT_COLORS, DEFAULT_BASELINE_ENDPOINT, DEFAULT_ES_ENDPOINT, DEFAULT_ES_PAYLOAD } from '@/types/experiment';
 import { searchBaseline, searchElasticsearch } from '@/lib/search-api';
 import { loadLastConfig } from '@/lib/experiment-persistence';
 import { ProductCardSimple } from '@/components/benchmark/ProductCardSimple';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Loader2, Clock, X } from 'lucide-react';
+import { Search, Loader2, Clock, X, ChevronDown, ChevronRight, List } from 'lucide-react';
 import { SearchHeartFill } from '@/components/icons/BootstrapIcons';
 import { NavLink } from '@/components/NavLink';
+import { Textarea } from '@/components/ui/textarea';
 
 const RECENT_KEY = 'search-preview-recent';
 const MAX_RECENT = 15;
@@ -31,14 +31,21 @@ interface VariantSearchResult {
   error?: string;
 }
 
+interface KeywordSearchGroup {
+  keyword: string;
+  results: VariantSearchResult[];
+}
+
 export default function SearchPreview() {
   const [query, setQuery] = useState('');
-  const [activeQuery, setActiveQuery] = useState('');
+  const [multiMode, setMultiMode] = useState(false);
   const [recent, setRecent] = useState<string[]>(loadRecent);
   const [variants, setVariants] = useState<VariantConfig[]>([]);
-  const [results, setResults] = useState<VariantSearchResult[]>([]);
+  const [searchGroups, setSearchGroups] = useState<KeywordSearchGroup[]>([]);
+  const [expandedKeyword, setExpandedKeyword] = useState<string | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Load variants from last config
   useEffect(() => {
     const saved = loadLastConfig();
     const v = saved.variants?.length ? saved.variants : [
@@ -48,38 +55,63 @@ export default function SearchPreview() {
     setVariants(v);
   }, []);
 
-  const executeSearch = useCallback(async (keyword: string) => {
-    if (!keyword.trim() || variants.length === 0) return;
-    const trimmed = keyword.trim();
-    setActiveQuery(trimmed);
-
-    // Save to recent
-    const updated = [trimmed, ...recent.filter(r => r !== trimmed)].slice(0, MAX_RECENT);
-    setRecent(updated);
-    saveRecent(updated);
-
-    // Init results
-    const initial: VariantSearchResult[] = variants.map(v => ({ variant: v, hits: [], loading: true }));
-    setResults(initial);
-
-    // Search all variants in parallel
-    const promises = variants.map(async (variant) => {
-      try {
-        let hits: SearchHit[];
-        if (variant.type === 'baseline') {
-          hits = await searchBaseline(trimmed);
-        } else {
-          hits = await searchElasticsearch(trimmed, variant.endpoint, variant.payload || '');
+  const searchSingleKeyword = useCallback(async (keyword: string): Promise<KeywordSearchGroup> => {
+    const results: VariantSearchResult[] = await Promise.all(
+      variants.map(async (variant) => {
+        try {
+          let hits: SearchHit[];
+          if (variant.type === 'baseline') {
+            hits = await searchBaseline(keyword);
+          } else {
+            hits = await searchElasticsearch(keyword, variant.endpoint, variant.payload || '');
+          }
+          return { variant, hits, loading: false };
+        } catch (err: any) {
+          return { variant, hits: [], loading: false, error: err?.message || 'Erro desconhecido' };
         }
-        return { variant, hits, loading: false };
-      } catch (err: any) {
-        return { variant, hits: [], loading: false, error: err?.message || 'Erro desconhecido' };
-      }
-    });
+      })
+    );
+    return { keyword, results };
+  }, [variants]);
 
-    const settled = await Promise.all(promises);
-    setResults(settled);
-  }, [variants, recent]);
+  const executeSearch = useCallback(async (rawQuery: string) => {
+    if (!rawQuery.trim() || variants.length === 0) return;
+
+    const keywords = rawQuery
+      .split('\n')
+      .map(l => l.trim())
+      .filter(Boolean);
+
+    if (keywords.length === 0) return;
+
+    setIsSearching(true);
+
+    // Save to recent (unique, most recent first)
+    const updatedRecent = [
+      ...keywords,
+      ...recent.filter(r => !keywords.includes(r)),
+    ].slice(0, MAX_RECENT);
+    setRecent(updatedRecent);
+    saveRecent(updatedRecent);
+
+    // Initialize with loading state
+    const initialGroups: KeywordSearchGroup[] = keywords.map(kw => ({
+      keyword: kw,
+      results: variants.map(v => ({ variant: v, hits: [], loading: true })),
+    }));
+    setSearchGroups(initialGroups);
+    setExpandedKeyword(keywords[0]);
+
+    // Execute searches sequentially per keyword to avoid overwhelming APIs
+    const completedGroups: KeywordSearchGroup[] = [];
+    for (const kw of keywords) {
+      const group = await searchSingleKeyword(kw);
+      completedGroups.push(group);
+      setSearchGroups([...completedGroups, ...initialGroups.slice(completedGroups.length)]);
+    }
+
+    setIsSearching(false);
+  }, [variants, recent, searchSingleKeyword]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,11 +128,24 @@ export default function SearchPreview() {
     saveRecent([]);
   };
 
-  const isSearching = results.some(r => r.loading);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // In single mode, Enter submits; in multi mode, Enter adds a line
+    if (!multiMode && e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      executeSearch(query);
+    }
+  };
+
+  const toggleMultiMode = () => {
+    setMultiMode(prev => !prev);
+    // Focus textarea after toggle
+    setTimeout(() => textareaRef.current?.focus(), 50);
+  };
+
+  const keywordCount = query.split('\n').map(l => l.trim()).filter(Boolean).length;
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header with search */}
       <header className="border-b border-border sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-4">
           <NavLink to="/" className="flex items-center gap-2 shrink-0 hover:opacity-80 transition-opacity">
@@ -110,34 +155,67 @@ export default function SearchPreview() {
             <span className="text-sm font-medium text-muted-foreground">← Voltar</span>
           </NavLink>
 
-          <form onSubmit={handleSubmit} className="flex-1 max-w-2xl relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Digite uma keyword para buscar..."
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              className="pl-9 pr-24 h-10"
-              autoFocus
-            />
-            <Button type="submit" size="sm" className="absolute right-1 top-1/2 -translate-y-1/2 h-8" disabled={!query.trim() || isSearching}>
-              {isSearching ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Search className="h-3.5 w-3.5 mr-1" />}
-              Buscar
-            </Button>
+          <form onSubmit={handleSubmit} className="flex-1 max-w-2xl flex items-start gap-2">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground z-10" />
+              {multiMode ? (
+                <Textarea
+                  ref={textareaRef}
+                  placeholder="Uma keyword por linha..."
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="pl-9 min-h-[80px] max-h-[200px] text-sm resize-y"
+                  autoFocus
+                />
+              ) : (
+                <Textarea
+                  ref={textareaRef}
+                  placeholder="Digite uma keyword para buscar..."
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="pl-9 min-h-[40px] max-h-[40px] text-sm resize-none py-2"
+                  rows={1}
+                  autoFocus
+                />
+              )}
+            </div>
+            <div className="flex flex-col gap-1 shrink-0">
+              <Button
+                type="button"
+                variant={multiMode ? 'secondary' : 'outline'}
+                size="sm"
+                className="h-8 px-2"
+                onClick={toggleMultiMode}
+                title={multiMode ? 'Modo single' : 'Multi-search: buscar múltiplas keywords'}
+              >
+                <List className="h-3.5 w-3.5" />
+              </Button>
+              <Button type="submit" size="sm" className="h-8" disabled={!query.trim() || isSearching}>
+                {isSearching ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
+              </Button>
+            </div>
           </form>
 
-          <Badge variant="outline" className="text-[10px] shrink-0">Search Preview</Badge>
+          {multiMode && keywordCount > 1 && (
+            <Badge variant="outline" className="text-[10px] shrink-0">{keywordCount} keywords</Badge>
+          )}
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto p-6">
-        {/* No results yet - show recent */}
-        {!activeQuery && (
+        {/* Empty state */}
+        {searchGroups.length === 0 && (
           <div className="max-w-xl mx-auto mt-12 space-y-6">
             <div className="text-center space-y-2">
               <Search className="h-12 w-12 text-muted-foreground/30 mx-auto" />
               <h2 className="text-lg font-semibold text-muted-foreground">Search Preview</h2>
               <p className="text-sm text-muted-foreground/70">
                 Visualize os resultados de busca em cada motor configurado.
+              </p>
+              <p className="text-xs text-muted-foreground/50">
+                Clique em <List className="inline h-3 w-3" /> para ativar o modo multi-search (uma keyword por linha).
               </p>
             </div>
 
@@ -169,16 +247,20 @@ export default function SearchPreview() {
           </div>
         )}
 
-        {/* Results */}
-        {activeQuery && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
+        {/* Results - accordion style */}
+        {searchGroups.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 mb-4">
               <h2 className="text-sm font-medium text-muted-foreground">
-                Resultados para <span className="text-foreground font-semibold">"{activeQuery}"</span>
+                {searchGroups.length === 1 ? (
+                  <>Resultados para <span className="text-foreground font-semibold">"{searchGroups[0].keyword}"</span></>
+                ) : (
+                  <>{searchGroups.length} keywords pesquisadas</>
+                )}
               </h2>
               {recent.length > 0 && (
                 <div className="flex items-center gap-1 ml-4">
-                  {recent.filter(r => r !== activeQuery).slice(0, 5).map(kw => (
+                  {recent.filter(r => !searchGroups.some(g => g.keyword === r)).slice(0, 5).map(kw => (
                     <Badge
                       key={kw}
                       variant="outline"
@@ -192,45 +274,71 @@ export default function SearchPreview() {
               )}
             </div>
 
-            <div className="grid gap-6" style={{ gridTemplateColumns: `repeat(${results.length}, 1fr)` }}>
-              {results.map(r => (
-                <Card key={r.variant.id}>
-                  <CardContent className="p-4 space-y-3">
-                    <div className="flex items-center gap-2 pb-2 border-b border-border">
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color || '0 0% 50%'})` }} />
-                      <span className="text-xs font-semibold">{r.variant.name}</span>
-                      {!r.loading && !r.error && (
-                        <Badge variant="secondary" className="text-[9px] ml-auto">{r.hits.length} resultados</Badge>
-                      )}
-                    </div>
+            {searchGroups.map(group => {
+              const isOpen = expandedKeyword === group.keyword;
+              const allLoading = group.results.every(r => r.loading);
+              const totalHits = group.results.reduce((sum, r) => sum + r.hits.length, 0);
 
-                    {r.loading && (
-                      <div className="flex items-center justify-center py-8">
-                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                      </div>
+              return (
+                <Card key={group.keyword} className="overflow-hidden">
+                  <button
+                    className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-muted/30 transition-colors"
+                    onClick={() => setExpandedKeyword(isOpen ? null : group.keyword)}
+                  >
+                    {isOpen ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
+                    <span className="text-sm font-semibold flex-1">{group.keyword}</span>
+                    {allLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                    {!allLoading && (
+                      <Badge variant="secondary" className="text-[10px]">
+                        {group.results.length} motores · {totalHits} resultados
+                      </Badge>
                     )}
+                  </button>
 
-                    {r.error && (
-                      <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3">
-                        <p className="text-xs text-destructive font-medium">Erro na busca</p>
-                        <p className="text-xs text-muted-foreground font-mono mt-1 break-all">{r.error}</p>
-                      </div>
-                    )}
+                  {isOpen && (
+                    <CardContent className="pt-0 pb-4 px-4">
+                      <div className="grid gap-6" style={{ gridTemplateColumns: `repeat(${group.results.length}, 1fr)` }}>
+                        {group.results.map(r => (
+                          <div key={r.variant.id} className="space-y-3">
+                            <div className="flex items-center gap-2 pb-2 border-b border-border">
+                              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color || '0 0% 50%'})` }} />
+                              <span className="text-xs font-semibold">{r.variant.name}</span>
+                              {!r.loading && !r.error && (
+                                <Badge variant="secondary" className="text-[9px] ml-auto">{r.hits.length} resultados</Badge>
+                              )}
+                            </div>
 
-                    {!r.loading && !r.error && (
-                      <div className="space-y-1">
-                        {r.hits.slice(0, 10).map((hit, i) => (
-                          <ProductCardSimple key={i} hit={hit} />
+                            {r.loading && (
+                              <div className="flex items-center justify-center py-8">
+                                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                              </div>
+                            )}
+
+                            {r.error && (
+                              <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3">
+                                <p className="text-xs text-destructive font-medium">Erro na busca</p>
+                                <p className="text-xs text-muted-foreground font-mono mt-1 break-all">{r.error}</p>
+                              </div>
+                            )}
+
+                            {!r.loading && !r.error && (
+                              <div className="space-y-1">
+                                {r.hits.slice(0, 10).map((hit, i) => (
+                                  <ProductCardSimple key={i} hit={hit} />
+                                ))}
+                                {r.hits.length === 0 && (
+                                  <p className="text-xs text-muted-foreground text-center py-4">Nenhum resultado</p>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         ))}
-                        {r.hits.length === 0 && (
-                          <p className="text-xs text-muted-foreground text-center py-4">Nenhum resultado</p>
-                        )}
                       </div>
-                    )}
-                  </CardContent>
+                    </CardContent>
+                  )}
                 </Card>
-              ))}
-            </div>
+              );
+            })}
           </div>
         )}
       </main>
