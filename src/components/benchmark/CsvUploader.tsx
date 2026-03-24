@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { TestCase } from '@/types/experiment';
 import { parseCsv } from '@/lib/csv-parser';
 import { loadKeywordDatabase, saveKeywordDatabase, removeKeywordsFromDatabase, clearKeywordDatabase } from '@/lib/keyword-database';
-import { Upload, FileText, Database, Trash2, CheckSquare, Square, MinusSquare } from 'lucide-react';
+import { Upload, FileText, Database, Trash2, CheckSquare, Square, MinusSquare, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,8 @@ export function CsvUploader({ onUpload, testCases }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
   const [showDb, setShowDb] = useState(false);
+  const [manualKeyword, setManualKeyword] = useState('');
+  const [manualIds, setManualIds] = useState('');
 
   useEffect(() => {
     // If there's a database but no test cases loaded, auto-show the database
@@ -103,18 +105,64 @@ export function CsvUploader({ onUpload, testCases }: Props) {
   const allFilteredSelected = filtered.length > 0 && filtered.every(tc => selected.has(tc.keyword));
   const someFilteredSelected = filtered.some(tc => selected.has(tc.keyword));
 
+  const handleAddManual = () => {
+    const keyword = manualKeyword.trim();
+    if (!keyword) return;
+    const ids = manualIds.split(',').map(id => id.trim()).filter(Boolean);
+    if (ids.length === 0) return;
+
+    const newCase: TestCase = { keyword, expectedIds: ids };
+    saveKeywordDatabase([newCase]);
+    const updated = loadKeywordDatabase();
+    setDatabase(updated);
+    const next = new Set(selected);
+    next.add(keyword);
+    setSelected(next);
+    onUpload(updated.filter(tc => next.has(tc.keyword)));
+    setShowDb(true);
+    setManualKeyword('');
+    setManualIds('');
+  };
+
   return (
     <div className="space-y-4">
+      {/* Manual input */}
+      <div className="space-y-2">
+        <p className="text-xs text-muted-foreground font-medium">Adicionar manualmente</p>
+        <div className="flex items-end gap-2">
+          <div className="flex-1 space-y-1">
+            <Input
+              placeholder="Keyword"
+              value={manualKeyword}
+              onChange={e => setManualKeyword(e.target.value)}
+              className="h-8 text-xs"
+            />
+          </div>
+          <div className="flex-[2] space-y-1">
+            <Input
+              placeholder="IDs esperados (separados por vírgula)"
+              value={manualIds}
+              onChange={e => setManualIds(e.target.value)}
+              className="h-8 text-xs"
+              onKeyDown={e => e.key === 'Enter' && handleAddManual()}
+            />
+          </div>
+          <Button variant="outline" size="sm" className="h-8" onClick={handleAddManual} disabled={!manualKeyword.trim() || !manualIds.trim()}>
+            <Plus className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+
       {/* Upload area */}
       <div
         onDrop={handleDrop}
         onDragOver={e => e.preventDefault()}
         onClick={() => document.getElementById('csv-input')?.click()}
-        className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer group"
+        className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary/50 transition-colors cursor-pointer group"
       >
-        <Upload className="mx-auto h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors mb-2" />
-        <p className="text-sm text-muted-foreground">Arraste um CSV ou clique para selecionar</p>
-        <p className="text-xs text-muted-foreground/60 mt-1">Formato: keyword,product_ids</p>
+        <Upload className="mx-auto h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors mb-1" />
+        <p className="text-xs text-muted-foreground">Arraste um CSV ou clique para selecionar</p>
+        <p className="text-[10px] text-muted-foreground/60 mt-0.5">Formato: keyword,product_ids</p>
         <input id="csv-input" type="file" accept=".csv" className="hidden" onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
       </div>
 
