@@ -17,6 +17,8 @@ export function CsvUploader({ onUpload, testCases }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
   const [showDb, setShowDb] = useState(false);
+  const [manualKeyword, setManualKeyword] = useState('');
+  const [manualIds, setManualIds] = useState('');
 
   useEffect(() => {
     // If there's a database but no test cases loaded, auto-show the database
