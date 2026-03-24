@@ -6,16 +6,14 @@ import { ExecutiveDashboard } from '@/components/benchmark/ExecutiveDashboard';
 import { KeywordBreakdown } from '@/components/benchmark/KeywordBreakdown';
 import { HistoryPanel } from '@/components/benchmark/HistoryPanel';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { DEMO_TEST_CASES, DEMO_VARIANTS, generateDemoResults } from '@/lib/demo-data';
 import { saveToHistory, createHistoryEntry, HistoryEntry } from '@/lib/history';
 import { sanitizeResults } from '@/lib/sanitize-results';
 import { SavedVariant } from '@/lib/variant-library';
-import { VARIANT_COLORS, DEFAULT_ES_ENDPOINT, DEFAULT_ES_PAYLOAD } from '@/types/experiment';
+import { VARIANT_COLORS } from '@/types/experiment';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { FlaskConical, Play, RotateCcw, Upload, Loader2, Beaker, Sparkles, Clock, Eraser, Search } from 'lucide-react';
+import { FlaskConical, Play, RotateCcw, Upload, Loader2, Beaker, Clock, Eraser, Search } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 
 export default function Index() {
@@ -46,20 +44,6 @@ export default function Index() {
     }));
     setActiveView('results');
     await runBenchmark();
-  };
-
-  const handleLoadDemo = () => {
-    const demoResults = sanitizeResults(generateDemoResults());
-    setExperiment(prev => ({
-      ...prev,
-      testCases: DEMO_TEST_CASES,
-      variants: DEMO_VARIANTS,
-      results: demoResults,
-      status: 'complete' as const,
-    }));
-    setActiveView('results');
-    const entry = createHistoryEntry(demoResults, DEMO_TEST_CASES, DEMO_VARIANTS);
-    saveToHistory(entry);
   };
 
   const handleLoadHistory = (entry: HistoryEntry) => {
@@ -124,8 +108,7 @@ export default function Index() {
             <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
               <FlaskConical className="h-4 w-4 text-primary" />
             </div>
-            <h1 className="text-base font-semibold tracking-tight">Search Relevance Lab</h1>
-            <Badge variant="outline" className="text-[10px] font-normal border-border">Ubook</Badge>
+            <h1 className="text-base font-semibold tracking-tight">Ubook Search Insights</h1>
           </div>
           <div className="flex items-center gap-2">
             <NavLink to="/search">
@@ -148,9 +131,6 @@ export default function Index() {
             )}
             {activeView === 'setup' && (
               <>
-                <Button variant="ghost" size="sm" onClick={handleLoadDemo} className="text-muted-foreground">
-                  <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Demo
-                </Button>
                 <Button variant="ghost" size="sm" onClick={handleClearConfig} className="text-muted-foreground">
                   <Eraser className="h-3.5 w-3.5 mr-1.5" /> Limpar Variantes
                 </Button>
@@ -209,7 +189,7 @@ export default function Index() {
 
             {!canRun && experiment.testCases.length === 0 && (
               <p className="text-sm text-muted-foreground text-center py-4">
-                Carregue um CSV com casos de teste para começar, ou clique em <strong>Demo</strong> para ver a ferramenta em ação.
+                Carregue um CSV com casos de teste ou adicione keywords manualmente para começar.
               </p>
             )}
           </div>
