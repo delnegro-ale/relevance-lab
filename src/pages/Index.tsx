@@ -124,8 +124,7 @@ export default function Index() {
             <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
               <FlaskConical className="h-4 w-4 text-primary" />
             </div>
-            <h1 className="text-base font-semibold tracking-tight">Search Relevance Lab</h1>
-            <Badge variant="outline" className="text-[10px] font-normal border-border">Ubook</Badge>
+            <h1 className="text-base font-semibold tracking-tight">Ubook Search Insights</h1>
           </div>
           <div className="flex items-center gap-2">
             <NavLink to="/search">

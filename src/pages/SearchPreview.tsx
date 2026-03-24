@@ -102,10 +102,11 @@ export default function SearchPreview() {
       {/* Header with search */}
       <header className="border-b border-border sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-4">
-          <NavLink to="/" className="flex items-center gap-2 shrink-0">
+          <NavLink to="/" className="flex items-center gap-2 shrink-0 hover:opacity-80 transition-opacity">
             <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
               <FlaskConical className="h-4 w-4 text-primary" />
             </div>
+            <span className="text-sm font-medium text-muted-foreground">← Voltar</span>
           </NavLink>
 
           <form onSubmit={handleSubmit} className="flex-1 max-w-2xl relative">
