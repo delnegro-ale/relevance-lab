@@ -102,10 +102,10 @@ export default function Index() {
       <header className="border-b border-border sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <SearchHeartFill className="h-4 w-4 text-primary" />
+            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <SearchHeartFill className="h-5 w-5 text-primary" />
             </div>
-            <h1 className="text-base font-semibold tracking-tight">Ubook Search Insights</h1>
+            <h1 className="text-xl font-black tracking-tight" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>Ubook Search Insights</h1>
           </div>
           <div className="flex items-center gap-2">
             <NavLink to="/search">
