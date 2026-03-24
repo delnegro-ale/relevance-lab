@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { TestCase } from '@/types/experiment';
 import { parseCsv } from '@/lib/csv-parser';
 import { loadKeywordDatabase, saveKeywordDatabase, removeKeywordsFromDatabase, clearKeywordDatabase } from '@/lib/keyword-database';
-import { Upload, FileText, Database, Trash2, CheckSquare, Square, MinusSquare, Plus, GripVertical, ArrowDownAZ, ArrowUpAZ } from 'lucide-react';
+import { Upload, Database, Trash2, CheckSquare, Square, Plus, GripVertical, ArrowDownAZ } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
