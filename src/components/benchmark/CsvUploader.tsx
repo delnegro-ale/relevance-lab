@@ -97,8 +97,44 @@ export function CsvUploader({ onUpload, testCases }: Props) {
     onUpload(loadKeywordDatabase().filter(tc => next.has(tc.keyword)));
   };
 
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
   const getFiltered = () => {
     return database.filter(tc => tc.keyword.toLowerCase().includes(search.toLowerCase()));
+  };
+
+  const handleSortAlpha = () => {
+    const sorted = [...database].sort((a, b) => a.keyword.localeCompare(b.keyword, 'pt-BR', { sensitivity: 'base' }));
+    // Save sorted order
+    clearKeywordDatabase();
+    saveKeywordDatabase(sorted);
+    setDatabase(sorted);
+  };
+
+  const handleDragStart = (idx: number) => {
+    setDragIdx(idx);
+  };
+
+  const handleDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    setDragOverIdx(idx);
+  };
+
+  const handleDrop = (dropIdx: number) => {
+    if (dragIdx === null || dragIdx === dropIdx) {
+      setDragIdx(null);
+      setDragOverIdx(null);
+      return;
+    }
+    const arr = [...database];
+    const [moved] = arr.splice(dragIdx, 1);
+    arr.splice(dropIdx, 0, moved);
+    clearKeywordDatabase();
+    saveKeywordDatabase(arr);
+    setDatabase(arr);
+    setDragIdx(null);
+    setDragOverIdx(null);
   };
 
   const filtered = getFiltered();
