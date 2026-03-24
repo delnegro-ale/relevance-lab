@@ -125,8 +125,8 @@ export function KeywordBreakdown({ results }: Props) {
             return (
               <div key={keyword}>
                 <div
-                  className="grid p-3 text-sm border-t border-border hover:bg-muted/30 cursor-pointer transition-colors min-w-[600px]"
-                  style={{ gridTemplateColumns: colTemplate }}
+                  className="grid px-3 py-3 text-sm border-t border-border hover:bg-muted/30 cursor-pointer transition-colors"
+                  style={{ gridTemplateColumns: colTemplate, minWidth: `${160 + variantCount * 120}px` }}
                   onClick={() => toggle(keyword)}
                 >
                   <div className="flex items-center gap-2">
