@@ -1,12 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { VariantConfig, DEFAULT_ES_PAYLOAD, VARIANT_COLORS } from '@/types/experiment';
 import { SavedVariant, loadVariantLibrary, saveVariantToLibrary, deleteFromLibrary } from '@/lib/variant-library';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Plus, Copy, Trash2, Code2, Settings2, Save, Library, ChevronDown, ChevronRight, X } from 'lucide-react';
+import { Plus, Copy, Trash2, Code2, Settings2, Save, Library, ChevronDown, ChevronRight, X, Eraser } from 'lucide-react';
 import { JsonEditorPanel } from './JsonEditorPanel';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface Props {
   variants: VariantConfig[];
@@ -15,9 +26,10 @@ interface Props {
   onDuplicate: (id: string) => void;
   onAdd: () => void;
   onLoadFromLibrary: (saved: SavedVariant) => void;
+  onClearVariants?: () => void;
 }
 
-export function VariantEditor({ variants, onUpdate, onRemove, onDuplicate, onAdd, onLoadFromLibrary }: Props) {
+export function VariantEditor({ variants, onUpdate, onRemove, onDuplicate, onAdd, onLoadFromLibrary, onClearVariants }: Props) {
   const [showLibrary, setShowLibrary] = useState(false);
   const [library, setLibrary] = useState<SavedVariant[]>(loadVariantLibrary);
 
@@ -84,13 +96,37 @@ export function VariantEditor({ variants, onUpdate, onRemove, onDuplicate, onAdd
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-danger"
+                    className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
                     onClick={(e) => { e.stopPropagation(); handleDeleteFromLibrary(saved.id); }}
                   >
                     <X className="h-3 w-3" />
                   </Button>
                 </div>
               ))}
+            </div>
+          )}
+
+          {onClearVariants && variants.length > 1 && (
+            <div className="pt-2 border-t border-border/50">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-destructive gap-1.5 w-full justify-start">
+                    <Eraser className="h-3.5 w-3.5" /> Limpar todas as variantes
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Limpar variantes?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Todas as variantes serão removidas, mantendo apenas a Baseline. Essa ação é irreversível.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={onClearVariants}>Confirmar</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           )}
         </Card>

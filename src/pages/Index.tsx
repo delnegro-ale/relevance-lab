@@ -13,7 +13,7 @@ import { VARIANT_COLORS } from '@/types/experiment';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { FlaskConical, Play, RotateCcw, Upload, Loader2, Beaker, Clock, Eraser, Search } from 'lucide-react';
+import { FlaskConical, Play, RotateCcw, Upload, Loader2, Beaker, Clock, Search } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 
 export default function Index() {
@@ -130,14 +130,9 @@ export default function Index() {
               </Button>
             )}
             {activeView === 'setup' && (
-              <>
-                <Button variant="ghost" size="sm" onClick={handleClearConfig} className="text-muted-foreground">
-                  <Eraser className="h-3.5 w-3.5 mr-1.5" /> Limpar Variantes
-                </Button>
-                <Button size="sm" onClick={handleRun} disabled={!canRun}>
-                  <Play className="h-3.5 w-3.5 mr-1.5" /> Executar Benchmark
-                </Button>
-              </>
+              <Button size="sm" onClick={handleRun} disabled={!canRun}>
+                <Play className="h-3.5 w-3.5 mr-1.5" /> Executar Benchmark
+              </Button>
             )}
           </div>
         </div>
@@ -182,6 +177,7 @@ export default function Index() {
                     onDuplicate={duplicateVariant}
                     onAdd={addVariant}
                     onLoadFromLibrary={handleLoadFromLibrary}
+                    onClearVariants={handleClearConfig}
                   />
                 </CardContent>
               </Card>
