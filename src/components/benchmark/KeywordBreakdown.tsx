@@ -64,7 +64,8 @@ export function KeywordBreakdown({ results }: Props) {
 
   if (safeResults.length === 0) return null;
 
-  const colTemplate = `2fr ${safeResults.map(() => '1fr').join(' ')}`;
+  const variantCount = safeResults.length;
+  const colTemplate = `minmax(160px, 2fr) ${safeResults.map(() => 'minmax(120px, 1fr)').join(' ')}`;
 
   const SortIcon = ({ colKey }: { colKey: SortKey }) => {
     if (sortKey !== colKey) return <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />;
