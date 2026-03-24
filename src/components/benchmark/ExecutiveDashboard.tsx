@@ -211,21 +211,6 @@ export function ExecutiveDashboard({ results }: Props) {
         </CardContent>
       </Card>
 
-      {/* Insights */}
-      <Card>
-        <CardHeader><CardTitle className="text-sm">Insights Automáticos</CardTitle></CardHeader>
-        <CardContent className="space-y-2">
-          {generateInsights(results).map((insight, i) => (
-            <div key={i} className="flex items-start gap-2 text-sm">
-              {insight.positive
-                ? <TrendingUp className="h-4 w-4 text-success mt-0.5 shrink-0" />
-                : <TrendingDown className="h-4 w-4 text-danger mt-0.5 shrink-0" />}
-              <span className="text-muted-foreground">{insight.text}</span>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
       {/* Payload Viewer Dialog */}
       <Dialog open={!!payloadVariant} onOpenChange={(open) => !open && setPayloadVariant(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh]">
