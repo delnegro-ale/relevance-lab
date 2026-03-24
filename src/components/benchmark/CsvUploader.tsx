@@ -228,6 +228,9 @@ export function CsvUploader({ onUpload, testCases }: Props) {
                   onChange={e => setSearch(e.target.value)}
                   className="h-7 text-xs flex-1"
                 />
+                <Button variant="ghost" size="sm" className="h-7 text-[11px] gap-1" onClick={handleSortAlpha} title="Ordenar A-Z">
+                  <ArrowDownAZ className="h-3.5 w-3.5" /> A-Z
+                </Button>
                 <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={selectAll}>
                   Selecionar todas
                 </Button>
@@ -238,16 +241,27 @@ export function CsvUploader({ onUpload, testCases }: Props) {
 
               {/* Keyword list */}
               <div className="max-h-64 overflow-y-auto">
-                {filtered.map(tc => {
+                {filtered.map((tc, idx) => {
                   const isSelected = selected.has(tc.keyword);
+                  const globalIdx = database.findIndex(d => d.keyword === tc.keyword);
                   return (
                     <div
                       key={tc.keyword}
+                      draggable={!search}
+                      onDragStart={() => handleDragStart(globalIdx)}
+                      onDragOver={(e) => handleDragOver(e, globalIdx)}
+                      onDrop={() => handleDrop(globalIdx)}
+                      onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
                       className={`flex items-center gap-2 px-3 py-2 border-b border-border/50 last:border-0 cursor-pointer transition-colors group ${
                         isSelected ? 'bg-primary/5' : 'hover:bg-muted/20'
-                      }`}
+                      } ${dragOverIdx === globalIdx ? 'border-t-2 border-t-primary' : ''}`}
                       onClick={() => toggleKeyword(tc.keyword)}
                     >
+                      {!search && (
+                        <div className="shrink-0 cursor-grab opacity-0 group-hover:opacity-60 hover:opacity-100 transition-opacity" onMouseDown={e => e.stopPropagation()}>
+                          <GripVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                        </div>
+                      )}
                       <div className="shrink-0">
                         {isSelected ? (
                           <CheckSquare className="h-4 w-4 text-primary" />
@@ -260,7 +274,7 @@ export function CsvUploader({ onUpload, testCases }: Props) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-5 w-5 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-danger"
+                        className="h-5 w-5 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
                         onClick={(e) => { e.stopPropagation(); handleRemoveKeyword(tc.keyword); }}
                       >
                         <Trash2 className="h-3 w-3" />
