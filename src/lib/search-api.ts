@@ -100,13 +100,24 @@ function parseEsResponse(data: any): SearchHit[] {
     const engine = src.engine || src.type || '';
     const coverImage = src.cover_image || '';
     const resolvedCover = buildCoverUrl(productId, coverImage, engine);
+
+    const rawPublisher = src.publisher || src.publisher_name || src.editora || '';
+    const publisher = typeof rawPublisher === 'object' && rawPublisher !== null
+      ? (rawPublisher.name || rawPublisher.title || '')
+      : String(rawPublisher);
+
+    const rawFormat = src.format || src.content_type || src.type || '';
+    const format = typeof rawFormat === 'object' && rawFormat !== null
+      ? (rawFormat.name || rawFormat.type || '')
+      : String(rawFormat);
+
     return {
       productId,
       title: src.title || '',
       position: i + 1,
       score: hit._score || null,
-      publisher: src.publisher || src.publisher_name || src.editora || '',
-      format: src.format || src.content_type || src.type || '',
+      publisher,
+      format,
       coverUrl: resolvedCover,
     };
   });
