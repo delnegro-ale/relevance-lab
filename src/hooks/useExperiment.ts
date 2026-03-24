@@ -40,7 +40,7 @@ export function useExperiment() {
         ...e,
         variants: [...e.variants, {
           id: `variant-${Date.now()}`,
-          name: `Variante ${idx}`,
+          name: `Motor ${idx}`,
           type: 'elasticsearch' as const,
           endpoint: DEFAULT_ES_ENDPOINT,
           payload: DEFAULT_ES_PAYLOAD,
