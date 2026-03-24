@@ -12,7 +12,7 @@ interface Props {
 }
 
 const METRIC_DEFS = [
-  { key: 'hitRate' as const, label: 'Hit Rate @10', icon: Target, pct: true, higherBetter: true },
+  { key: 'perfectMatchRate' as const, label: 'Match Perfeito', icon: Trophy, pct: true, higherBetter: true },
   { key: 'mrr' as const, label: 'MRR', icon: Crosshair, pct: false, higherBetter: true },
   { key: 'coverage' as const, label: 'Cobertura', icon: TrendingUp, pct: true, higherBetter: true },
   { key: 'avgPosition' as const, label: 'Posição Média', icon: Award, pct: false, higherBetter: false },
