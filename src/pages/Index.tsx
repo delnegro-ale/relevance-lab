@@ -128,6 +128,11 @@ export default function Index() {
             <Badge variant="outline" className="text-[10px] font-normal border-border">Ubook</Badge>
           </div>
           <div className="flex items-center gap-2">
+            <NavLink to="/search">
+              <Button variant="ghost" size="sm" className="text-muted-foreground">
+                <Search className="h-3.5 w-3.5 mr-1.5" /> Search Preview
+              </Button>
+            </NavLink>
             <Button
               variant={showHistory ? 'secondary' : 'ghost'}
               size="sm"
