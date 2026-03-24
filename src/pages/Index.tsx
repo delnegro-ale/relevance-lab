@@ -6,7 +6,7 @@ import { ExecutiveDashboard } from '@/components/benchmark/ExecutiveDashboard';
 import { KeywordBreakdown } from '@/components/benchmark/KeywordBreakdown';
 import { HistoryPanel } from '@/components/benchmark/HistoryPanel';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { DEMO_TEST_CASES, DEMO_VARIANTS, generateDemoResults } from '@/lib/demo-data';
+import { DEMO_TEST_CASES, DEMO_VARIANTS } from '@/lib/demo-data';
 import { saveToHistory, createHistoryEntry, HistoryEntry } from '@/lib/history';
 import { sanitizeResults } from '@/lib/sanitize-results';
 import { SavedVariant } from '@/lib/variant-library';
