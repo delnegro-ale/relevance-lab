@@ -65,28 +65,28 @@ export function ExecutiveDashboard({ results }: Props) {
         </Card>
       )}
 
-      {/* Perfect Match - Hero KPI Section */}
+      {/* Hit Rate - Hero KPI Section */}
       <Card className="border-primary/20 overflow-hidden">
         <CardHeader className="pb-2">
           <div className="flex items-center gap-2">
             <Crown className="h-5 w-5 text-accent" />
-            <CardTitle className="text-sm">Match Perfeito — Critério de Vitória</CardTitle>
+            <CardTitle className="text-sm">Hit Rate @10 — Critério de Vitória</CardTitle>
             <MetricTooltip
-              label="Match Perfeito"
-              description={METRIC_EXPLANATIONS.perfectMatchRate?.description || ''}
-              interpretation={METRIC_EXPLANATIONS.perfectMatchRate?.interpretation || ''}
+              label="Hit Rate @10"
+              description={METRIC_EXPLANATIONS.hitRate?.description || ''}
+              interpretation={METRIC_EXPLANATIONS.hitRate?.interpretation || ''}
             />
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Porcentagem de buscas em que <strong>todos</strong> os produtos esperados apareceram no top 10. Quanto maior, melhor.
+            Porcentagem média de produtos esperados encontrados no top 10. Quanto maior, melhor.
           </p>
         </CardHeader>
         <CardContent className="pb-6">
           <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {results.map(r => {
-              const isWinner = r === perfectMatchWinner;
-              const pct = (r.metrics.perfectMatchRate * 100).toFixed(1);
-              const perfectCount = r.keywordResults.filter(kr => kr.perfectMatch).length;
+              const isWinner = r === hitRateWinner;
+              const pct = (r.metrics.hitRate * 100).toFixed(1);
+              const hitCount = r.keywordResults.filter(kr => kr.hitRate > 0).length;
               const totalCount = r.keywordResults.length;
 
               return (
