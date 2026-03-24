@@ -101,7 +101,7 @@ export function ExecutiveDashboard({ results }: Props) {
                   {isWinner && (
                     <div className="absolute -top-2.5 left-1/2 -translate-x-1/2">
                       <span className="bg-accent text-accent-foreground text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full">
-                        Vencedora
+                        Vencedor
                       </span>
                     </div>
                   )}
