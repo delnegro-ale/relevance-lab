@@ -6,16 +6,14 @@ import { ExecutiveDashboard } from '@/components/benchmark/ExecutiveDashboard';
 import { KeywordBreakdown } from '@/components/benchmark/KeywordBreakdown';
 import { HistoryPanel } from '@/components/benchmark/HistoryPanel';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { DEMO_TEST_CASES, DEMO_VARIANTS } from '@/lib/demo-data';
 import { saveToHistory, createHistoryEntry, HistoryEntry } from '@/lib/history';
 import { sanitizeResults } from '@/lib/sanitize-results';
 import { SavedVariant } from '@/lib/variant-library';
-import { VARIANT_COLORS, DEFAULT_ES_ENDPOINT, DEFAULT_ES_PAYLOAD } from '@/types/experiment';
+import { VARIANT_COLORS } from '@/types/experiment';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { FlaskConical, Play, RotateCcw, Upload, Loader2, Beaker, Sparkles, Clock, Eraser, Search } from 'lucide-react';
+import { FlaskConical, Play, RotateCcw, Upload, Loader2, Beaker, Clock, Eraser, Search } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 
 export default function Index() {
