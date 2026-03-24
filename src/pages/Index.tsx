@@ -205,7 +205,7 @@ export default function Index() {
 
             {!canRun && experiment.testCases.length === 0 && (
               <p className="text-sm text-muted-foreground text-center py-4">
-                Carregue um CSV com casos de teste para começar, ou clique em <strong>Demo</strong> para ver a ferramenta em ação.
+                Carregue um CSV com casos de teste ou adicione keywords manualmente para começar.
               </p>
             )}
           </div>
