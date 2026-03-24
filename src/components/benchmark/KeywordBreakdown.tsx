@@ -82,7 +82,7 @@ export function KeywordBreakdown({ results }: Props) {
             <CardTitle className="text-sm">Análise por Keyword</CardTitle>
             <MetricTooltip
               label="Análise por Keyword"
-              description="Mostra o desempenho de cada termo de busca individualmente. Clique em uma keyword para ver os resultados detalhados de cada variante."
+              description="Mostra o desempenho de cada termo de busca individualmente. Clique em uma keyword para ver os resultados detalhados de cada motor."
               interpretation="Compare visualmente as capas e títulos para validar se a busca está retornando os produtos certos."
             />
           </div>

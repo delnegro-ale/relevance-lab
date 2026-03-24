@@ -7,7 +7,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Loader2, Clock, X, FlaskConical } from 'lucide-react';
+import { Search, Loader2, Clock, X } from 'lucide-react';
+import { SearchHeartFill } from '@/components/icons/BootstrapIcons';
 import { NavLink } from '@/components/NavLink';
 
 const RECENT_KEY = 'search-preview-recent';
@@ -104,7 +105,7 @@ export default function SearchPreview() {
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-4">
           <NavLink to="/" className="flex items-center gap-2 shrink-0 hover:opacity-80 transition-opacity">
             <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <FlaskConical className="h-4 w-4 text-primary" />
+              <SearchHeartFill className="h-4 w-4 text-primary" />
             </div>
             <span className="text-sm font-medium text-muted-foreground">← Voltar</span>
           </NavLink>
@@ -136,7 +137,7 @@ export default function SearchPreview() {
               <Search className="h-12 w-12 text-muted-foreground/30 mx-auto" />
               <h2 className="text-lg font-semibold text-muted-foreground">Search Preview</h2>
               <p className="text-sm text-muted-foreground/70">
-                Visualize os resultados de busca em cada variante configurada.
+                Visualize os resultados de busca em cada motor configurado.
               </p>
             </div>
 

@@ -4,7 +4,7 @@ import { SavedVariant, loadVariantLibrary, saveVariantToLibrary, deleteFromLibra
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Plus, Copy, Trash2, Code2, Settings2, Save, Library, ChevronDown, ChevronRight, X, Eraser } from 'lucide-react';
+import { Plus, Copy, Trash2, Code2, Settings2, Save, Library, X, Eraser, GripVertical } from 'lucide-react';
 import { JsonEditorPanel } from './JsonEditorPanel';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -27,11 +27,14 @@ interface Props {
   onAdd: () => void;
   onLoadFromLibrary: (saved: SavedVariant) => void;
   onClearVariants?: () => void;
+  onReorder?: (variants: VariantConfig[]) => void;
 }
 
-export function VariantEditor({ variants, onUpdate, onRemove, onDuplicate, onAdd, onLoadFromLibrary, onClearVariants }: Props) {
+export function VariantEditor({ variants, onUpdate, onRemove, onDuplicate, onAdd, onLoadFromLibrary, onClearVariants, onReorder }: Props) {
   const [showLibrary, setShowLibrary] = useState(false);
   const [library, setLibrary] = useState<SavedVariant[]>(loadVariantLibrary);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
   const refreshLibrary = () => setLibrary(loadVariantLibrary());
 
@@ -50,6 +53,19 @@ export function VariantEditor({ variants, onUpdate, onRemove, onDuplicate, onAdd
     setShowLibrary(false);
   };
 
+  const handleDragStart = (idx: number) => setDragIdx(idx);
+  const handleDragOver = (e: React.DragEvent, idx: number) => { e.preventDefault(); setDragOverIdx(idx); };
+  const handleDrop = (dropIdx: number) => {
+    if (dragIdx === null || dragIdx === dropIdx || !onReorder) {
+      setDragIdx(null); setDragOverIdx(null); return;
+    }
+    const arr = [...variants];
+    const [moved] = arr.splice(dragIdx, 1);
+    arr.splice(dropIdx, 0, moved);
+    onReorder(arr);
+    setDragIdx(null); setDragOverIdx(null);
+  };
+
   return (
     <div className="space-y-3">
       {/* Library toggle */}
@@ -61,7 +77,7 @@ export function VariantEditor({ variants, onUpdate, onRemove, onDuplicate, onAdd
           className="text-xs gap-1.5"
         >
           <Library className="h-3.5 w-3.5" />
-          Biblioteca de Variantes
+          Biblioteca de Motores
           {library.length > 0 && (
             <Badge variant="secondary" className="text-[9px] h-4 px-1.5 ml-1">{library.length}</Badge>
           )}
@@ -72,11 +88,11 @@ export function VariantEditor({ variants, onUpdate, onRemove, onDuplicate, onAdd
       {showLibrary && (
         <Card className="p-3 space-y-2 border-primary/20 bg-primary/5">
           <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
-            Variantes salvas — clique para adicionar ao teste
+            Motores salvos — clique para adicionar ao teste
           </p>
           {library.length === 0 ? (
             <p className="text-xs text-muted-foreground py-2">
-              Nenhuma variante salva. Use o ícone <Save className="h-3 w-3 inline" /> em uma variante para salvá-la.
+              Nenhum motor salvo. Use o ícone <Save className="h-3 w-3 inline" /> em um motor para salvá-lo.
             </p>
           ) : (
             <div className="space-y-1.5">
@@ -111,14 +127,14 @@ export function VariantEditor({ variants, onUpdate, onRemove, onDuplicate, onAdd
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-destructive gap-1.5 w-full justify-start">
-                    <Eraser className="h-3.5 w-3.5" /> Limpar todas as variantes
+                    <Eraser className="h-3.5 w-3.5" /> Limpar todos os motores
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Limpar variantes?</AlertDialogTitle>
+                    <AlertDialogTitle>Limpar motores?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Todas as variantes serão removidas, mantendo apenas a Baseline. Essa ação é irreversível.
+                      Todos os motores serão removidos, mantendo apenas a Baseline. Essa ação é irreversível.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -132,28 +148,38 @@ export function VariantEditor({ variants, onUpdate, onRemove, onDuplicate, onAdd
         </Card>
       )}
 
-      {/* Active variants */}
+      {/* Active variants with drag-and-drop */}
       {variants.map((v, idx) => (
-        <VariantCard
+        <div
           key={v.id}
-          variant={v}
-          colorIndex={idx}
-          onUpdate={onUpdate}
-          onRemove={onRemove}
-          onDuplicate={onDuplicate}
-          onSaveToLibrary={handleSaveToLibrary}
-          canRemove={variants.length > 1}
-          isBaseline={v.type === 'baseline'}
-        />
+          draggable={variants.length > 1}
+          onDragStart={() => handleDragStart(idx)}
+          onDragOver={(e) => handleDragOver(e, idx)}
+          onDrop={() => handleDrop(idx)}
+          onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+          className={`transition-all ${dragOverIdx === idx ? 'border-t-2 border-t-primary rounded-t-none' : ''}`}
+        >
+          <VariantCard
+            variant={v}
+            colorIndex={idx}
+            onUpdate={onUpdate}
+            onRemove={onRemove}
+            onDuplicate={onDuplicate}
+            onSaveToLibrary={handleSaveToLibrary}
+            canRemove={variants.length > 1}
+            isBaseline={v.type === 'baseline'}
+            showGrip={variants.length > 1}
+          />
+        </div>
       ))}
       <Button variant="outline" onClick={onAdd} className="w-full border-dashed">
-        <Plus className="h-4 w-4 mr-2" /> Adicionar Variante
+        <Plus className="h-4 w-4 mr-2" /> Adicionar Motor
       </Button>
     </div>
   );
 }
 
-function VariantCard({ variant, colorIndex, onUpdate, onRemove, onDuplicate, onSaveToLibrary, canRemove, isBaseline }: {
+function VariantCard({ variant, colorIndex, onUpdate, onRemove, onDuplicate, onSaveToLibrary, canRemove, isBaseline, showGrip }: {
   variant: VariantConfig;
   colorIndex: number;
   onUpdate: (id: string, u: Partial<VariantConfig>) => void;
@@ -162,11 +188,11 @@ function VariantCard({ variant, colorIndex, onUpdate, onRemove, onDuplicate, onS
   onSaveToLibrary: (v: VariantConfig) => void;
   canRemove: boolean;
   isBaseline: boolean;
+  showGrip: boolean;
 }) {
   const [jsonEditorOpen, setJsonEditorOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
-  // The display color is based on the order (colorIndex), not stored color
   const displayColor = VARIANT_COLORS[colorIndex % VARIANT_COLORS.length];
 
   return (
@@ -174,6 +200,11 @@ function VariantCard({ variant, colorIndex, onUpdate, onRemove, onDuplicate, onS
       <Card className="overflow-hidden">
         <div className="p-3 space-y-3">
           <div className="flex items-center gap-2">
+            {showGrip && (
+              <div className="shrink-0 cursor-grab opacity-40 hover:opacity-100 transition-opacity">
+                <GripVertical className="h-4 w-4 text-muted-foreground" />
+              </div>
+            )}
             <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: `hsl(${displayColor})` }} />
             {isBaseline ? (
               <div className="flex items-center gap-2 flex-1">

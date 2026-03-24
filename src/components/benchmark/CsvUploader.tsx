@@ -16,7 +16,7 @@ export function CsvUploader({ onUpload, testCases }: Props) {
   const [database, setDatabase] = useState<TestCase[]>(loadKeywordDatabase);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
-  const [showDb, setShowDb] = useState(false);
+  const [showDb, setShowDb] = useState(true);
   const [manualKeyword, setManualKeyword] = useState('');
   const [manualIds, setManualIds] = useState('');
 
@@ -240,7 +240,7 @@ export function CsvUploader({ onUpload, testCases }: Props) {
               </div>
 
               {/* Keyword list */}
-              <div className="max-h-64 overflow-y-auto">
+              <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 480px)', minHeight: '120px' }}>
                 {filtered.map((tc, idx) => {
                   const isSelected = selected.has(tc.keyword);
                   const globalIdx = database.findIndex(d => d.keyword === tc.keyword);

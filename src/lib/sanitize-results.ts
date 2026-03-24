@@ -34,7 +34,7 @@ function sanitizeVariant(v: any): VariantConfig | null {
   if (!v || typeof v !== 'object') return null;
   return {
     id: String(v.id || `variant-${Date.now()}-${Math.random()}`),
-    name: String(v.name || 'Variante sem nome'),
+    name: String(v.name || 'Motor sem nome'),
     type: v.type === 'baseline' ? 'baseline' : 'elasticsearch',
     endpoint: String(v.endpoint || ''),
     payload: v.payload != null ? String(v.payload) : undefined,

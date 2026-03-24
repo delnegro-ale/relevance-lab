@@ -30,8 +30,8 @@ const GUIDE_ITEMS = [
   },
   {
     emoji: '🔄',
-    title: 'Comparação entre variantes',
-    text: 'A primeira variante é sempre o "baseline" (referência). As demais mostram a diferença (+ ou −) em relação a ela.',
+    title: 'Comparação entre motores',
+    text: 'O primeiro motor é sempre o "baseline" (referência). Os demais mostram a diferença (+ ou −) em relação a ele.',
   },
 ];
 

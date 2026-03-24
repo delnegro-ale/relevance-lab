@@ -13,18 +13,18 @@ import { VARIANT_COLORS } from '@/types/experiment';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { FlaskConical, Play, RotateCcw, Upload, Loader2, Beaker, Clock, Search } from 'lucide-react';
+import { Play, RotateCcw, Loader2, Clock, Search } from 'lucide-react';
+import { SearchHeartFill, InputCursorText, BracesAsterisk } from '@/components/icons/BootstrapIcons';
 import { NavLink } from '@/components/NavLink';
 
 export default function Index() {
-  const { experiment, setTestCases, addVariant, updateVariant, removeVariant, duplicateVariant, runBenchmark, setExperiment } = useExperiment();
+  const { experiment, setTestCases, addVariant, updateVariant, removeVariant, duplicateVariant, reorderVariants, runBenchmark, setExperiment } = useExperiment();
   const [activeView, setActiveView] = useState<'setup' | 'results'>('setup');
   const [showHistory, setShowHistory] = useState(false);
   const prevStatusRef = useRef(experiment.status);
 
   const canRun = experiment.testCases.length > 0 && experiment.variants.length > 0 && experiment.status !== 'running';
 
-  // Auto-save to history when benchmark completes
   useEffect(() => {
     if (experiment.status === 'complete' && prevStatusRef.current === 'running' && experiment.results.length > 0) {
       const entry = createHistoryEntry(experiment.results, experiment.testCases, experiment.variants);
@@ -34,7 +34,6 @@ export default function Index() {
   }, [experiment.status, experiment.results, experiment.testCases, experiment.variants]);
 
   const handleRun = async () => {
-    // Assign colors by order before running
     setExperiment(prev => ({
       ...prev,
       variants: prev.variants.map((v, i) => ({
@@ -60,7 +59,6 @@ export default function Index() {
   };
 
   const handleNewTest = () => {
-    // "Novo Teste" keeps current config (copy of last state) but clears results
     setExperiment(prev => ({
       ...prev,
       results: [],
@@ -73,7 +71,7 @@ export default function Index() {
   const handleClearConfig = () => {
     setExperiment(prev => ({
       ...prev,
-      variants: [prev.variants[0]], // Keep only baseline
+      variants: [prev.variants[0]],
       results: [],
       status: 'setup' as const,
       progress: { current: 0, total: 0, keyword: '' },
@@ -101,12 +99,11 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b border-border sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <FlaskConical className="h-4 w-4 text-primary" />
+              <SearchHeartFill className="h-4 w-4 text-primary" />
             </div>
             <h1 className="text-base font-semibold tracking-tight">Ubook Search Insights</h1>
           </div>
@@ -147,27 +144,27 @@ export default function Index() {
 
         {activeView === 'setup' && (
           <div className="space-y-6">
-            <div className="flex items-center gap-2 mb-2">
-              <Beaker className="h-5 w-5 text-muted-foreground" />
-              <h2 className="text-lg font-semibold">Configurar Experimento</h2>
-            </div>
+            <h2 className="text-xl font-bold">Configurar Benchmark</h2>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
+              <Card className="flex flex-col">
                 <CardHeader>
                   <CardTitle className="text-sm flex items-center gap-2">
-                    <Upload className="h-4 w-4 text-primary" />
-                    Casos de Teste
+                    <InputCursorText className="h-4 w-4 text-primary" />
+                    Keywords
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-1">
                   <CsvUploader onUpload={setTestCases} testCases={experiment.testCases} />
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm">Variantes de Busca</CardTitle>
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <BracesAsterisk className="h-4 w-4 text-primary" />
+                    Motores de Busca
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <VariantEditor
@@ -178,6 +175,7 @@ export default function Index() {
                     onAdd={addVariant}
                     onLoadFromLibrary={handleLoadFromLibrary}
                     onClearVariants={handleClearConfig}
+                    onReorder={reorderVariants}
                   />
                 </CardContent>
               </Card>
@@ -185,7 +183,7 @@ export default function Index() {
 
             {!canRun && experiment.testCases.length === 0 && (
               <p className="text-sm text-muted-foreground text-center py-4">
-                Carregue um CSV com casos de teste ou adicione keywords manualmente para começar.
+                Carregue um CSV com keywords ou adicione manualmente para começar.
               </p>
             )}
           </div>

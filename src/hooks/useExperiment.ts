@@ -40,7 +40,7 @@ export function useExperiment() {
         ...e,
         variants: [...e.variants, {
           id: `variant-${Date.now()}`,
-          name: `Variante ${idx}`,
+          name: `Motor ${idx}`,
           type: 'elasticsearch' as const,
           endpoint: DEFAULT_ES_ENDPOINT,
           payload: DEFAULT_ES_PAYLOAD,
@@ -122,5 +122,9 @@ export function useExperiment() {
     setExperiment(e => ({ ...e, status: 'complete', results: sanitizeResults(allResults) }));
   }, []);
 
-  return { experiment, setTestCases, addVariant, updateVariant, removeVariant, duplicateVariant, runBenchmark, setExperiment };
+  const reorderVariants = useCallback((newVariants: VariantConfig[]) => {
+    setExperiment(e => ({ ...e, variants: newVariants }));
+  }, []);
+
+  return { experiment, setTestCases, addVariant, updateVariant, removeVariant, duplicateVariant, reorderVariants, runBenchmark, setExperiment };
 }
