@@ -5,6 +5,7 @@ import { VariantEditor } from '@/components/benchmark/VariantEditor';
 import { ExecutiveDashboard } from '@/components/benchmark/ExecutiveDashboard';
 import { KeywordBreakdown } from '@/components/benchmark/KeywordBreakdown';
 import { HistoryPanel } from '@/components/benchmark/HistoryPanel';
+import { ExportPdfButton } from '@/components/benchmark/ExportPdfButton';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { saveToHistory, createHistoryEntry, HistoryEntry } from '@/lib/history';
 import { sanitizeResults } from '@/lib/sanitize-results';
@@ -122,9 +123,12 @@ export default function Index() {
               <Clock className="h-3.5 w-3.5 mr-1.5" /> Histórico
             </Button>
             {activeView === 'results' && (
-              <Button variant="outline" size="sm" onClick={handleNewTest}>
-                <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Novo Teste
-              </Button>
+              <>
+                <ExportPdfButton results={experiment.results} />
+                <Button variant="outline" size="sm" onClick={handleNewTest}>
+                  <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Novo Teste
+                </Button>
+              </>
             )}
             {activeView === 'setup' && (
               <Button size="sm" onClick={handleRun} disabled={!canRun}>

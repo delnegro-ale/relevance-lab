@@ -3,7 +3,7 @@ import { VariantResult } from '@/types/experiment';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Trophy, Target, Crosshair, TrendingUp, TrendingDown, Award, Percent, AlertTriangle, Crown, Code2 } from 'lucide-react';
+import { Trophy, Target, Crosshair, TrendingUp, Award, Percent, AlertTriangle, Crown, Code2 } from 'lucide-react';
 import { MetricTooltip, METRIC_EXPLANATIONS } from './MetricTooltip';
 import { HowToReadReport } from './HowToReadReport';
 
@@ -211,21 +211,6 @@ export function ExecutiveDashboard({ results }: Props) {
         </CardContent>
       </Card>
 
-      {/* Insights */}
-      <Card>
-        <CardHeader><CardTitle className="text-sm">Insights Automáticos</CardTitle></CardHeader>
-        <CardContent className="space-y-2">
-          {generateInsights(results).map((insight, i) => (
-            <div key={i} className="flex items-start gap-2 text-sm">
-              {insight.positive
-                ? <TrendingUp className="h-4 w-4 text-success mt-0.5 shrink-0" />
-                : <TrendingDown className="h-4 w-4 text-danger mt-0.5 shrink-0" />}
-              <span className="text-muted-foreground">{insight.text}</span>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
       {/* Payload Viewer Dialog */}
       <Dialog open={!!payloadVariant} onOpenChange={(open) => !open && setPayloadVariant(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh]">
@@ -255,43 +240,3 @@ export function ExecutiveDashboard({ results }: Props) {
   );
 }
 
-function generateInsights(results: VariantResult[]) {
-  const insights: { positive: boolean; text: string }[] = [];
-  const baseline = results[0];
-
-  for (let i = 1; i < results.length; i++) {
-    const r = results[i];
-    const hitDelta = r.metrics.hitRate - baseline.metrics.hitRate;
-
-    if (Math.abs(hitDelta) > 0.001) {
-      insights.push({
-        positive: hitDelta > 0,
-        text: `${r.variant.name} teve ${hitDelta > 0 ? '+' : ''}${(hitDelta * 100).toFixed(1)}pp de hit rate vs baseline`,
-      });
-    }
-
-    const pmDelta = r.metrics.perfectMatchRate - baseline.metrics.perfectMatchRate;
-    if (Math.abs(pmDelta) > 0.001) {
-      insights.push({
-        positive: pmDelta > 0,
-        text: `${r.variant.name} teve ${pmDelta > 0 ? '+' : ''}${(pmDelta * 100).toFixed(1)}pp de match perfeito vs baseline`,
-      });
-    }
-
-    const improvements = r.keywordResults.filter((kr, ki) => kr.hitRate > (baseline.keywordResults[ki]?.hitRate ?? 0)).length;
-    const regressions = r.keywordResults.filter((kr, ki) => kr.hitRate < (baseline.keywordResults[ki]?.hitRate ?? 0)).length;
-
-    if (improvements > 0) insights.push({ positive: true, text: `${r.variant.name} melhorou ${improvements} keyword${improvements > 1 ? 's' : ''} vs baseline` });
-    if (regressions > 0) insights.push({ positive: false, text: `${r.variant.name} piorou ${regressions} keyword${regressions > 1 ? 's' : ''} vs baseline` });
-
-    const posDelta = r.metrics.avgPosition - baseline.metrics.avgPosition;
-    if (Math.abs(posDelta) > 0.1) {
-      insights.push({
-        positive: posDelta < 0,
-        text: `${r.variant.name}: posição média ${posDelta < 0 ? 'melhorou' : 'piorou'} em ${Math.abs(posDelta).toFixed(1)} posições vs baseline`,
-      });
-    }
-  }
-
-  return insights;
-}
