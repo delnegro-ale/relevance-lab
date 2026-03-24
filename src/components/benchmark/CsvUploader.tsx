@@ -189,7 +189,7 @@ export function CsvUploader({ onUpload, testCases }: Props) {
 
       {/* Upload area */}
       <div
-        onDrop={handleDrop}
+        onDrop={handleFileDrop}
         onDragOver={e => e.preventDefault()}
         onClick={() => document.getElementById('csv-input')?.click()}
         className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-primary/50 transition-colors cursor-pointer group"
