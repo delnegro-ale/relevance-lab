@@ -64,7 +64,8 @@ export function KeywordBreakdown({ results }: Props) {
 
   if (safeResults.length === 0) return null;
 
-  const colTemplate = `2fr ${safeResults.map(() => '1fr').join(' ')}`;
+  const variantCount = safeResults.length;
+  const colTemplate = `minmax(160px, 2fr) ${safeResults.map(() => 'minmax(120px, 1fr)').join(' ')}`;
 
   const SortIcon = ({ colKey }: { colKey: SortKey }) => {
     if (sortKey !== colKey) return <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />;
@@ -97,7 +98,7 @@ export function KeywordBreakdown({ results }: Props) {
       <CardContent>
         <div className="rounded-md border border-border overflow-x-auto">
           {/* Header */}
-          <div className="grid bg-muted/50 p-3 text-xs text-muted-foreground font-medium min-w-[600px]" style={{ gridTemplateColumns: colTemplate }}>
+          <div className="grid bg-muted/50 px-3 py-3 text-xs text-muted-foreground font-medium" style={{ gridTemplateColumns: colTemplate, minWidth: `${160 + variantCount * 120}px` }}>
             <button
               className="flex items-center gap-1 hover:text-foreground transition-colors text-left"
               onClick={() => handleSort('keyword')}
@@ -107,11 +108,11 @@ export function KeywordBreakdown({ results }: Props) {
             {safeResults.map(r => (
               <button
                 key={r.variant.id}
-                className="flex items-center justify-center gap-1.5 hover:text-foreground transition-colors"
+                className="flex items-center justify-center gap-1.5 hover:text-foreground transition-colors text-center px-1"
                 onClick={() => handleSort(`variant-hitrate-${r.variant.id}`)}
               >
                 <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: `hsl(${r.variant.color || '0 0% 50%'})` }} />
-                <span className="truncate">{r.variant.name}</span>
+                <span className="text-center leading-tight break-words line-clamp-2">{r.variant.name}</span>
                 <SortIcon colKey={`variant-hitrate-${r.variant.id}`} />
               </button>
             ))}
@@ -124,8 +125,8 @@ export function KeywordBreakdown({ results }: Props) {
             return (
               <div key={keyword}>
                 <div
-                  className="grid p-3 text-sm border-t border-border hover:bg-muted/30 cursor-pointer transition-colors min-w-[600px]"
-                  style={{ gridTemplateColumns: colTemplate }}
+                  className="grid px-3 py-3 text-sm border-t border-border hover:bg-muted/30 cursor-pointer transition-colors"
+                  style={{ gridTemplateColumns: colTemplate, minWidth: `${160 + variantCount * 120}px` }}
                   onClick={() => toggle(keyword)}
                 >
                   <div className="flex items-center gap-2">
