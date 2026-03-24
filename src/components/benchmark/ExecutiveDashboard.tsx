@@ -56,7 +56,7 @@ export function ExecutiveDashboard({ results }: Props) {
                 {results.filter(r => r.errorCount > 0).map(r => (
                   <p key={r.variant.id} className="text-xs text-muted-foreground">
                     <span className="font-medium" style={{ color: `hsl(${r.variant.color})` }}>{r.variant.name}</span>
-                    {': '}{r.errorCount} de {r.keywordResults.length} consultas falharam — os resultados desta variante podem estar incompletos.
+                    {': '}{r.errorCount} de {r.keywordResults.length} consultas falharam — os resultados deste motor podem estar incompletos.
                   </p>
                 ))}
               </div>
