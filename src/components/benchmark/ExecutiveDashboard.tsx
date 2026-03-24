@@ -122,7 +122,7 @@ export function ExecutiveDashboard({ results }: Props) {
                     {pct}%
                   </p>
                   <p className="text-xs text-muted-foreground mt-2">
-                    {perfectCount} de {totalCount} keywords
+                    {hitCount} de {totalCount} keywords com hits
                   </p>
                   {/* Progress bar */}
                   <div className="mt-3 h-2 rounded-full bg-muted overflow-hidden">
