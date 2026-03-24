@@ -105,7 +105,7 @@ export default function Index() {
             <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
               <SearchHeartFill className="h-7 w-7 text-primary" />
             </div>
-            <h1 className="text-2xl tracking-tight" style={{ fontFamily: "'Bowlby One', Georgia, serif" }}>Ubook Search Insights</h1>
+            <h1 className="text-2xl tracking-tight" style={{ fontFamily: "'Poppins', sans-serif", fontWeight: 600 }}>Ubook Search Insights</h1>
           </div>
           <div className="flex items-center gap-2">
             <NavLink to="/search">
