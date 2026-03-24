@@ -21,9 +21,10 @@ export function KeywordBreakdown({ results }: Props) {
   const [sortDir, setSortDir] = useState<SortDir>('asc');
 
   const safeResults = results.filter(r => r && r.variant && Array.isArray(r.keywordResults));
-  if (safeResults.length === 0) return null;
 
-  const keywords = (safeResults[0].keywordResults || []).map(kr => kr?.keyword).filter(Boolean) as string[];
+  const keywords = safeResults.length > 0
+    ? (safeResults[0].keywordResults || []).map(kr => kr?.keyword).filter(Boolean) as string[]
+    : [];
   const filtered = keywords.filter(k => k.toLowerCase().includes(search.toLowerCase()));
 
   const sorted = useMemo(() => {
