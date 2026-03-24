@@ -138,8 +138,6 @@ export function CsvUploader({ onUpload, testCases }: Props) {
   };
 
   const filtered = getFiltered();
-  const allFilteredSelected = filtered.length > 0 && filtered.every(tc => selected.has(tc.keyword));
-  const someFilteredSelected = filtered.some(tc => selected.has(tc.keyword));
 
   const handleAddManual = () => {
     const keyword = manualKeyword.trim();
