@@ -1,103 +1,59 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { VariantResult } from '@/types/experiment';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronRight, Check, X, Search, AlertTriangle, ImageOff, BookOpen, Headphones, FileText as FileIcon } from 'lucide-react';
+import { ChevronDown, ChevronRight, Check, X, Search, AlertTriangle, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { MetricTooltip } from './MetricTooltip';
+import { ProductCardSimple } from './ProductCardSimple';
 
 interface Props {
   results: VariantResult[];
 }
 
-function getFormatIcon(format: string) {
-  const f = (format || '').toLowerCase();
-  if (f.includes('audio') || f.includes('audiobook') || f.includes('mp3')) return Headphones;
-  if (f.includes('ebook') || f.includes('epub') || f.includes('pdf')) return FileIcon;
-  return BookOpen;
-}
-
-function ProductCard({ hit, isExpected }: {
-  hit: { productId: string; title?: string; position: number; score?: number | null; publisher?: string; format?: string; coverUrl?: string };
-  isExpected: boolean;
-}) {
-  const coverUrl = hit.coverUrl || `https://media3.ubook.com/catalog/book-cover-image/${hit.productId}/400x600/`;
-  const FormatIcon = getFormatIcon(hit.format || '');
-
-  return (
-    <div className={`flex gap-2.5 p-2 rounded-lg transition-colors ${isExpected ? 'bg-success/10 ring-1 ring-success/30' : 'hover:bg-muted/20'}`}>
-      {/* Position */}
-      <div className="flex flex-col items-center justify-start pt-1 shrink-0 w-5">
-        <span className="text-[10px] font-mono-data text-muted-foreground font-semibold">{hit.position}</span>
-      </div>
-
-      {/* Cover */}
-      <div className="w-10 h-14 rounded overflow-hidden bg-muted/50 shrink-0 relative">
-        <img
-          src={coverUrl}
-          alt={hit.title || hit.productId}
-          className="w-full h-full object-cover"
-          loading="lazy"
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.style.display = 'none';
-            if (target.nextElementSibling) {
-              (target.nextElementSibling as HTMLElement).style.display = 'flex';
-            }
-          }}
-        />
-        <div className="absolute inset-0 items-center justify-center hidden">
-          <ImageOff className="h-4 w-4 text-muted-foreground/40" />
-        </div>
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0 flex flex-col justify-center">
-        <p
-          className={`text-xs leading-tight truncate ${isExpected ? 'font-semibold text-success' : 'text-foreground'}`}
-          title={hit.title || 'Sem título'}
-        >
-          {(hit.title || 'Sem título').length > 40 ? `${(hit.title || 'Sem título').slice(0, 40)}…` : (hit.title || 'Sem título')}
-        </p>
-        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-          <span className="text-[10px] font-mono-data text-muted-foreground">ID: {hit.productId}</span>
-          {hit.publisher && (
-            <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">{hit.publisher}</span>
-          )}
-          {hit.format && (
-            <span className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground/70">
-              <FormatIcon className="h-3 w-3" />
-              {hit.format}
-            </span>
-          )}
-          {typeof hit.score === 'number' && !isNaN(hit.score) && (
-            <span className="text-[10px] font-mono-data text-muted-foreground/50">score: {hit.score.toFixed(1)}</span>
-          )}
-        </div>
-      </div>
-
-      {/* Match indicator */}
-      {isExpected && (
-        <div className="shrink-0 flex items-center">
-          <div className="w-5 h-5 rounded-full bg-success/20 flex items-center justify-center">
-            <Check className="h-3 w-3 text-success" />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+type SortKey = 'keyword' | `variant-hitrate-${string}`;
+type SortDir = 'asc' | 'desc';
 
 export function KeywordBreakdown({ results }: Props) {
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [sortKey, setSortKey] = useState<SortKey>('keyword');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
 
-  // Defensive: ensure results array is valid and has keywordResults
   const safeResults = results.filter(r => r && r.variant && Array.isArray(r.keywordResults));
   if (safeResults.length === 0) return null;
 
   const keywords = (safeResults[0].keywordResults || []).map(kr => kr?.keyword).filter(Boolean) as string[];
   const filtered = keywords.filter(k => k.toLowerCase().includes(search.toLowerCase()));
+
+  const sorted = useMemo(() => {
+    const arr = [...filtered];
+    arr.sort((a, b) => {
+      if (sortKey === 'keyword') {
+        const cmp = a.localeCompare(b, 'pt-BR', { sensitivity: 'base' });
+        return sortDir === 'asc' ? cmp : -cmp;
+      }
+      // Sort by variant hitRate
+      const variantId = sortKey.replace('variant-hitrate-', '');
+      const vr = safeResults.find(r => r.variant.id === variantId);
+      if (!vr) return 0;
+      const krA = vr.keywordResults.find(k => k?.keyword === a);
+      const krB = vr.keywordResults.find(k => k?.keyword === b);
+      const valA = krA?.hitRate ?? -1;
+      const valB = krB?.hitRate ?? -1;
+      return sortDir === 'asc' ? valA - valB : valB - valA;
+    });
+    return arr;
+  }, [filtered, sortKey, sortDir, safeResults]);
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir(key === 'keyword' ? 'asc' : 'desc');
+    }
+  };
 
   const toggle = (k: string) => {
     const next = new Set(expanded);
@@ -106,6 +62,13 @@ export function KeywordBreakdown({ results }: Props) {
   };
 
   const colTemplate = `2fr ${safeResults.map(() => '1fr').join(' ')}`;
+
+  const SortIcon = ({ colKey }: { colKey: SortKey }) => {
+    if (sortKey !== colKey) return <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />;
+    return sortDir === 'asc'
+      ? <ArrowUp className="h-3 w-3 text-primary" />
+      : <ArrowDown className="h-3 w-3 text-primary" />;
+  };
 
   return (
     <Card>
@@ -132,17 +95,27 @@ export function KeywordBreakdown({ results }: Props) {
         <div className="rounded-md border border-border overflow-x-auto">
           {/* Header */}
           <div className="grid bg-muted/50 p-3 text-xs text-muted-foreground font-medium min-w-[600px]" style={{ gridTemplateColumns: colTemplate }}>
-            <span>Keyword</span>
+            <button
+              className="flex items-center gap-1 hover:text-foreground transition-colors text-left"
+              onClick={() => handleSort('keyword')}
+            >
+              Keyword <SortIcon colKey="keyword" />
+            </button>
             {safeResults.map(r => (
-              <span key={r.variant.id} className="text-center flex items-center justify-center gap-1.5">
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color || '0 0% 50%'})` }} />
+              <button
+                key={r.variant.id}
+                className="flex items-center justify-center gap-1.5 hover:text-foreground transition-colors"
+                onClick={() => handleSort(`variant-hitrate-${r.variant.id}`)}
+              >
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: `hsl(${r.variant.color || '0 0% 50%'})` }} />
                 <span className="truncate">{r.variant.name}</span>
-              </span>
+                <SortIcon colKey={`variant-hitrate-${r.variant.id}`} />
+              </button>
             ))}
           </div>
 
           {/* Rows */}
-          {filtered.map(keyword => {
+          {sorted.map(keyword => {
             const isExpanded = expanded.has(keyword);
 
             return (
@@ -162,7 +135,7 @@ export function KeywordBreakdown({ results }: Props) {
                     if (kr.error) {
                       return (
                         <div key={r.variant.id} className="text-center">
-                          <span className="inline-flex items-center gap-1 text-xs text-danger font-medium">
+                          <span className="inline-flex items-center gap-1 text-xs text-destructive font-medium">
                             <AlertTriangle className="h-3 w-3" /> Erro
                           </span>
                         </div>
@@ -171,7 +144,7 @@ export function KeywordBreakdown({ results }: Props) {
                     const hitRate = typeof kr.hitRate === 'number' && !isNaN(kr.hitRate) ? kr.hitRate : 0;
                     return (
                       <div key={r.variant.id} className="text-center">
-                        <span className={`font-mono-data text-sm font-semibold ${hitRate === 1 ? 'text-success' : hitRate > 0 ? 'text-warning' : 'text-danger'}`}>
+                        <span className={`font-mono-data text-sm font-semibold ${hitRate === 1 ? 'text-success' : hitRate > 0 ? 'text-warning' : 'text-destructive'}`}>
                           {(hitRate * 100).toFixed(0)}%
                         </span>
                         <span className="text-[10px] text-muted-foreground ml-1">
@@ -195,8 +168,8 @@ export function KeywordBreakdown({ results }: Props) {
                                 <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color || '0 0% 50%'})` }} />
                                 <span className="text-xs font-semibold">{r.variant.name || 'Sem nome'}</span>
                               </div>
-                              <div className="bg-danger/10 border border-danger/20 rounded-md p-3">
-                                <div className="flex items-center gap-2 text-danger text-xs font-medium mb-1">
+                              <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3">
+                                <div className="flex items-center gap-2 text-destructive text-xs font-medium mb-1">
                                   <AlertTriangle className="h-3.5 w-3.5" />
                                   Falha na consulta
                                 </div>
@@ -218,7 +191,6 @@ export function KeywordBreakdown({ results }: Props) {
                               </Badge>
                             </div>
 
-                            {/* Summary metrics */}
                             <div className="grid grid-cols-2 gap-2 text-xs">
                               <div className="flex items-center gap-1">
                                 <span className="text-muted-foreground">MRR:</span>
@@ -230,42 +202,37 @@ export function KeywordBreakdown({ results }: Props) {
                               </div>
                             </div>
 
-                            {/* Product cards */}
                             <div className="space-y-1">
                               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Top 10 resultados</p>
                               <div className="space-y-1">
-                                {hits.slice(0, 10).map((hit, i) => {
-                                  const isExpected = expectedIds.includes(hit.productId);
-                                  return (
-                                    <ProductCard
-                                      key={i}
-                                      hit={hit}
-                                      isExpected={isExpected}
-                                    />
-                                  );
-                                })}
+                                {hits.slice(0, 10).map((hit, i) => (
+                                  <ProductCardSimple
+                                    key={i}
+                                    hit={hit}
+                                    isExpected={expectedIds.includes(hit.productId)}
+                                  />
+                                ))}
                               </div>
                             </div>
 
-                            {/* Missing */}
                             {missingIds.length > 0 && (
                               <div className="mt-2 pt-2 border-t border-border/50">
-                                <p className="text-[10px] text-danger flex items-center gap-1 mb-1.5">
+                                <p className="text-[10px] text-destructive flex items-center gap-1 mb-1.5">
                                   <X className="h-3 w-3" /> Não encontrados no top 10
                                 </p>
                                 <div className="space-y-1">
                                   {missingIds.map(id => (
-                                    <div key={id} className="flex items-center gap-2 p-1.5 rounded bg-danger/5">
+                                    <div key={id} className="flex items-center gap-2 p-1.5 rounded bg-destructive/5">
                                       <div className="w-6 h-9 rounded overflow-hidden bg-muted/50 shrink-0 relative">
                                         <img
-                                          src={`https://media3.ubook.com/catalog/book-cover-image/${id}/400x600/`}
+                                          src={`https://media3.ubook.com/catalog/book-cover-image/${id}/200x300/`}
                                           alt={id}
                                           className="w-full h-full object-cover"
                                           loading="lazy"
                                           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                         />
                                       </div>
-                                      <span className="text-xs font-mono-data text-danger/70">{id}</span>
+                                      <span className="text-xs font-mono-data text-destructive/70">{id}</span>
                                     </div>
                                   ))}
                                 </div>
