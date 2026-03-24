@@ -147,9 +147,6 @@ export default function Index() {
             )}
             {activeView === 'setup' && (
               <>
-                <Button variant="ghost" size="sm" onClick={handleLoadDemo} className="text-muted-foreground">
-                  <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Demo
-                </Button>
                 <Button variant="ghost" size="sm" onClick={handleClearConfig} className="text-muted-foreground">
                   <Eraser className="h-3.5 w-3.5 mr-1.5" /> Limpar Variantes
                 </Button>
