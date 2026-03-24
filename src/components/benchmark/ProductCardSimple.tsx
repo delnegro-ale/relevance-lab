@@ -1,5 +1,5 @@
-import { BookOpen, Headphones, FileText as FileIcon, ImageOff } from 'lucide-react';
-
+import { BookOpen, Headphones, FileText as FileIcon, ImageOff, ExternalLink } from 'lucide-react';
+import { buildProductUrl } from '@/lib/product-url';
 function getFormatIcon(format: string) {
   const f = (format || '').toLowerCase();
   if (f.includes('audio') || f.includes('audiobook') || f.includes('mp3')) return Headphones;
