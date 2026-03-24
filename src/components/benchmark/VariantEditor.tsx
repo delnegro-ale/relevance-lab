@@ -1,12 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { VariantConfig, DEFAULT_ES_PAYLOAD, VARIANT_COLORS } from '@/types/experiment';
 import { SavedVariant, loadVariantLibrary, saveVariantToLibrary, deleteFromLibrary } from '@/lib/variant-library';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Plus, Copy, Trash2, Code2, Settings2, Save, Library, ChevronDown, ChevronRight, X } from 'lucide-react';
+import { Plus, Copy, Trash2, Code2, Settings2, Save, Library, ChevronDown, ChevronRight, X, Eraser } from 'lucide-react';
 import { JsonEditorPanel } from './JsonEditorPanel';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface Props {
   variants: VariantConfig[];
@@ -15,9 +26,10 @@ interface Props {
   onDuplicate: (id: string) => void;
   onAdd: () => void;
   onLoadFromLibrary: (saved: SavedVariant) => void;
+  onClearVariants?: () => void;
 }
 
-export function VariantEditor({ variants, onUpdate, onRemove, onDuplicate, onAdd, onLoadFromLibrary }: Props) {
+export function VariantEditor({ variants, onUpdate, onRemove, onDuplicate, onAdd, onLoadFromLibrary, onClearVariants }: Props) {
   const [showLibrary, setShowLibrary] = useState(false);
   const [library, setLibrary] = useState<SavedVariant[]>(loadVariantLibrary);
 

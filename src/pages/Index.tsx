@@ -177,6 +177,7 @@ export default function Index() {
                     onDuplicate={duplicateVariant}
                     onAdd={addVariant}
                     onLoadFromLibrary={handleLoadFromLibrary}
+                    onClearVariants={handleClearConfig}
                   />
                 </CardContent>
               </Card>
