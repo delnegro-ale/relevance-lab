@@ -5,6 +5,7 @@ import { VariantEditor } from '@/components/benchmark/VariantEditor';
 import { ExecutiveDashboard } from '@/components/benchmark/ExecutiveDashboard';
 import { KeywordBreakdown } from '@/components/benchmark/KeywordBreakdown';
 import { HistoryPanel } from '@/components/benchmark/HistoryPanel';
+import { ExportPdfButton } from '@/components/benchmark/ExportPdfButton';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { saveToHistory, createHistoryEntry, HistoryEntry } from '@/lib/history';
 import { sanitizeResults } from '@/lib/sanitize-results';
