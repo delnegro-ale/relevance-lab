@@ -161,8 +161,8 @@ export default function Index() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <BracesAsterisk className="h-4 w-4 text-primary" />
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <BracesAsterisk className="h-5 w-5 text-primary" />
                     Motores de Busca
                   </CardTitle>
                 </CardHeader>
