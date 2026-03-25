@@ -47,7 +47,7 @@ function parseBaselineResponse(data: any): SearchHit[] {
       ? (rawFormat.name || rawFormat.type || '')
       : String(rawFormat);
 
-    const isSeries = String(item.is_series || '').toLowerCase() === 'yes';
+    const isSeries = String(item.is_serie || '').toLowerCase() === 'yes';
     const finalCover = isSeries
       ? `https://media3.ubook.com/catalog/book-cover-image/${productId}/200x300/${coverImage}`
       : resolvedCover;
@@ -116,7 +116,7 @@ function parseEsResponse(data: any): SearchHit[] {
       ? (rawFormat.name || rawFormat.type || '')
       : String(rawFormat);
 
-    const isSeries = String(src.is_series || '').toLowerCase() === 'yes';
+    const isSeries = String(src.is_serie || '').toLowerCase() === 'yes';
     const finalCover = isSeries
       ? `https://media3.ubook.com/catalog/book-cover-image/${productId}/200x300/${coverImage}`
       : resolvedCover;
