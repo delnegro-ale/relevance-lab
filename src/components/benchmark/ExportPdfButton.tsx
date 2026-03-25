@@ -319,8 +319,8 @@ export function ExportPdfButton({ results }: Props) {
           // Missing IDs
           const missingIds = kr.missingIds || [];
           if (missingIds.length > 0) {
-            const missingY = detailStartY + 12 + Math.min(hits.length, 9) * rowH + 4;
-            if (missingY < H - 18) {
+            const missingY = detailStartY + 12 + Math.min(hits.length, 10) * (rowH + gap) + 2;
+            if (missingY < H - 8) {
               pdf.setFont('helvetica', 'bold');
               pdf.setFontSize(7);
               pdf.setTextColor(PDF_COLORS.danger);
