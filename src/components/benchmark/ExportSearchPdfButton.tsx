@@ -82,10 +82,10 @@ export function ExportSearchPdfButton({ searchGroups }: Props) {
           // Product list with covers — compact to fit 10
           const hits = r.hits.slice(0, 10);
           const rowH = 17;
-          const gap = 1.5;
+          const gap = 0.8;
           hits.forEach((hit, hi) => {
             const rowY = startY + 12 + hi * (rowH + gap);
-            if (rowY + rowH > H - 8) return;
+            if (rowY + rowH > H - 2) return;
 
             drawProductHit(pdf, hit, x + 2, rowY, colW - 4, false, imageMap);
           });
