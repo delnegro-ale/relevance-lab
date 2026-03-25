@@ -181,7 +181,6 @@ export function ExportPdfButton({ results }: Props) {
         });
       });
 
-      drawFooter(pdf);
 
       // ===== PAGE 2+: Keyword Summary Table =====
       const keywords = results[0].keywordResults.map(kr => kr.keyword);
@@ -254,7 +253,6 @@ export function ExportPdfButton({ results }: Props) {
           });
         });
 
-        drawFooter(pdf);
       }
 
       // ===== KEYWORD DETAIL PAGES =====
@@ -263,18 +261,13 @@ export function ExportPdfButton({ results }: Props) {
         drawBg(pdf);
 
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(16);
+        pdf.setFontSize(14);
         pdf.setTextColor(PDF_COLORS.primary);
-        pdf.text(`"${kw}"`, margin, margin + 10);
-
-        pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(9);
-        pdf.setTextColor(PDF_COLORS.textMuted);
-        pdf.text('Detalhes dos resultados por motor', margin, margin + 16);
+        pdf.text(`"${kw}"`, margin, margin + 7);
 
         const variantCount = results.length;
-        const colW = (contentW - (variantCount - 1) * 5) / variantCount;
-        const detailStartY = margin + 24;
+        const colW = (contentW - (variantCount - 1) * 4) / variantCount;
+        const detailStartY = margin + 12;
 
         results.forEach((r, vi) => {
           const kr = r.keywordResults.find(k => k.keyword === kw);
@@ -307,10 +300,10 @@ export function ExportPdfButton({ results }: Props) {
           // Product hits — compact rows to fit 10
           const hits = kr.hits || [];
           const rowH = 17;
-          const gap = 1.5;
+          const gap = 0.8;
           hits.slice(0, 10).forEach((hit, hi) => {
-            const rowY = detailStartY + 12 + hi * (rowH + gap);
-            if (rowY + rowH > H - 8) return;
+            const rowY = detailStartY + 10 + hi * (rowH + gap);
+            if (rowY + rowH > H - 2) return;
 
             const isExpected = kr.expectedIds.includes(hit.productId);
             drawProductHit(pdf, hit, x + 2, rowY, colW - 4, isExpected, imageMap);
@@ -319,8 +312,8 @@ export function ExportPdfButton({ results }: Props) {
           // Missing IDs
           const missingIds = kr.missingIds || [];
           if (missingIds.length > 0) {
-            const missingY = detailStartY + 12 + Math.min(hits.length, 10) * (rowH + gap) + 2;
-            if (missingY < H - 8) {
+            const missingY = detailStartY + 10 + Math.min(hits.length, 10) * (rowH + gap) + 2;
+            if (missingY < H - 2) {
               pdf.setFont('helvetica', 'bold');
               pdf.setFontSize(7);
               pdf.setTextColor(PDF_COLORS.danger);
