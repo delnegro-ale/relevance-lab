@@ -72,15 +72,15 @@ export function ExportPdfButton({ results }: Props) {
         drawCard(pdf, x, cardY, cardW, cardH);
 
         if (isWinner) {
-          pdf.setDrawColor(PDF_COLORS.primary);
+          pdf.setDrawColor(PDF_COLORS.accent);
           pdf.setLineWidth(1);
           pdf.roundedRect(x, cardY, cardW, cardH, 3, 3, 'S');
 
-          pdf.setFillColor(PDF_COLORS.primary);
+          pdf.setFillColor(PDF_COLORS.accent);
           pdf.roundedRect(x + cardW / 2 - 14, cardY - 3.5, 28, 7, 2, 2, 'F');
           pdf.setFont('helvetica', 'bold');
           pdf.setFontSize(6);
-          pdf.setTextColor('#ffffff');
+          pdf.setTextColor('#1a1a1a');
           pdf.text('VENCEDOR', x + cardW / 2, cardY + 1.5, { align: 'center' });
         }
 
