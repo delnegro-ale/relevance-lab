@@ -263,18 +263,13 @@ export function ExportPdfButton({ results }: Props) {
         drawBg(pdf);
 
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(16);
+        pdf.setFontSize(14);
         pdf.setTextColor(PDF_COLORS.primary);
-        pdf.text(`"${kw}"`, margin, margin + 10);
-
-        pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(9);
-        pdf.setTextColor(PDF_COLORS.textMuted);
-        pdf.text('Detalhes dos resultados por motor', margin, margin + 16);
+        pdf.text(`"${kw}"`, margin, margin + 7);
 
         const variantCount = results.length;
-        const colW = (contentW - (variantCount - 1) * 5) / variantCount;
-        const detailStartY = margin + 24;
+        const colW = (contentW - (variantCount - 1) * 4) / variantCount;
+        const detailStartY = margin + 12;
 
         results.forEach((r, vi) => {
           const kr = r.keywordResults.find(k => k.keyword === kw);
