@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { FileDown, Loader2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import {
-  PDF_COLORS, A4_LANDSCAPE, drawBg, drawCard, drawFooter,
+  PDF_COLORS, A4_LANDSCAPE, drawBg, drawCard, drawFooter, drawCrown,
   getVariantHex, preloadImages, drawProductHit, fmt,
 } from '@/lib/pdf-helpers';
 
@@ -49,12 +49,13 @@ export function ExportPdfButton({ results }: Props) {
       pdf.text(`Relatório gerado em ${new Date().toLocaleString('pt-BR')}`, margin, margin + 17);
       pdf.text(`${results[0].keywordResults.length} keywords · ${results.length} motores`, margin, margin + 23);
 
-      // Hit Rate Hero
+      // Hit Rate Hero — with crown icon
       const heroY = margin + 32;
+      drawCrown(pdf, margin + 4, heroY - 2, 8, PDF_COLORS.accent);
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(13);
-      pdf.setTextColor(PDF_COLORS.primary);
-      pdf.text('Hit Rate @10 — Critério de Vitória', margin, heroY);
+      pdf.setTextColor(PDF_COLORS.accent);
+      pdf.text('Hit Rate @10 — Critério de Vitória', margin + 10, heroY);
 
       const hitRateWinner = results.reduce((best, r) =>
         r.metrics.hitRate > best.metrics.hitRate ? r : best
@@ -71,15 +72,15 @@ export function ExportPdfButton({ results }: Props) {
         drawCard(pdf, x, cardY, cardW, cardH);
 
         if (isWinner) {
-          pdf.setDrawColor(PDF_COLORS.primary);
+          pdf.setDrawColor(PDF_COLORS.accent);
           pdf.setLineWidth(1);
           pdf.roundedRect(x, cardY, cardW, cardH, 3, 3, 'S');
 
-          pdf.setFillColor(PDF_COLORS.primary);
+          pdf.setFillColor(PDF_COLORS.accent);
           pdf.roundedRect(x + cardW / 2 - 14, cardY - 3.5, 28, 7, 2, 2, 'F');
           pdf.setFont('helvetica', 'bold');
           pdf.setFontSize(6);
-          pdf.setTextColor('#ffffff');
+          pdf.setTextColor('#1a1a1a');
           pdf.text('VENCEDOR', x + cardW / 2, cardY + 1.5, { align: 'center' });
         }
 
@@ -96,7 +97,7 @@ export function ExportPdfButton({ results }: Props) {
         // Big percentage
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(22);
-        pdf.setTextColor(isWinner ? PDF_COLORS.primary : PDF_COLORS.text);
+        pdf.setTextColor(isWinner ? PDF_COLORS.accent : PDF_COLORS.text);
         pdf.text(`${(r.metrics.hitRate * 100).toFixed(1)}%`, x + cardW / 2, cardY + 30, { align: 'center' });
 
         // Hit count
@@ -113,7 +114,7 @@ export function ExportPdfButton({ results }: Props) {
         pdf.roundedRect(x + 5, barY, barW, 2.5, 1, 1, 'F');
         const fillW = barW * r.metrics.hitRate;
         if (fillW > 0) {
-          pdf.setFillColor(isWinner ? PDF_COLORS.primary : PDF_COLORS.textMuted);
+          pdf.setFillColor(isWinner ? PDF_COLORS.accent : PDF_COLORS.textMuted);
           pdf.roundedRect(x + 5, barY, fillW, 2.5, 1, 1, 'F');
         }
       });
@@ -303,12 +304,13 @@ export function ExportPdfButton({ results }: Props) {
           pdf.setTextColor(PDF_COLORS.textMuted);
           pdf.text(hitPct, x + colW - 4, detailStartY + 4, { align: 'right' });
 
-          // Product hits with covers, publisher, green box
+          // Product hits — compact rows to fit 10
           const hits = kr.hits || [];
-          const rowH = 21;
-          hits.slice(0, 8).forEach((hit, hi) => {
-            const rowY = detailStartY + 12 + hi * rowH;
-            if (rowY + rowH > H - 22) return;
+          const rowH = 17;
+          const gap = 1.5;
+          hits.slice(0, 10).forEach((hit, hi) => {
+            const rowY = detailStartY + 12 + hi * (rowH + gap);
+            if (rowY + rowH > H - 8) return;
 
             const isExpected = kr.expectedIds.includes(hit.productId);
             drawProductHit(pdf, hit, x + 2, rowY, colW - 4, isExpected, imageMap);
@@ -317,8 +319,8 @@ export function ExportPdfButton({ results }: Props) {
           // Missing IDs
           const missingIds = kr.missingIds || [];
           if (missingIds.length > 0) {
-            const missingY = detailStartY + 12 + Math.min(hits.length, 9) * rowH + 4;
-            if (missingY < H - 18) {
+            const missingY = detailStartY + 12 + Math.min(hits.length, 10) * (rowH + gap) + 2;
+            if (missingY < H - 8) {
               pdf.setFont('helvetica', 'bold');
               pdf.setFontSize(7);
               pdf.setTextColor(PDF_COLORS.danger);

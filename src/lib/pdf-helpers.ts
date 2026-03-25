@@ -7,14 +7,15 @@ export const PDF_COLORS = {
   text: '#e2e8f0',
   textMuted: '#8b92a5',
   primary: '#ff5b00',
+  accent: '#e8a308',   // hsl(38, 92%, 50%) — golden yellow for winner
   success: '#22c55e',
   successBg: '#1a3a2a',
-  successBorder: '#22c55e',
+  successBorder: '#2a6e3f',
   danger: '#ef4444',
   warning: '#eab308',
 };
 
-export const A4_LANDSCAPE = { W: 297, H: 210, margin: 15 };
+export const A4_LANDSCAPE = { W: 297, H: 210, margin: 8 };
 
 export function hslToHex(h: number, s: number, l: number): string {
   s /= 100;
@@ -51,15 +52,33 @@ export function drawFooter(pdf: jsPDF, label = 'Ubook Search Insights') {
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(7);
   pdf.setTextColor(PDF_COLORS.textMuted);
-  pdf.text(label, margin, H - 8);
-  pdf.text(new Date().toLocaleString('pt-BR'), W - margin, H - 8, { align: 'right' });
+  if (typeof (pdf as any).setCharSpace === 'function') (pdf as any).setCharSpace(0);
+  pdf.text(label, margin, H - 4);
+  pdf.text(new Date().toLocaleString('pt-BR'), W - margin, H - 4, { align: 'right' });
+}
+
+/** Draw a small crown icon using PDF primitives */
+export function drawCrown(pdf: jsPDF, cx: number, cy: number, size: number, color: string) {
+  pdf.setFillColor(color);
+  const w = size;
+  const h = size * 0.7;
+  const x = cx - w / 2;
+  const y = cy - h / 2;
+  // Base rectangle
+  pdf.rect(x, y + h * 0.5, w, h * 0.5, 'F');
+  // Three triangular points
+  const points = [
+    { x1: x, y1: y + h * 0.6, x2: x + w * 0.15, y2: y },
+    { x1: x + w * 0.35, y1: y + h * 0.6, x2: x + w * 0.5, y2: y },
+    { x1: x + w * 0.7, y1: y + h * 0.6, x2: x + w * 0.85, y2: y },
+  ];
+  points.forEach(p => {
+    pdf.triangle(p.x1, p.y1, p.x2, p.y2, p.x1 + (p.x2 - p.x1) * 2, p.y1, 'F');
+  });
 }
 
 /**
  * Preload images using multiple strategies to handle CORS.
- * Strategy 1: fetch as blob (works with CORS headers)
- * Strategy 2: Image with crossOrigin=anonymous
- * Strategy 3: Image without crossOrigin (canvas may be tainted but try anyway)
  */
 export async function preloadImages(urls: string[]): Promise<Map<string, string>> {
   const unique = [...new Set(urls)];
@@ -111,22 +130,17 @@ export async function preloadImages(urls: string[]): Promise<Map<string, string>
         else resolve(false);
       };
       img.onerror = () => resolve(false);
-      // Add cache-buster to avoid cached non-CORS responses
       const separator = url.includes('?') ? '&' : '?';
       img.src = useCors ? `${url}${separator}_cors=1` : url;
     });
   };
 
   const loadOne = async (url: string): Promise<void> => {
-    // Strategy 1: fetch as blob
     if (await loadViaFetch(url)) return;
-    // Strategy 2: img with crossOrigin
     if (await loadViaImg(url, true)) return;
-    // Strategy 3: img without crossOrigin (may taint canvas)
     await loadViaImg(url, false);
   };
 
-  // Load in batches of 8
   for (let i = 0; i < unique.length; i += 8) {
     await Promise.all(unique.slice(i, i + 8).map(loadOne));
   }
@@ -135,18 +149,18 @@ export async function preloadImages(urls: string[]): Promise<Map<string, string>
   return map;
 }
 
-/** Helper to set consistent text style and reset char spacing */
+/** Helper to set consistent text style and always reset char spacing */
 function setTextStyle(pdf: jsPDF, font: string, style: string, size: number, color: string) {
   pdf.setFont(font, style);
   pdf.setFontSize(size);
   pdf.setTextColor(color);
-  // @ts-ignore — setCharSpace exists on jsPDF
-  if (typeof pdf.setCharSpace === 'function') pdf.setCharSpace(0);
+  if (typeof (pdf as any).setCharSpace === 'function') (pdf as any).setCharSpace(0);
 }
 
 /**
- * Draw a product hit row in the PDF with cover image, green box for expected hits,
- * and separate lines for title, ID, format, publisher.
+ * Draw a product hit row — compact layout to fit 10 per page.
+ * Cover image, title, ID, format, publisher on separate lines.
+ * Green highlight box for expected hits.
  */
 export function drawProductHit(
   pdf: jsPDF,
@@ -157,25 +171,25 @@ export function drawProductHit(
   isExpected: boolean,
   imageMap: Map<string, string>,
 ) {
-  const rowH = 22;
-  const coverW = 11;
-  const coverH = 16;
-  const posW = 10;
-  const textX = x + posW + coverW + 4;
-  const maxTextW = colW - posW - coverW - 8;
+  const rowH = 17;
+  const coverW = 9;
+  const coverH = 13;
+  const posW = 8;
+  const textX = x + posW + coverW + 3;
+  const maxTextW = colW - posW - coverW - 6;
 
-  // Green highlight box for expected hits
+  // Green highlight box for expected hits — thin border, tight padding
   if (isExpected) {
     pdf.setFillColor(PDF_COLORS.successBg);
-    pdf.roundedRect(x, y, colW, rowH, 2, 2, 'F');
+    pdf.roundedRect(x + 0.5, y + 0.5, colW - 1, rowH - 1, 1.5, 1.5, 'F');
     pdf.setDrawColor(PDF_COLORS.successBorder);
-    pdf.setLineWidth(0.6);
-    pdf.roundedRect(x, y, colW, rowH, 2, 2, 'S');
+    pdf.setLineWidth(0.3);
+    pdf.roundedRect(x + 0.5, y + 0.5, colW - 1, rowH - 1, 1.5, 1.5, 'S');
   }
 
   // Position number
-  setTextStyle(pdf, 'helvetica', 'bold', 10, PDF_COLORS.textMuted);
-  pdf.text(`${hit.position}`, x + 4, y + rowH / 2 + 1);
+  setTextStyle(pdf, 'helvetica', 'bold', 9, PDF_COLORS.textMuted);
+  pdf.text(`${hit.position}`, x + 3, y + rowH / 2 + 1);
 
   // Cover image
   const coverUrl = hit.coverUrl || `https://media3.ubook.com/catalog/book-cover-image/${hit.productId}/200x300/`;
@@ -195,29 +209,27 @@ export function drawProductHit(
   }
 
   // Title (line 1)
-  const maxChars = Math.floor(maxTextW / 1.6);
-  setTextStyle(pdf, 'helvetica', 'bold', 9, isExpected ? PDF_COLORS.success : PDF_COLORS.text);
+  const maxChars = Math.floor(maxTextW / 1.5);
+  setTextStyle(pdf, 'helvetica', 'bold', 8, isExpected ? PDF_COLORS.success : PDF_COLORS.text);
   const title = hit.title || 'Sem título';
   const displayTitle = title.length > maxChars ? title.slice(0, maxChars - 1) + '…' : title;
-  pdf.text(displayTitle, textX, y + 5.5);
+  pdf.text(displayTitle, textX, y + 4.5);
 
   // ID (line 2)
-  setTextStyle(pdf, 'helvetica', 'normal', 8, PDF_COLORS.textMuted);
-  pdf.text(`ID: ${hit.productId}`, textX, y + 10.5);
+  setTextStyle(pdf, 'helvetica', 'normal', 7, PDF_COLORS.textMuted);
+  pdf.text(`ID: ${hit.productId}`, textX, y + 8.5);
 
-  // Format (line 3) - if available
+  // Format (line 3) — plain text, no emoji
   if (hit.format) {
-    const f = hit.format.toLowerCase();
-    const icon = f.includes('audio') || f.includes('mp3') ? '🎧' : f.includes('ebook') || f.includes('epub') ? '📄' : '📖';
-    setTextStyle(pdf, 'helvetica', 'normal', 7.5, PDF_COLORS.textMuted);
-    pdf.text(`${icon} ${hit.format}`, textX, y + 14.5);
+    setTextStyle(pdf, 'helvetica', 'normal', 7, PDF_COLORS.textMuted);
+    pdf.text(hit.format, textX, y + 12);
   }
 
-  // Publisher (line 4) - if available
+  // Publisher (line 4)
   if (hit.publisher) {
-    setTextStyle(pdf, 'helvetica', 'normal', 7.5, PDF_COLORS.textMuted);
+    setTextStyle(pdf, 'helvetica', 'normal', 7, PDF_COLORS.textMuted);
     const pub = hit.publisher.length > maxChars ? hit.publisher.slice(0, maxChars - 1) + '…' : hit.publisher;
-    const pubY = hit.format ? y + 18 : y + 14.5;
+    const pubY = hit.format ? y + 15.5 : y + 12;
     pdf.text(pub, textX, pubY);
   }
 

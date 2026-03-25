@@ -79,12 +79,13 @@ export function ExportSearchPdfButton({ searchGroups }: Props) {
           pdf.setTextColor(PDF_COLORS.textMuted);
           pdf.text(`${r.hits.length} resultados`, x + colW - 4, startY + 4, { align: 'right' });
 
-          // Product list with covers
-          const hits = r.hits.slice(0, 8);
-          const rowH = 21;
+          // Product list with covers — compact to fit 10
+          const hits = r.hits.slice(0, 10);
+          const rowH = 17;
+          const gap = 1.5;
           hits.forEach((hit, hi) => {
-            const rowY = startY + 12 + hi * rowH;
-            if (rowY + rowH > H - 22) return;
+            const rowY = startY + 12 + hi * (rowH + gap);
+            if (rowY + rowH > H - 8) return;
 
             drawProductHit(pdf, hit, x + 2, rowY, colW - 4, false, imageMap);
           });
