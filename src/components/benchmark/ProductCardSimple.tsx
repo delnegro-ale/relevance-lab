@@ -32,7 +32,7 @@ export function ProductCardSimple({ hit, isExpected = false }: Props) {
   const FormatIcon = getFormatIcon(hit.format || '');
   const fullTitle = hit.title || 'Sem título';
   const displayTitle = fullTitle.length > 40 ? `${fullTitle.slice(0, 40)}…` : fullTitle;
-  const productUrl = buildProductUrl(hit.productId, hit.format);
+  const productUrl = buildProductUrl(hit.productId, hit.format, hit.isSeries);
 
   return (
     <>
