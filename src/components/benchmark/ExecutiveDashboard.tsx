@@ -31,9 +31,11 @@ export function ExecutiveDashboard({ results }: Props) {
   const baseline = results[0];
 
   // Winner by hitRate
-  const hitRateWinner = results.reduce((best, r) =>
-    r.metrics.hitRate > best.metrics.hitRate ? r : best
-  );
+  const hitRateWinner = results.reduce((best, r) => {
+    if (r.metrics.hitRate !== best.metrics.hitRate) return r.metrics.hitRate > best.metrics.hitRate ? r : best;
+    if (r.metrics.mrr !== best.metrics.mrr) return r.metrics.mrr > best.metrics.mrr ? r : best;
+    return r.metrics.perfectMatchRate > best.metrics.perfectMatchRate ? r : best;
+  });
 
   const chartData = METRIC_DEFS.filter(m => m.key !== 'avgPosition').map(m => ({
     name: m.label,
