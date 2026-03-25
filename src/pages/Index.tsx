@@ -209,6 +209,20 @@ export default function Index() {
           </Card>
         )}
 
+        {activeView === 'results' && experiment.status === 'error' && (
+          <Card className="max-w-md mx-auto mt-24">
+            <CardContent className="p-8 text-center space-y-4">
+              <p className="font-semibold text-lg text-destructive">Erro ao executar benchmark</p>
+              <p className="text-sm text-muted-foreground">
+                Ocorreu um erro inesperado. Verifique o console para mais detalhes.
+              </p>
+              <Button variant="outline" size="sm" onClick={handleNewTest}>
+                <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Voltar
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {activeView === 'results' && experiment.status === 'complete' && (
           <div className="space-y-6">
             <ErrorBoundary fallbackTitle="Erro ao renderizar o dashboard de resultados">
