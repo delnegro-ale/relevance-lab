@@ -181,7 +181,6 @@ export function ExportPdfButton({ results }: Props) {
         });
       });
 
-      drawFooter(pdf);
 
       // ===== PAGE 2+: Keyword Summary Table =====
       const keywords = results[0].keywordResults.map(kr => kr.keyword);
