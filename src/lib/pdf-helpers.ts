@@ -56,34 +56,49 @@ export function drawFooter(pdf: jsPDF, label = 'Ubook Search Insights') {
 
 /**
  * Preload images and return a map of URL → base64 data URI.
+ * Uses fetch → blob → createObjectURL → Image → canvas to avoid CORS issues.
  * Silently skips images that fail to load.
  */
 export async function preloadImages(urls: string[]): Promise<Map<string, string>> {
   const unique = [...new Set(urls)];
   const map = new Map<string, string>();
 
-  const loadOne = (url: string): Promise<void> =>
-    new Promise((resolve) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        try {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.naturalWidth;
-          canvas.height = img.naturalHeight;
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(img, 0, 0);
-            map.set(url, canvas.toDataURL('image/jpeg', 0.8));
+  const loadOne = async (url: string): Promise<void> => {
+    try {
+      // Fetch as blob to bypass CORS canvas tainting
+      const resp = await fetch(url, { mode: 'cors' });
+      if (!resp.ok) return;
+      const blob = await resp.blob();
+      const objectUrl = URL.createObjectURL(blob);
+
+      await new Promise<void>((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(img, 0, 0);
+              map.set(url, canvas.toDataURL('image/jpeg', 0.8));
+            }
+          } catch {
+            // skip
           }
-        } catch {
-          // CORS or other error, skip
-        }
-        resolve();
-      };
-      img.onerror = () => resolve();
-      img.src = url;
-    });
+          URL.revokeObjectURL(objectUrl);
+          resolve();
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          resolve();
+        };
+        img.src = objectUrl;
+      });
+    } catch {
+      // Network error, skip
+    }
+  };
 
   // Load in batches of 10 to avoid flooding
   for (let i = 0; i < unique.length; i += 10) {
