@@ -8,7 +8,8 @@ export const PDF_COLORS = {
   textMuted: '#8b92a5',
   primary: '#ff5b00',
   success: '#22c55e',
-  successBg: '#22c55e',
+  successBg: '#1a3a2a',
+  successBorder: '#22c55e',
   danger: '#ef4444',
   warning: '#eab308',
 };
@@ -55,62 +56,97 @@ export function drawFooter(pdf: jsPDF, label = 'Ubook Search Insights') {
 }
 
 /**
- * Preload images and return a map of URL → base64 data URI.
- * Uses fetch → blob → createObjectURL → Image → canvas to avoid CORS issues.
- * Silently skips images that fail to load.
+ * Preload images using multiple strategies to handle CORS.
+ * Strategy 1: fetch as blob (works with CORS headers)
+ * Strategy 2: Image with crossOrigin=anonymous
+ * Strategy 3: Image without crossOrigin (canvas may be tainted but try anyway)
  */
 export async function preloadImages(urls: string[]): Promise<Map<string, string>> {
   const unique = [...new Set(urls)];
   const map = new Map<string, string>();
 
-  const loadOne = async (url: string): Promise<void> => {
+  const canvasExtract = (img: HTMLImageElement): string | null => {
     try {
-      // Fetch as blob to bypass CORS canvas tainting
-      const resp = await fetch(url, { mode: 'cors' });
-      if (!resp.ok) return;
-      const blob = await resp.blob();
-      const objectUrl = URL.createObjectURL(blob);
-
-      await new Promise<void>((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-          try {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.naturalWidth;
-            canvas.height = img.naturalHeight;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-              ctx.drawImage(img, 0, 0);
-              map.set(url, canvas.toDataURL('image/jpeg', 0.8));
-            }
-          } catch {
-            // skip
-          }
-          URL.revokeObjectURL(objectUrl);
-          resolve();
-        };
-        img.onerror = () => {
-          URL.revokeObjectURL(objectUrl);
-          resolve();
-        };
-        img.src = objectUrl;
-      });
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth || 200;
+      canvas.height = img.naturalHeight || 300;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+      ctx.drawImage(img, 0, 0);
+      return canvas.toDataURL('image/jpeg', 0.85);
     } catch {
-      // Network error, skip
+      return null;
     }
   };
 
-  // Load in batches of 10 to avoid flooding
-  for (let i = 0; i < unique.length; i += 10) {
-    await Promise.all(unique.slice(i, i + 10).map(loadOne));
+  const loadViaFetch = async (url: string): Promise<boolean> => {
+    try {
+      const resp = await fetch(url, { credentials: 'omit' });
+      if (!resp.ok) return false;
+      const blob = await resp.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      return new Promise<boolean>((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const data = canvasExtract(img);
+          URL.revokeObjectURL(objectUrl);
+          if (data) { map.set(url, data); resolve(true); }
+          else resolve(false);
+        };
+        img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(false); };
+        img.src = objectUrl;
+      });
+    } catch {
+      return false;
+    }
+  };
+
+  const loadViaImg = async (url: string, useCors: boolean): Promise<boolean> => {
+    return new Promise<boolean>((resolve) => {
+      const img = new Image();
+      if (useCors) img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const data = canvasExtract(img);
+        if (data) { map.set(url, data); resolve(true); }
+        else resolve(false);
+      };
+      img.onerror = () => resolve(false);
+      // Add cache-buster to avoid cached non-CORS responses
+      const separator = url.includes('?') ? '&' : '?';
+      img.src = useCors ? `${url}${separator}_cors=1` : url;
+    });
+  };
+
+  const loadOne = async (url: string): Promise<void> => {
+    // Strategy 1: fetch as blob
+    if (await loadViaFetch(url)) return;
+    // Strategy 2: img with crossOrigin
+    if (await loadViaImg(url, true)) return;
+    // Strategy 3: img without crossOrigin (may taint canvas)
+    await loadViaImg(url, false);
+  };
+
+  // Load in batches of 8
+  for (let i = 0; i < unique.length; i += 8) {
+    await Promise.all(unique.slice(i, i + 8).map(loadOne));
   }
 
+  console.log(`[PDF] Preloaded ${map.size}/${unique.length} images`);
   return map;
+}
+
+/** Helper to set consistent text style and reset char spacing */
+function setTextStyle(pdf: jsPDF, font: string, style: string, size: number, color: string) {
+  pdf.setFont(font, style);
+  pdf.setFontSize(size);
+  pdf.setTextColor(color);
+  // @ts-ignore — setCharSpace exists on jsPDF
+  if (typeof pdf.setCharSpace === 'function') pdf.setCharSpace(0);
 }
 
 /**
  * Draw a product hit row in the PDF with cover image, green box for expected hits,
- * publisher name on separate line, and format icon text.
+ * and separate lines for title, ID, format, publisher.
  */
 export function drawProductHit(
   pdf: jsPDF,
@@ -121,27 +157,25 @@ export function drawProductHit(
   isExpected: boolean,
   imageMap: Map<string, string>,
 ) {
-  const rowH = 20;
-  const coverW = 10;
-  const coverH = 15;
-  const posW = 8;
+  const rowH = 22;
+  const coverW = 11;
+  const coverH = 16;
+  const posW = 10;
   const textX = x + posW + coverW + 4;
   const maxTextW = colW - posW - coverW - 8;
 
   // Green highlight box for expected hits
   if (isExpected) {
-    pdf.setFillColor('#1a3a2a');
+    pdf.setFillColor(PDF_COLORS.successBg);
     pdf.roundedRect(x, y, colW, rowH, 2, 2, 'F');
-    pdf.setDrawColor('#22c55e');
-    pdf.setLineWidth(0.5);
+    pdf.setDrawColor(PDF_COLORS.successBorder);
+    pdf.setLineWidth(0.6);
     pdf.roundedRect(x, y, colW, rowH, 2, 2, 'S');
   }
 
   // Position number
-  pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(9);
-  pdf.setTextColor(PDF_COLORS.textMuted);
-  pdf.text(`${hit.position}`, x + 3, y + rowH / 2 + 1);
+  setTextStyle(pdf, 'helvetica', 'bold', 10, PDF_COLORS.textMuted);
+  pdf.text(`${hit.position}`, x + 4, y + rowH / 2 + 1);
 
   // Cover image
   const coverUrl = hit.coverUrl || `https://media3.ubook.com/catalog/book-cover-image/${hit.productId}/200x300/`;
@@ -160,33 +194,31 @@ export function drawProductHit(
     pdf.roundedRect(imgX, imgY, coverW, coverH, 1, 1, 'F');
   }
 
-  // Title
-  const maxChars = Math.floor(maxTextW / 1.8);
-  pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(9);
-  pdf.setTextColor(isExpected ? PDF_COLORS.success : PDF_COLORS.text);
-  const title = (hit.title || 'Sem título');
+  // Title (line 1)
+  const maxChars = Math.floor(maxTextW / 1.6);
+  setTextStyle(pdf, 'helvetica', 'bold', 9, isExpected ? PDF_COLORS.success : PDF_COLORS.text);
+  const title = hit.title || 'Sem título';
   const displayTitle = title.length > maxChars ? title.slice(0, maxChars - 1) + '…' : title;
-  pdf.text(displayTitle, textX, y + 6);
+  pdf.text(displayTitle, textX, y + 5.5);
 
-  // Second line: ID · Format
-  pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(8);
-  pdf.setTextColor(PDF_COLORS.textMuted);
-  const idParts = [`ID: ${hit.productId}`];
+  // ID (line 2)
+  setTextStyle(pdf, 'helvetica', 'normal', 8, PDF_COLORS.textMuted);
+  pdf.text(`ID: ${hit.productId}`, textX, y + 10.5);
+
+  // Format (line 3) - if available
   if (hit.format) {
     const f = hit.format.toLowerCase();
     const icon = f.includes('audio') || f.includes('mp3') ? '🎧' : f.includes('ebook') || f.includes('epub') ? '📄' : '📖';
-    idParts.push(`${icon} ${hit.format}`);
+    setTextStyle(pdf, 'helvetica', 'normal', 7.5, PDF_COLORS.textMuted);
+    pdf.text(`${icon} ${hit.format}`, textX, y + 14.5);
   }
-  pdf.text(idParts.join(' · '), textX, y + 11);
 
-  // Third line: Publisher (separate)
+  // Publisher (line 4) - if available
   if (hit.publisher) {
-    pdf.setFontSize(7.5);
-    pdf.setTextColor(PDF_COLORS.textMuted);
+    setTextStyle(pdf, 'helvetica', 'normal', 7.5, PDF_COLORS.textMuted);
     const pub = hit.publisher.length > maxChars ? hit.publisher.slice(0, maxChars - 1) + '…' : hit.publisher;
-    pdf.text(pub, textX, y + 15.5);
+    const pubY = hit.format ? y + 18 : y + 14.5;
+    pdf.text(pub, textX, pubY);
   }
 
   return rowH;
