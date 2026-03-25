@@ -80,8 +80,8 @@ export function ExportSearchPdfButton({ searchGroups }: Props) {
           pdf.text(`${r.hits.length} resultados`, x + colW - 4, startY + 4, { align: 'right' });
 
           // Product list with covers
-          const hits = r.hits.slice(0, 9);
-          const rowH = 17;
+          const hits = r.hits.slice(0, 8);
+          const rowH = 21;
           hits.forEach((hit, hi) => {
             const rowY = startY + 12 + hi * rowH;
             if (rowY + rowH > H - 22) return;

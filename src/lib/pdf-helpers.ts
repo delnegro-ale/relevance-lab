@@ -56,34 +56,49 @@ export function drawFooter(pdf: jsPDF, label = 'Ubook Search Insights') {
 
 /**
  * Preload images and return a map of URL → base64 data URI.
+ * Uses fetch → blob → createObjectURL → Image → canvas to avoid CORS issues.
  * Silently skips images that fail to load.
  */
 export async function preloadImages(urls: string[]): Promise<Map<string, string>> {
   const unique = [...new Set(urls)];
   const map = new Map<string, string>();
 
-  const loadOne = (url: string): Promise<void> =>
-    new Promise((resolve) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        try {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.naturalWidth;
-          canvas.height = img.naturalHeight;
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(img, 0, 0);
-            map.set(url, canvas.toDataURL('image/jpeg', 0.8));
+  const loadOne = async (url: string): Promise<void> => {
+    try {
+      // Fetch as blob to bypass CORS canvas tainting
+      const resp = await fetch(url, { mode: 'cors' });
+      if (!resp.ok) return;
+      const blob = await resp.blob();
+      const objectUrl = URL.createObjectURL(blob);
+
+      await new Promise<void>((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(img, 0, 0);
+              map.set(url, canvas.toDataURL('image/jpeg', 0.8));
+            }
+          } catch {
+            // skip
           }
-        } catch {
-          // CORS or other error, skip
-        }
-        resolve();
-      };
-      img.onerror = () => resolve();
-      img.src = url;
-    });
+          URL.revokeObjectURL(objectUrl);
+          resolve();
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          resolve();
+        };
+        img.src = objectUrl;
+      });
+    } catch {
+      // Network error, skip
+    }
+  };
 
   // Load in batches of 10 to avoid flooding
   for (let i = 0; i < unique.length; i += 10) {
@@ -95,7 +110,7 @@ export async function preloadImages(urls: string[]): Promise<Map<string, string>
 
 /**
  * Draw a product hit row in the PDF with cover image, green box for expected hits,
- * publisher name, and format icon text.
+ * publisher name on separate line, and format icon text.
  */
 export function drawProductHit(
   pdf: jsPDF,
@@ -106,66 +121,73 @@ export function drawProductHit(
   isExpected: boolean,
   imageMap: Map<string, string>,
 ) {
-  const rowH = 16;
-  const coverW = 8;
-  const coverH = 12;
-  const textX = x + coverW + 6;
-  const maxTextW = colW - coverW - 10;
+  const rowH = 20;
+  const coverW = 10;
+  const coverH = 15;
+  const posW = 8;
+  const textX = x + posW + coverW + 4;
+  const maxTextW = colW - posW - coverW - 8;
 
   // Green highlight box for expected hits
   if (isExpected) {
     pdf.setFillColor('#1a3a2a');
     pdf.roundedRect(x, y, colW, rowH, 2, 2, 'F');
     pdf.setDrawColor('#22c55e');
-    pdf.setLineWidth(0.4);
+    pdf.setLineWidth(0.5);
     pdf.roundedRect(x, y, colW, rowH, 2, 2, 'S');
   }
 
   // Position number
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(8);
+  pdf.setFontSize(9);
   pdf.setTextColor(PDF_COLORS.textMuted);
-  pdf.text(`${hit.position}`, x + 2, y + 5);
+  pdf.text(`${hit.position}`, x + 3, y + rowH / 2 + 1);
 
   // Cover image
   const coverUrl = hit.coverUrl || `https://media3.ubook.com/catalog/book-cover-image/${hit.productId}/200x300/`;
   const imgData = imageMap.get(coverUrl);
+  const imgX = x + posW;
+  const imgY = y + (rowH - coverH) / 2;
   if (imgData) {
     try {
-      pdf.addImage(imgData, 'JPEG', x + 6, y + 2, coverW, coverH);
+      pdf.addImage(imgData, 'JPEG', imgX, imgY, coverW, coverH);
     } catch {
-      // fallback: draw placeholder
       pdf.setFillColor(PDF_COLORS.border);
-      pdf.roundedRect(x + 6, y + 2, coverW, coverH, 1, 1, 'F');
+      pdf.roundedRect(imgX, imgY, coverW, coverH, 1, 1, 'F');
     }
   } else {
     pdf.setFillColor(PDF_COLORS.border);
-    pdf.roundedRect(x + 6, y + 2, coverW, coverH, 1, 1, 'F');
+    pdf.roundedRect(imgX, imgY, coverW, coverH, 1, 1, 'F');
   }
 
   // Title
+  const maxChars = Math.floor(maxTextW / 1.8);
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(8);
+  pdf.setFontSize(9);
   pdf.setTextColor(isExpected ? PDF_COLORS.success : PDF_COLORS.text);
   const title = (hit.title || 'Sem título');
-  const maxChars = Math.floor(maxTextW / 1.8);
   const displayTitle = title.length > maxChars ? title.slice(0, maxChars - 1) + '…' : title;
-  pdf.text(displayTitle, textX, y + 5);
+  pdf.text(displayTitle, textX, y + 6);
 
-  // Second line: ID · Publisher · Format
+  // Second line: ID · Format
   pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(7);
+  pdf.setFontSize(8);
   pdf.setTextColor(PDF_COLORS.textMuted);
-  const parts = [`ID: ${hit.productId}`];
-  if (hit.publisher) parts.push(hit.publisher);
+  const idParts = [`ID: ${hit.productId}`];
   if (hit.format) {
     const f = hit.format.toLowerCase();
     const icon = f.includes('audio') || f.includes('mp3') ? '🎧' : f.includes('ebook') || f.includes('epub') ? '📄' : '📖';
-    parts.push(`${icon} ${hit.format}`);
+    idParts.push(`${icon} ${hit.format}`);
   }
-  const metaLine = parts.join(' · ');
-  const displayMeta = metaLine.length > maxChars + 10 ? metaLine.slice(0, maxChars + 9) + '…' : metaLine;
-  pdf.text(displayMeta, textX, y + 10);
+  pdf.text(idParts.join(' · '), textX, y + 11);
+
+  // Third line: Publisher (separate)
+  if (hit.publisher) {
+    pdf.setFontSize(7.5);
+    pdf.setTextColor(PDF_COLORS.textMuted);
+    const pub = hit.publisher.length > maxChars ? hit.publisher.slice(0, maxChars - 1) + '…' : hit.publisher;
+    pdf.text(pub, textX, y + 15.5);
+  }
 
   return rowH;
 }

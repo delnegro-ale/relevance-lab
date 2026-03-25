@@ -305,8 +305,8 @@ export function ExportPdfButton({ results }: Props) {
 
           // Product hits with covers, publisher, green box
           const hits = kr.hits || [];
-          const rowH = 17;
-          hits.slice(0, 9).forEach((hit, hi) => {
+          const rowH = 21;
+          hits.slice(0, 8).forEach((hit, hi) => {
             const rowY = detailStartY + 12 + hi * rowH;
             if (rowY + rowH > H - 22) return;
 
