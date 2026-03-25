@@ -253,7 +253,6 @@ export function ExportPdfButton({ results }: Props) {
           });
         });
 
-        drawFooter(pdf);
       }
 
       // ===== KEYWORD DETAIL PAGES =====
