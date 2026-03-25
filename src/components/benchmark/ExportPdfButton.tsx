@@ -114,7 +114,7 @@ export function ExportPdfButton({ results }: Props) {
         pdf.roundedRect(x + 5, barY, barW, 2.5, 1, 1, 'F');
         const fillW = barW * r.metrics.hitRate;
         if (fillW > 0) {
-          pdf.setFillColor(isWinner ? PDF_COLORS.primary : PDF_COLORS.textMuted);
+          pdf.setFillColor(isWinner ? PDF_COLORS.accent : PDF_COLORS.textMuted);
           pdf.roundedRect(x + 5, barY, fillW, 2.5, 1, 1, 'F');
         }
       });
