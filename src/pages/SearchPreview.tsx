@@ -336,6 +336,7 @@ export default function SearchPreview() {
                           </div>
                         ))}
                       </div>
+                      </div>
                     </CardContent>
                   )}
                 </Card>
