@@ -158,6 +158,11 @@ export function CsvUploader({ onUpload, testCases }: Props) {
     setManualIds('');
   };
 
+  const handleCloneToInput = (tc: TestCase) => {
+    setManualKeyword(tc.keyword);
+    setManualIds(tc.expectedIds.join(', '));
+  };
+
   return (
     <div className="space-y-4">
       {/* Manual input */}
