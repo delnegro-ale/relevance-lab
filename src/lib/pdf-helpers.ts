@@ -15,7 +15,7 @@ export const PDF_COLORS = {
   warning: '#eab308',
 };
 
-export const A4_LANDSCAPE = { W: 297, H: 210, margin: 8 };
+export const A4_LANDSCAPE = { W: 297, H: 210, margin: 5 };
 
 export function hslToHex(h: number, s: number, l: number): string {
   s /= 100;

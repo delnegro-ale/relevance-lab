@@ -91,7 +91,7 @@ export function ExportSearchPdfButton({ searchGroups }: Props) {
           });
         });
 
-        drawFooter(pdf, 'Ubook Search Insights — Search Preview');
+        
       });
 
       pdf.save(`search-preview-${new Date().toISOString().slice(0, 10)}.pdf`);
