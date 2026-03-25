@@ -97,7 +97,7 @@ export function ExportPdfButton({ results }: Props) {
         // Big percentage
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(22);
-        pdf.setTextColor(isWinner ? PDF_COLORS.primary : PDF_COLORS.text);
+        pdf.setTextColor(isWinner ? PDF_COLORS.accent : PDF_COLORS.text);
         pdf.text(`${(r.metrics.hitRate * 100).toFixed(1)}%`, x + cardW / 2, cardY + 30, { align: 'center' });
 
         // Hit count
