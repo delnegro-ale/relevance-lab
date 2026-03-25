@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { TestCase } from '@/types/experiment';
 import { parseCsv } from '@/lib/csv-parser';
 import { loadKeywordDatabase, saveKeywordDatabase, removeKeywordsFromDatabase, clearKeywordDatabase } from '@/lib/keyword-database';
-import { Upload, Database, Trash2, CheckSquare, Square, Plus, GripVertical, ArrowDownAZ } from 'lucide-react';
+import { Upload, Database, Trash2, CheckSquare, Square, Plus, GripVertical, ArrowDownAZ, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -158,6 +158,11 @@ export function CsvUploader({ onUpload, testCases }: Props) {
     setManualIds('');
   };
 
+  const handleCloneToInput = (tc: TestCase) => {
+    setManualKeyword(tc.keyword);
+    setManualIds(tc.expectedIds.join(', '));
+  };
+
   return (
     <div className="space-y-4">
       {/* Manual input */}
@@ -271,6 +276,15 @@ export function CsvUploader({ onUpload, testCases }: Props) {
                       </div>
                       <span className={`text-sm flex-1 ${isSelected ? 'font-medium' : 'text-muted-foreground'}`}>{tc.keyword}</span>
                       <span className="text-[10px] font-mono-data text-muted-foreground">{tc.expectedIds.length} IDs</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary"
+                        onClick={(e) => { e.stopPropagation(); handleCloneToInput(tc); }}
+                        title="Copiar para o campo de input"
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
