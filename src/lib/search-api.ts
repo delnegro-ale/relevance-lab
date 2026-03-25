@@ -47,6 +47,11 @@ function parseBaselineResponse(data: any): SearchHit[] {
       ? (rawFormat.name || rawFormat.type || '')
       : String(rawFormat);
 
+    const isSeries = String(item.is_series || '').toLowerCase() === 'yes';
+    const finalCover = isSeries
+      ? `https://media3.ubook.com/catalog/book-cover-image/${productId}/200x300/${coverImage}`
+      : resolvedCover;
+
     return {
       productId,
       title: item.title || item.name || '',
@@ -54,7 +59,8 @@ function parseBaselineResponse(data: any): SearchHit[] {
       score: item.score || item._score || null,
       publisher,
       format,
-      coverUrl: resolvedCover,
+      coverUrl: finalCover,
+      isSeries,
       rawPayload: item,
     };
   });
