@@ -20,6 +20,7 @@ export interface SearchHit {
   publisher?: string;
   format?: string;
   coverUrl?: string;
+  rawPayload?: Record<string, any>;
 }
 
 export interface KeywordResult {

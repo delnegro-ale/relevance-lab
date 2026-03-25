@@ -118,6 +118,7 @@ function parseEsResponse(data: any): SearchHit[] {
       publisher,
       format,
       coverUrl: resolvedCover,
+      rawPayload: hit,
     };
   });
 }
