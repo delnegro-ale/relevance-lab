@@ -18,6 +18,7 @@ interface Hit {
   publisher?: string;
   format?: string;
   coverUrl?: string;
+  isSeries?: boolean;
   rawPayload?: Record<string, any>;
 }
 
