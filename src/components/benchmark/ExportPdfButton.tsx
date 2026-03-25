@@ -302,10 +302,10 @@ export function ExportPdfButton({ results }: Props) {
           // Product hits — compact rows to fit 10
           const hits = kr.hits || [];
           const rowH = 17;
-          const gap = 1.5;
+          const gap = 0.8;
           hits.slice(0, 10).forEach((hit, hi) => {
-            const rowY = detailStartY + 12 + hi * (rowH + gap);
-            if (rowY + rowH > H - 8) return;
+            const rowY = detailStartY + 10 + hi * (rowH + gap);
+            if (rowY + rowH > H - 2) return;
 
             const isExpected = kr.expectedIds.includes(hit.productId);
             drawProductHit(pdf, hit, x + 2, rowY, colW - 4, isExpected, imageMap);
