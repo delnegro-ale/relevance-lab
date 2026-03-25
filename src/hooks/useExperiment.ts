@@ -81,50 +81,45 @@ export function useExperiment() {
 
     setExperiment(e => ({ ...e, status: 'running', progress: { current: 0, total, keyword: '' }, results: [] }));
 
-    try {
-      const allResults: VariantResult[] = [];
+    const allResults: VariantResult[] = [];
 
-      for (const variant of variants) {
-        const keywordResults: KeywordResult[] = [];
-        let errorCount = 0;
+    for (const variant of variants) {
+      const keywordResults: KeywordResult[] = [];
+      let errorCount = 0;
 
-        for (const tc of testCases) {
-          current++;
-          setExperiment(e => ({ ...e, progress: { current, total, keyword: tc.keyword } }));
+      for (const tc of testCases) {
+        current++;
+        setExperiment(e => ({ ...e, progress: { current, total, keyword: tc.keyword } }));
 
-          let hits: import('@/types/experiment').SearchHit[] = [];
-          let error: string | undefined;
-          try {
-            if (variant.type === 'baseline') {
-              hits = await searchBaseline(tc.keyword);
-            } else {
-              hits = await searchElasticsearch(tc.keyword, variant.endpoint, variant.payload || '');
-            }
-          } catch (err: any) {
-            error = err?.message || 'Erro desconhecido';
-            errorCount++;
-            console.error(`Error: "${tc.keyword}" / ${variant.name}:`, err);
+        let hits: import('@/types/experiment').SearchHit[] = [];
+        let error: string | undefined;
+        try {
+          if (variant.type === 'baseline') {
+            hits = await searchBaseline(tc.keyword);
+          } else {
+            hits = await searchElasticsearch(tc.keyword, variant.endpoint, variant.payload || '');
           }
-
-          const m = calculateKeywordMetrics(tc.expectedIds, hits);
-          keywordResults.push({
-            keyword: tc.keyword, expectedIds: tc.expectedIds, hits,
-            foundIds: m.foundIds, missingIds: m.missingIds, hitRate: m.hitRate,
-            mrr: m.mrr, avgPosition: m.avgPosition, perfectMatch: m.perfectMatch,
-            error,
-          });
-
-          await new Promise(r => setTimeout(r, 150));
+        } catch (err: any) {
+          error = err?.message || 'Erro desconhecido';
+          errorCount++;
+          console.error(`Error: "${tc.keyword}" / ${variant.name}:`, err);
         }
 
-        allResults.push({ variant, keywordResults, metrics: aggregateMetrics(keywordResults), errorCount });
+        const m = calculateKeywordMetrics(tc.expectedIds, hits);
+        keywordResults.push({
+          keyword: tc.keyword, expectedIds: tc.expectedIds, hits,
+          foundIds: m.foundIds, missingIds: m.missingIds, hitRate: m.hitRate,
+          mrr: m.mrr, avgPosition: m.avgPosition, perfectMatch: m.perfectMatch,
+          error,
+        });
+
+        await new Promise(r => setTimeout(r, 150));
       }
 
-      setExperiment(e => ({ ...e, status: 'complete', results: sanitizeResults(allResults) }));
-    } catch (err) {
-      console.error('[Benchmark] Fatal error:', err);
-      setExperiment(e => ({ ...e, status: 'error', results: [] }));
+      allResults.push({ variant, keywordResults, metrics: aggregateMetrics(keywordResults), errorCount });
     }
+
+    setExperiment(e => ({ ...e, status: 'complete', results: sanitizeResults(allResults) }));
   }, []);
 
   const reorderVariants = useCallback((newVariants: VariantConfig[]) => {
