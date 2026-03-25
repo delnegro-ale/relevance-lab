@@ -298,7 +298,8 @@ export default function SearchPreview() {
 
                   {isOpen && (
                     <CardContent className="pt-0 pb-4 px-4">
-                      <div className="grid gap-6" style={{ gridTemplateColumns: `repeat(${group.results.length}, 1fr)` }}>
+                      <div className="overflow-x-auto">
+                      <div className="grid gap-6" style={{ gridTemplateColumns: `repeat(${group.results.length}, minmax(220px, 1fr))` }}>
                         {group.results.map(r => (
                           <div key={r.variant.id} className="space-y-3">
                             <div className="flex items-center gap-2 pb-2 border-b border-border">
