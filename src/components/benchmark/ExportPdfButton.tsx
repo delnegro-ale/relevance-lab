@@ -49,12 +49,13 @@ export function ExportPdfButton({ results }: Props) {
       pdf.text(`Relatório gerado em ${new Date().toLocaleString('pt-BR')}`, margin, margin + 17);
       pdf.text(`${results[0].keywordResults.length} keywords · ${results.length} motores`, margin, margin + 23);
 
-      // Hit Rate Hero
+      // Hit Rate Hero — with crown icon
       const heroY = margin + 32;
+      drawCrown(pdf, margin + 4, heroY - 2, 8, PDF_COLORS.accent);
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(13);
-      pdf.setTextColor(PDF_COLORS.primary);
-      pdf.text('Hit Rate @10 — Critério de Vitória', margin, heroY);
+      pdf.setTextColor(PDF_COLORS.accent);
+      pdf.text('Hit Rate @10 — Critério de Vitória', margin + 10, heroY);
 
       const hitRateWinner = results.reduce((best, r) =>
         r.metrics.hitRate > best.metrics.hitRate ? r : best
