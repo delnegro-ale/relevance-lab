@@ -37,13 +37,11 @@ function parseBaselineResponse(data: any): SearchHit[] {
     const coverImage = item.cover_image || '';
     const resolvedCover = buildCoverUrl(productId, coverImage, engine);
 
-    // Safely extract publisher (may be object with .name)
     const rawPublisher = item.publisher || item.publisher_name || item.editora || '';
     const publisher = typeof rawPublisher === 'object' && rawPublisher !== null
       ? (rawPublisher.name || rawPublisher.title || JSON.stringify(rawPublisher))
       : String(rawPublisher);
 
-    // Safely extract format/type (may be object)
     const rawFormat = item.format || item.content_type || item.type || item.formato || '';
     const format = typeof rawFormat === 'object' && rawFormat !== null
       ? (rawFormat.name || rawFormat.type || '')
@@ -57,6 +55,7 @@ function parseBaselineResponse(data: any): SearchHit[] {
       publisher,
       format,
       coverUrl: resolvedCover,
+      rawPayload: item,
     };
   });
 }
@@ -119,6 +118,7 @@ function parseEsResponse(data: any): SearchHit[] {
       publisher,
       format,
       coverUrl: resolvedCover,
+      rawPayload: hit,
     };
   });
 }
