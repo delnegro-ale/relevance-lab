@@ -304,12 +304,13 @@ export function ExportPdfButton({ results }: Props) {
           pdf.setTextColor(PDF_COLORS.textMuted);
           pdf.text(hitPct, x + colW - 4, detailStartY + 4, { align: 'right' });
 
-          // Product hits with covers, publisher, green box
+          // Product hits — compact rows to fit 10
           const hits = kr.hits || [];
-          const rowH = 21;
-          hits.slice(0, 8).forEach((hit, hi) => {
-            const rowY = detailStartY + 12 + hi * rowH;
-            if (rowY + rowH > H - 22) return;
+          const rowH = 17;
+          const gap = 1.5;
+          hits.slice(0, 10).forEach((hit, hi) => {
+            const rowY = detailStartY + 12 + hi * (rowH + gap);
+            if (rowY + rowH > H - 8) return;
 
             const isExpected = kr.expectedIds.includes(hit.productId);
             drawProductHit(pdf, hit, x + 2, rowY, colW - 4, isExpected, imageMap);
