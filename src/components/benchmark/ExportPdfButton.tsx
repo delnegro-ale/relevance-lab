@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { FileDown, Loader2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import {
-  PDF_COLORS, A4_LANDSCAPE, drawBg, drawCard, drawFooter,
+  PDF_COLORS, A4_LANDSCAPE, drawBg, drawCard, drawFooter, drawCrown,
   getVariantHex, preloadImages, drawProductHit, fmt,
 } from '@/lib/pdf-helpers';
 
