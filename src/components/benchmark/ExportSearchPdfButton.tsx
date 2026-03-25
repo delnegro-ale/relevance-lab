@@ -3,6 +3,10 @@ import { Button } from '@/components/ui/button';
 import { FileDown, Loader2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { KeywordSearchGroup } from '@/pages/SearchPreview';
+import {
+  PDF_COLORS, A4_LANDSCAPE, drawBg, drawFooter,
+  getVariantHex, preloadImages, drawProductHit,
+} from '@/lib/pdf-helpers';
 
 interface Props {
   searchGroups: KeywordSearchGroup[];
@@ -16,119 +20,77 @@ export function ExportSearchPdfButton({ searchGroups }: Props) {
     setExporting(true);
 
     try {
+      // Preload cover images
+      const allCoverUrls: string[] = [];
+      searchGroups.forEach(group => {
+        group.results.forEach(r => {
+          (r.hits || []).forEach(hit => {
+            allCoverUrls.push(hit.coverUrl || `https://media3.ubook.com/catalog/book-cover-image/${hit.productId}/200x300/`);
+          });
+        });
+      });
+      const imageMap = await preloadImages(allCoverUrls);
+
       const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-      const W = 297;
-      const H = 210;
-      const margin = 15;
+      const { W, H, margin } = A4_LANDSCAPE;
       const contentW = W - margin * 2;
 
-      const colors = {
-        bg: '#0f1117',
-        cardBg: '#1a1d27',
-        border: '#2a2d3a',
-        text: '#e2e8f0',
-        textMuted: '#8b92a5',
-        primary: '#ff5b00',
-      };
-
-      const drawBg = () => {
-        pdf.setFillColor(colors.bg);
-        pdf.rect(0, 0, W, H, 'F');
-      };
-
-      const drawFooter = () => {
-        pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(6);
-        pdf.setTextColor(colors.textMuted);
-        pdf.text('Ubook Search Insights — Search Preview', margin, H - 8);
-        pdf.text(new Date().toLocaleString('pt-BR'), W - margin, H - 8, { align: 'right' });
-      };
-
-      // One page per keyword
       searchGroups.forEach((group, gi) => {
         if (gi > 0) pdf.addPage('a4', 'landscape');
-        drawBg();
+        drawBg(pdf);
 
         // Title
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(14);
-        pdf.setTextColor(colors.primary);
-        pdf.text(`"${group.keyword}"`, margin, margin + 8);
+        pdf.setFontSize(16);
+        pdf.setTextColor(PDF_COLORS.primary);
+        pdf.text(`"${group.keyword}"`, margin, margin + 10);
 
         pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(8);
-        pdf.setTextColor(colors.textMuted);
-        pdf.text(`Keyword ${gi + 1} de ${searchGroups.length}`, margin, margin + 14);
+        pdf.setFontSize(9);
+        pdf.setTextColor(PDF_COLORS.textMuted);
+        pdf.text(`Keyword ${gi + 1} de ${searchGroups.length}`, margin, margin + 16);
 
         const variantCount = group.results.length;
-        const colW = (contentW - (variantCount - 1) * 4) / variantCount;
-        const startY = margin + 22;
+        const colW = (contentW - (variantCount - 1) * 5) / variantCount;
+        const startY = margin + 24;
 
         group.results.forEach((r, vi) => {
-          const x = margin + vi * (colW + 4);
+          const x = margin + vi * (colW + 5);
 
           // Variant header
-          const hslMatch = (r.variant.color || '').match(/(\d+)\s+(\d+)%\s+(\d+)%/);
-          if (hslMatch) {
-            pdf.setFillColor(hslToHex(parseInt(hslMatch[1]), parseInt(hslMatch[2]), parseInt(hslMatch[3])));
-          } else {
-            pdf.setFillColor(colors.textMuted);
-          }
-          pdf.circle(x + 3, startY + 2, 1.5, 'F');
+          pdf.setFillColor(getVariantHex(r.variant.color || ''));
+          pdf.circle(x + 4, startY + 2, 2, 'F');
 
           pdf.setFont('helvetica', 'bold');
-          pdf.setFontSize(8);
-          pdf.setTextColor(colors.text);
-          pdf.text(r.variant.name, x + 7, startY + 3);
+          pdf.setFontSize(10);
+          pdf.setTextColor(PDF_COLORS.text);
+          pdf.text(r.variant.name, x + 9, startY + 4);
 
           if (r.error) {
             pdf.setFont('helvetica', 'normal');
-            pdf.setFontSize(7);
-            pdf.setTextColor('#ef4444');
-            pdf.text(`Erro: ${r.error.slice(0, 80)}`, x + 3, startY + 12);
+            pdf.setFontSize(8);
+            pdf.setTextColor(PDF_COLORS.danger);
+            pdf.text(`Erro: ${r.error.slice(0, 60)}`, x + 4, startY + 14);
             return;
           }
 
           pdf.setFont('helvetica', 'normal');
-          pdf.setFontSize(7);
-          pdf.setTextColor(colors.textMuted);
-          pdf.text(`${r.hits.length} resultados`, x + colW - 3, startY + 3, { align: 'right' });
+          pdf.setFontSize(8);
+          pdf.setTextColor(PDF_COLORS.textMuted);
+          pdf.text(`${r.hits.length} resultados`, x + colW - 4, startY + 4, { align: 'right' });
 
-          // Product list
-          const hits = r.hits.slice(0, 10);
+          // Product list with covers
+          const hits = r.hits.slice(0, 9);
+          const rowH = 17;
           hits.forEach((hit, hi) => {
-            const rowY = startY + 10 + hi * 14;
-            if (rowY > H - 20) return;
+            const rowY = startY + 12 + hi * rowH;
+            if (rowY + rowH > H - 22) return;
 
-            // Position
-            pdf.setFont('helvetica', 'bold');
-            pdf.setFontSize(7);
-            pdf.setTextColor(colors.textMuted);
-            pdf.text(`${hit.position}`, x + 3, rowY + 4);
-
-            // Title
-            pdf.setFont('helvetica', 'normal');
-            pdf.setFontSize(7);
-            pdf.setTextColor(colors.text);
-            const title = (hit.title || 'Sem título').slice(0, 45);
-            pdf.text(title, x + 10, rowY + 4);
-
-            // ID + format
-            pdf.setFontSize(6);
-            pdf.setTextColor(colors.textMuted);
-            const meta = `ID: ${hit.productId}${hit.format ? ` · ${hit.format}` : ''}`;
-            pdf.text(meta, x + 10, rowY + 9);
-
-            // Separator
-            if (hi < hits.length - 1) {
-              pdf.setDrawColor(colors.border);
-              pdf.setLineWidth(0.1);
-              pdf.line(x + 3, rowY + 12, x + colW - 3, rowY + 12);
-            }
+            drawProductHit(pdf, hit, x + 2, rowY, colW - 4, false, imageMap);
           });
         });
 
-        drawFooter();
+        drawFooter(pdf, 'Ubook Search Insights — Search Preview');
       });
 
       pdf.save(`search-preview-${new Date().toISOString().slice(0, 10)}.pdf`);
@@ -148,19 +110,7 @@ export function ExportSearchPdfButton({ searchGroups }: Props) {
       className="text-muted-foreground text-xs"
     >
       {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <FileDown className="h-3.5 w-3.5 mr-1.5" />}
-      Exportar PDF
+      {exporting ? 'Gerando PDF…' : 'Exportar PDF'}
     </Button>
   );
-}
-
-function hslToHex(h: number, s: number, l: number): string {
-  s /= 100;
-  l /= 100;
-  const a = s * Math.min(l, 1 - l);
-  const f = (n: number) => {
-    const k = (n + h / 30) % 12;
-    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-    return Math.round(255 * color).toString(16).padStart(2, '0');
-  };
-  return `#${f(0)}${f(8)}${f(4)}`;
 }
