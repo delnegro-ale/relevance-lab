@@ -61,6 +61,7 @@ function sanitizeKeywordResult(kr: any): KeywordResult | null {
     avgPosition: typeof kr.avgPosition === 'number' && !isNaN(kr.avgPosition) ? kr.avgPosition : null,
     perfectMatch: Boolean(kr.perfectMatch),
     error: kr.error ? String(kr.error) : undefined,
+    responseTimeMs: typeof kr.responseTimeMs === 'number' ? kr.responseTimeMs : undefined,
   };
 }
 
@@ -74,6 +75,8 @@ function sanitizeHit(hit: any): SearchHit | null {
     publisher: hit.publisher != null ? String(hit.publisher) : undefined,
     format: hit.format != null ? String(hit.format) : undefined,
     coverUrl: hit.coverUrl != null ? String(hit.coverUrl) : undefined,
+    isSeries: hit.isSeries,
+    rawPayload: hit.rawPayload,
   };
 }
 
