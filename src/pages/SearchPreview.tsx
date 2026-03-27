@@ -63,13 +63,13 @@ export default function SearchPreview() {
     const results: VariantSearchResult[] = await Promise.all(
       variants.map(async (variant) => {
         try {
-          let hits: SearchHit[];
+          let res;
           if (variant.type === 'baseline') {
-            hits = await searchBaseline(keyword);
+            res = await searchBaseline(keyword);
           } else {
-            hits = await searchElasticsearch(keyword, variant.endpoint, variant.payload || '');
+            res = await searchElasticsearch(keyword, variant.endpoint, variant.payload || '');
           }
-          return { variant, hits, loading: false };
+          return { variant, hits: res.hits, loading: false, took: res.took, rawResponse: res.rawResponse };
         } catch (err: any) {
           return { variant, hits: [], loading: false, error: err?.message || 'Erro desconhecido' };
         }
