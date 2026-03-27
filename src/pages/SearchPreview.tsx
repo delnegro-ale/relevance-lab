@@ -31,6 +31,8 @@ interface VariantSearchResult {
   hits: SearchHit[];
   loading: boolean;
   error?: string;
+  took?: number;
+  rawResponse?: Record<string, any>;
 }
 
 export interface KeywordSearchGroup {
