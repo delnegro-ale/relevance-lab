@@ -21,6 +21,7 @@ export function KeywordBreakdown({ results }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [sortKey, setSortKey] = useState<SortKey>('keyword');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [viewingResponse, setViewingResponse] = useState<{ payload: Record<string, any>; title: string } | null>(null);
 
   const safeResults = results.filter(r => r && r.variant && Array.isArray(r.keywordResults));
 
