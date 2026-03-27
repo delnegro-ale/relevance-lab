@@ -78,6 +78,7 @@ export function KeywordBreakdown({ results }: Props) {
   };
 
   return (
+    <>
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between flex-wrap gap-3">
