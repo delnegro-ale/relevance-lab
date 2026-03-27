@@ -187,8 +187,9 @@ export function ExecutiveDashboard({ results }: Props) {
         })}
       </div>
 
-      {/* Distribution Charts */}
-      <DistributionCharts results={results} />
+      <ErrorBoundary fallbackTitle="Erro ao renderizar gráficos de distribuição">
+        <DistributionCharts results={results} />
+      </ErrorBoundary>
 
       {/* Payload Viewer Dialog */}
       <Dialog open={!!payloadVariant} onOpenChange={(open) => !open && setPayloadVariant(null)}>
