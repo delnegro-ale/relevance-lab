@@ -3,7 +3,7 @@ import { VariantResult } from '@/types/experiment';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
+  PieChart, Pie, Cell,
 } from 'recharts';
 import { Building2, FileType, CreditCard, Clock } from 'lucide-react';
 
@@ -15,6 +15,19 @@ interface DistEntry {
   name: string;
   value: number;
 }
+
+// Palette for consistent entity coloring across all variants
+const ENTITY_PALETTE = [
+  'hsl(262 80% 60%)',  // purple
+  'hsl(38 92% 50%)',   // amber
+  'hsl(200 80% 55%)',  // blue
+  'hsl(142 70% 45%)',  // green
+  'hsl(350 80% 60%)',  // red
+  'hsl(28 90% 55%)',   // orange
+  'hsl(180 60% 45%)',  // teal
+  'hsl(320 70% 55%)',  // pink
+];
+const OTHERS_COLOR = 'hsl(215 15% 35%)';
 
 function extractField(hit: any, field: string): string {
   const raw = hit.rawPayload;
@@ -64,9 +77,40 @@ function buildDistForVariant(result: VariantResult, field: string, topN = 5): Di
   return entries;
 }
 
-const PIE_COLORS = ['hsl(var(--primary))', 'hsl(38 92% 50%)', 'hsl(200 80% 55%)', 'hsl(142 70% 45%)', 'hsl(350 80% 60%)', 'hsl(var(--muted-foreground))'];
+/** Build a global color map: same entity name → same color across all variants */
+function buildGlobalColorMap(results: VariantResult[], field: string): Record<string, string> {
+  const globalCounts: Record<string, number> = {};
+  for (const r of results) {
+    for (const kr of r.keywordResults) {
+      for (const hit of kr.hits.slice(0, 10)) {
+        const val = extractField(hit, field);
+        globalCounts[val] = (globalCounts[val] || 0) + 1;
+      }
+    }
+  }
+  const sorted = Object.entries(globalCounts).sort((a, b) => b[1] - a[1]);
+  const map: Record<string, string> = {};
+  let idx = 0;
+  for (const [name] of sorted) {
+    if (name === 'Outros') continue;
+    map[name] = ENTITY_PALETTE[idx % ENTITY_PALETTE.length];
+    idx++;
+  }
+  map['Outros'] = OTHERS_COLOR;
+  return map;
+}
 
-function VariantSection({ result }: { result: VariantResult }) {
+function getColor(name: string, colorMap: Record<string, string>, variantColor: string): string {
+  if (name === 'Outros') return OTHERS_COLOR;
+  return colorMap[name] || variantColor;
+}
+
+function VariantSection({ result, publisherColors, formatColors, planColors }: {
+  result: VariantResult;
+  publisherColors: Record<string, string>;
+  formatColors: Record<string, string>;
+  planColors: Record<string, string>;
+}) {
   const publisherData = useMemo(() => buildDistForVariant(result, 'publisher'), [result]);
   const formatData = useMemo(() => buildDistForVariant(result, 'type'), [result]);
   const planData = useMemo(() => buildDistForVariant(result, 'catalog_plus'), [result]);
@@ -81,7 +125,7 @@ function VariantSection({ result }: { result: VariantResult }) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        {/* Editoras - bar chart */}
+        {/* Editoras */}
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
@@ -97,18 +141,11 @@ function VariantSection({ result }: { result: VariantResult }) {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={publisherData} layout="vertical" barCategoryGap="20%">
                     <XAxis type="number" tick={{ fontSize: 10, fill: 'hsl(215 15% 50%)' }} axisLine={false} tickLine={false} />
-                    <YAxis
-                      type="category"
-                      dataKey="name"
-                      tick={{ fontSize: 9, fill: 'hsl(215 15% 50%)' }}
-                      axisLine={false}
-                      tickLine={false}
-                      width={90}
-                    />
+                    <YAxis type="category" dataKey="name" tick={{ fontSize: 9, fill: 'hsl(215 15% 50%)' }} axisLine={false} tickLine={false} width={90} />
                     <Tooltip contentStyle={{ backgroundColor: 'hsl(225 20% 9%)', border: '1px solid hsl(225 15% 16%)', borderRadius: '8px', fontSize: '11px' }} />
                     <Bar dataKey="value" radius={[0, 3, 3, 0]}>
                       {publisherData.map((entry, i) => (
-                        <Cell key={i} fill={entry.name === 'Outros' ? 'hsl(215 15% 35%)' : variantColor} opacity={entry.name === 'Outros' ? 0.5 : 1} />
+                        <Cell key={i} fill={getColor(entry.name, publisherColors, variantColor)} opacity={entry.name === 'Outros' ? 0.5 : 1} />
                       ))}
                     </Bar>
                   </BarChart>
@@ -118,7 +155,7 @@ function VariantSection({ result }: { result: VariantResult }) {
           </CardContent>
         </Card>
 
-        {/* Formatos - bar chart */}
+        {/* Formatos */}
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
@@ -134,18 +171,11 @@ function VariantSection({ result }: { result: VariantResult }) {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={formatData} layout="vertical" barCategoryGap="20%">
                     <XAxis type="number" tick={{ fontSize: 10, fill: 'hsl(215 15% 50%)' }} axisLine={false} tickLine={false} />
-                    <YAxis
-                      type="category"
-                      dataKey="name"
-                      tick={{ fontSize: 9, fill: 'hsl(215 15% 50%)' }}
-                      axisLine={false}
-                      tickLine={false}
-                      width={70}
-                    />
+                    <YAxis type="category" dataKey="name" tick={{ fontSize: 9, fill: 'hsl(215 15% 50%)' }} axisLine={false} tickLine={false} width={70} />
                     <Tooltip contentStyle={{ backgroundColor: 'hsl(225 20% 9%)', border: '1px solid hsl(225 15% 16%)', borderRadius: '8px', fontSize: '11px' }} />
                     <Bar dataKey="value" radius={[0, 3, 3, 0]}>
                       {formatData.map((entry, i) => (
-                        <Cell key={i} fill={entry.name === 'Outros' ? 'hsl(215 15% 35%)' : variantColor} opacity={entry.name === 'Outros' ? 0.5 : 1} />
+                        <Cell key={i} fill={getColor(entry.name, formatColors, variantColor)} opacity={entry.name === 'Outros' ? 0.5 : 1} />
                       ))}
                     </Bar>
                   </BarChart>
@@ -155,7 +185,7 @@ function VariantSection({ result }: { result: VariantResult }) {
           </CardContent>
         </Card>
 
-        {/* Planos - pie chart */}
+        {/* Planos */}
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
@@ -182,8 +212,8 @@ function VariantSection({ result }: { result: VariantResult }) {
                       label={({ name, value }) => `${name}: ${value}`}
                       labelLine={{ stroke: 'hsl(215 15% 40%)', strokeWidth: 0.5 }}
                     >
-                      {planData.map((_, i) => (
-                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                      {planData.map((entry, i) => (
+                        <Cell key={i} fill={getColor(entry.name, planColors, variantColor)} />
                       ))}
                     </Pie>
                     <Tooltip contentStyle={{ backgroundColor: 'hsl(225 20% 9%)', border: '1px solid hsl(225 15% 16%)', borderRadius: '8px', fontSize: '11px' }} />
@@ -199,20 +229,33 @@ function VariantSection({ result }: { result: VariantResult }) {
 }
 
 export function DistributionCharts({ results }: Props) {
+  // Build global color maps so same entity = same color across all variants
+  const publisherColors = useMemo(() => buildGlobalColorMap(results, 'publisher'), [results]);
+  const formatColors = useMemo(() => buildGlobalColorMap(results, 'type'), [results]);
+  const planColors = useMemo(() => buildGlobalColorMap(results, 'catalog_plus'), [results]);
+
   const avgResponseTimes = useMemo(() => {
     return results.map(r => {
       const times = r.keywordResults
         .map(kr => kr.responseTimeMs)
-        .filter((t): t is number => t !== undefined);
+        .filter((t): t is number => t !== undefined && !isNaN(t));
       const avg = times.length > 0 ? Math.round(times.reduce((a, b) => a + b, 0) / times.length) : 0;
-      return { variant: r.variant, avg, min: Math.min(...times), max: Math.max(...times), count: times.length };
+      const min = times.length > 0 ? Math.min(...times) : 0;
+      const max = times.length > 0 ? Math.max(...times) : 0;
+      return { variant: r.variant, avg, min, max, count: times.length };
     });
   }, [results]);
 
   return (
     <div className="space-y-6">
       {results.map(r => (
-        <VariantSection key={r.variant.id} result={r} />
+        <VariantSection
+          key={r.variant.id}
+          result={r}
+          publisherColors={publisherColors}
+          formatColors={formatColors}
+          planColors={planColors}
+        />
       ))}
 
       {/* Response time */}
@@ -230,7 +273,9 @@ export function DistributionCharts({ results }: Props) {
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: `hsl(${rt.variant.color})` }} />
                 <span className="text-[11px] text-muted-foreground">{rt.variant.name}:</span>
                 <span className="text-[11px] font-mono-data text-muted-foreground/80">{rt.avg}ms</span>
-                <span className="text-[10px] font-mono-data text-muted-foreground/50">(min {rt.min}ms · max {rt.max}ms)</span>
+                {rt.count > 0 && (
+                  <span className="text-[10px] font-mono-data text-muted-foreground/50">(min {rt.min}ms · max {rt.max}ms)</span>
+                )}
               </div>
             ))}
           </div>

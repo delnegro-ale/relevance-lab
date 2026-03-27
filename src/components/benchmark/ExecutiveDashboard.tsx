@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { VariantResult } from '@/types/experiment';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Trophy, Target, Crosshair, TrendingUp, Award, Percent, AlertTriangle, Crown, Code2 } from 'lucide-react';
+import { Trophy, Crosshair, TrendingUp, Award, AlertTriangle, Crown, Code2 } from 'lucide-react';
 import { MetricTooltip, METRIC_EXPLANATIONS } from './MetricTooltip';
 import { HowToReadReport } from './HowToReadReport';
 import { DistributionCharts } from './DistributionCharts';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 interface Props {
   results: VariantResult[];
@@ -38,10 +38,6 @@ export function ExecutiveDashboard({ results }: Props) {
     return r.metrics.perfectMatchRate > best.metrics.perfectMatchRate ? r : best;
   });
 
-  const chartData = METRIC_DEFS.filter(m => m.key !== 'avgPosition').map(m => ({
-    name: m.label,
-    ...Object.fromEntries(results.map(r => [r.variant.name, parseFloat((r.metrics[m.key] * 100).toFixed(1))])),
-  }));
 
   return (
     <div className="space-y-6">
@@ -191,31 +187,9 @@ export function ExecutiveDashboard({ results }: Props) {
         })}
       </div>
 
-      {/* Distribution Charts */}
-      <DistributionCharts results={results} />
-
-      {/* Chart */}
-      <Card>
-        <CardHeader><CardTitle className="text-sm">Comparação Visual (%)</CardTitle></CardHeader>
-        <CardContent>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} barCategoryGap="20%">
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'hsl(215 15% 50%)' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: 'hsl(215 15% 50%)' }} axisLine={false} tickLine={false} domain={[0, 100]} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: 'hsl(225 20% 9%)', border: '1px solid hsl(225 15% 16%)', borderRadius: '8px', fontSize: '12px' }}
-                  formatter={(value: number) => [`${value}%`]}
-                />
-                <Legend wrapperStyle={{ fontSize: '11px' }} />
-                {results.map(r => (
-                  <Bar key={r.variant.id} dataKey={r.variant.name} fill={`hsl(${r.variant.color})`} radius={[4, 4, 0, 0]} />
-                ))}
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+      <ErrorBoundary fallbackTitle="Erro ao renderizar gráficos de distribuição">
+        <DistributionCharts results={results} />
+      </ErrorBoundary>
 
       {/* Payload Viewer Dialog */}
       <Dialog open={!!payloadVariant} onOpenChange={(open) => !open && setPayloadVariant(null)}>
