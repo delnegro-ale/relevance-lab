@@ -282,5 +282,15 @@ export function KeywordBreakdown({ results }: Props) {
         </div>
       </CardContent>
     </Card>
+
+    {viewingResponse && (
+      <PayloadViewerDialog
+        open={!!viewingResponse}
+        onOpenChange={(open) => !open && setViewingResponse(null)}
+        payload={viewingResponse.payload}
+        title={viewingResponse.title}
+      />
+    )}
+    </>
   );
 }
