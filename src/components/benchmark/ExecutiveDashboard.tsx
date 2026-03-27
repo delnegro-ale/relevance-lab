@@ -191,6 +191,9 @@ export function ExecutiveDashboard({ results }: Props) {
         })}
       </div>
 
+      {/* Distribution Charts */}
+      <DistributionCharts results={results} />
+
       {/* Chart */}
       <Card>
         <CardHeader><CardTitle className="text-sm">Comparação Visual (%)</CardTitle></CardHeader>
