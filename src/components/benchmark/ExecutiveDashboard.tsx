@@ -6,6 +6,7 @@ import { Trophy, Crosshair, TrendingUp, Award, AlertTriangle, Crown, Code2 } fro
 import { MetricTooltip, METRIC_EXPLANATIONS } from './MetricTooltip';
 import { HowToReadReport } from './HowToReadReport';
 import { DistributionCharts } from './DistributionCharts';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 interface Props {
   results: VariantResult[];
