@@ -193,12 +193,21 @@ export function KeywordBreakdown({ results }: Props) {
                             <div className="flex items-center gap-2 pb-2 border-b border-border">
                               <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color || '0 0% 50%'})` }} />
                               <span className="text-xs font-semibold">{r.variant.name || 'Sem nome'}</span>
+                              {kr.rawResponse && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setViewingResponse({ payload: kr.rawResponse!, title: `${r.variant.name} — "${keyword}"` }); }}
+                                  className="p-0.5 rounded hover:bg-muted/40 transition-colors"
+                                  title="Ver response completo"
+                                >
+                                  <Code2 className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                                </button>
+                              )}
                               <Badge variant={(kr.hitRate ?? 0) === 1 ? 'default' : 'secondary'} className="text-[9px] ml-auto">
                                 {((kr.hitRate ?? 0) * 100).toFixed(0)}% hit rate
                               </Badge>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="grid grid-cols-3 gap-2 text-xs">
                               <div className="flex items-center gap-1">
                                 <span className="text-muted-foreground">MRR:</span>
                                 <span className="font-mono-data font-medium">{(kr.mrr ?? 0).toFixed(3)}</span>
@@ -207,6 +216,12 @@ export function KeywordBreakdown({ results }: Props) {
                                 <span className="text-muted-foreground">Pos. Média:</span>
                                 <span className="font-mono-data font-medium">{kr.avgPosition?.toFixed(1) || 'N/A'}</span>
                               </div>
+                              {typeof kr.took === 'number' && (
+                                <div className="flex items-center gap-1">
+                                  <span className="text-muted-foreground">Tempo:</span>
+                                  <span className="font-mono-data font-medium text-muted-foreground/70">{kr.took}ms</span>
+                                </div>
+                              )}
                             </div>
 
                             <div className="space-y-1">
