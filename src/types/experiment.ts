@@ -45,6 +45,7 @@ export interface VariantMetrics {
   coverage: number;
   avgPosition: number;
   perfectMatchRate: number;
+  avgResponseTime?: number;
 }
 
 export interface VariantResult {
