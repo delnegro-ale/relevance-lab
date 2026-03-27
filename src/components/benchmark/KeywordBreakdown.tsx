@@ -157,6 +157,9 @@ export function KeywordBreakdown({ results }: Props) {
                         <span className="text-[10px] text-muted-foreground ml-1">
                           ({(kr.foundIds || []).length}/{(kr.expectedIds || []).length})
                         </span>
+                        {typeof kr.took === 'number' && (
+                          <span className="text-[9px] text-muted-foreground/50 ml-1 font-mono-data">{kr.took}ms</span>
+                        )}
                       </div>
                     );
                   })}
