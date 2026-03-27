@@ -55,6 +55,27 @@ export function JsonEditorPanel({ open, onOpenChange, value, onChange, defaultVa
   const [localValue, setLocalValue] = useState(value);
   const [isValid, setIsValid] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+  const [panelWidth, setPanelWidth] = useState(720);
+
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = panelWidth;
+    const onMouseMove = (e: MouseEvent) => {
+      const diff = startX - e.clientX;
+      setPanelWidth(Math.max(400, Math.min(window.innerWidth * 0.9, startWidth + diff)));
+    };
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, [panelWidth]);
 
   useEffect(() => {
     setLocalValue(value);
