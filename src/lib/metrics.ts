@@ -5,7 +5,8 @@ export function calculateKeywordMetrics(expectedIds: string[], hits: SearchHit[]
   const hitIds = topHits.map(h => h.productId);
   const foundIds = expectedIds.filter(id => hitIds.includes(id));
   const missingIds = expectedIds.filter(id => !hitIds.includes(id));
-  const hitRate = expectedIds.length > 0 ? foundIds.length / expectedIds.length : 0;
+  const maxExpected = Math.min(expectedIds.length, topK);
+  const hitRate = maxExpected > 0 ? foundIds.length / maxExpected : 0;
 
   let mrr = 0;
   for (const id of expectedIds) {
