@@ -199,6 +199,11 @@ export function KeywordBreakdown({ results }: Props) {
                               <Badge variant={(kr.hitRate ?? 0) === 1 ? 'default' : 'secondary'} className="text-[9px] ml-auto">
                                 {((kr.hitRate ?? 0) * 100).toFixed(0)}% hit rate
                               </Badge>
+                              {kr.responseTimeMs !== undefined && (
+                                <span className="text-[9px] font-mono-data text-muted-foreground/50 flex items-center gap-0.5" title="Tempo de resposta">
+                                  <Clock className="h-2.5 w-2.5" />{kr.responseTimeMs}ms
+                                </span>
+                              )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-2 text-xs">
