@@ -48,6 +48,7 @@ export default function SearchPreview() {
   const [variants, setVariants] = useState<VariantConfig[]>([]);
   const [searchGroups, setSearchGroups] = useState<KeywordSearchGroup[]>([]);
   const [expandedKeyword, setExpandedKeyword] = useState<string | null>(null);
+  const [viewingResponse, setViewingResponse] = useState<{ payload: Record<string, any>; title: string } | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [wasMultiSearch, setWasMultiSearch] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
