@@ -155,6 +155,11 @@ export function KeywordBreakdown({ results }: Props) {
                         <span className="text-[10px] text-muted-foreground ml-1">
                           ({(kr.foundIds || []).length}/{(kr.expectedIds || []).length})
                         </span>
+                        {kr.responseTimeMs !== undefined && (
+                          <span className="text-[9px] text-muted-foreground/50 font-mono-data ml-1" title="Tempo de resposta">
+                            {kr.responseTimeMs}ms
+                          </span>
+                        )}
                       </div>
                     );
                   })}
