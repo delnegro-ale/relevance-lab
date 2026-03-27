@@ -1,5 +1,11 @@
 import { SearchHit, DEFAULT_BASELINE_ENDPOINT } from '@/types/experiment';
 
+export interface SearchResponse {
+  hits: SearchHit[];
+  took?: number;
+  rawResponse?: Record<string, any>;
+}
+
 export async function searchBaseline(keyword: string): Promise<SearchHit[]> {
   const formData = new FormData();
   formData.append('imagesUrl', '//media3.ubook.com/catalog/book-cover-image/replaced_product_id/400x600/');
