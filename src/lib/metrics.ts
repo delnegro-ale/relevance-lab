@@ -16,7 +16,7 @@ export function calculateKeywordMetrics(expectedIds: string[], hits: SearchHit[]
 
   const positions = foundIds.map(id => hitIds.indexOf(id) + 1);
   const avgPosition = positions.length > 0 ? positions.reduce((a, b) => a + b, 0) / positions.length : null;
-  const perfectMatch = missingIds.length === 0 && expectedIds.length > 0;
+  const perfectMatch = foundIds.length >= maxExpected && maxExpected > 0;
 
   return { foundIds, missingIds, hitRate, mrr, avgPosition, perfectMatch };
 }
