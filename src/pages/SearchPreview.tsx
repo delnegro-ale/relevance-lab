@@ -308,7 +308,12 @@ export default function SearchPreview() {
                               <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color || '0 0% 50%'})` }} />
                               <span className="text-xs font-semibold">{r.variant.name}</span>
                               {!r.loading && !r.error && (
-                                <Badge variant="secondary" className="text-[9px] ml-auto">{r.hits.length} resultados</Badge>
+                                <div className="flex items-center gap-2 ml-auto">
+                                  {typeof r.took === 'number' && (
+                                    <span className="text-[9px] font-mono-data text-muted-foreground/60">{r.took}ms</span>
+                                  )}
+                                  <Badge variant="secondary" className="text-[9px]">{r.hits.length} resultados</Badge>
+                                </div>
                               )}
                             </div>
 
