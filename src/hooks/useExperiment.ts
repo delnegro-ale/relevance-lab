@@ -93,11 +93,19 @@ export function useExperiment() {
 
         let hits: import('@/types/experiment').SearchHit[] = [];
         let error: string | undefined;
+        let took: number | undefined;
+        let rawResponse: Record<string, any> | undefined;
         try {
           if (variant.type === 'baseline') {
-            hits = await searchBaseline(tc.keyword);
+            const res = await searchBaseline(tc.keyword);
+            hits = res.hits;
+            took = res.took;
+            rawResponse = res.rawResponse;
           } else {
-            hits = await searchElasticsearch(tc.keyword, variant.endpoint, variant.payload || '');
+            const res = await searchElasticsearch(tc.keyword, variant.endpoint, variant.payload || '');
+            hits = res.hits;
+            took = res.took;
+            rawResponse = res.rawResponse;
           }
         } catch (err: any) {
           error = err?.message || 'Erro desconhecido';
@@ -110,7 +118,7 @@ export function useExperiment() {
           keyword: tc.keyword, expectedIds: tc.expectedIds, hits,
           foundIds: m.foundIds, missingIds: m.missingIds, hitRate: m.hitRate,
           mrr: m.mrr, avgPosition: m.avgPosition, perfectMatch: m.perfectMatch,
-          error,
+          error, took, rawResponse,
         });
 
         await new Promise(r => setTimeout(r, 150));

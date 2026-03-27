@@ -71,3 +71,11 @@
 .json-code-editor pre {
   background: transparent !important;
 }
+
+/* JSON Viewer Syntax Highlighting */
+.json-key { color: #cc99cd; }
+.json-string { color: #7ec699; }
+.json-number { color: #f08d49; }
+.json-boolean { color: #67cdcc; }
+.json-null { color: #999; font-style: italic; }
+.json-fold-indicator { color: #636d83; font-style: italic; }

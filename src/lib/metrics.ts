@@ -31,5 +31,8 @@ export function aggregateMetrics(keywordResults: KeywordResult[]): VariantMetric
   const avgPosition = withPos.length > 0 ? withPos.reduce((s, kr) => s + (kr.avgPosition || 0), 0) / withPos.length : 0;
   const perfectMatchRate = keywordResults.filter(kr => kr.perfectMatch).length / n;
 
-  return { hitRate, mrr, coverage, avgPosition, perfectMatchRate };
+  const withTook = keywordResults.filter(kr => typeof kr.took === 'number');
+  const avgResponseTime = withTook.length > 0 ? withTook.reduce((s, kr) => s + (kr.took || 0), 0) / withTook.length : undefined;
+
+  return { hitRate, mrr, coverage, avgPosition, perfectMatchRate, avgResponseTime };
 }

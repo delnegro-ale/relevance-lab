@@ -3,10 +3,11 @@ import { VariantResult } from '@/types/experiment';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronRight, X, Search, AlertTriangle, ArrowUp, ArrowDown, ArrowUpDown, ExternalLink } from 'lucide-react';
+import { ChevronDown, ChevronRight, X, Search, AlertTriangle, ArrowUp, ArrowDown, ArrowUpDown, ExternalLink, Code2 } from 'lucide-react';
 import { MetricTooltip } from './MetricTooltip';
 import { ProductCardSimple } from './ProductCardSimple';
 import { buildProductUrl } from '@/lib/product-url';
+import { PayloadViewerDialog } from './PayloadViewerDialog';
 
 interface Props {
   results: VariantResult[];
@@ -20,6 +21,7 @@ export function KeywordBreakdown({ results }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [sortKey, setSortKey] = useState<SortKey>('keyword');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [viewingResponse, setViewingResponse] = useState<{ payload: Record<string, any>; title: string } | null>(null);
 
   const safeResults = results.filter(r => r && r.variant && Array.isArray(r.keywordResults));
 
@@ -76,6 +78,7 @@ export function KeywordBreakdown({ results }: Props) {
   };
 
   return (
+    <>
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -155,6 +158,9 @@ export function KeywordBreakdown({ results }: Props) {
                         <span className="text-[10px] text-muted-foreground ml-1">
                           ({(kr.foundIds || []).length}/{(kr.expectedIds || []).length})
                         </span>
+                        {typeof kr.took === 'number' && (
+                          <span className="text-[9px] text-muted-foreground/50 ml-1 font-mono-data">{kr.took}ms</span>
+                        )}
                       </div>
                     );
                   })}
@@ -191,12 +197,21 @@ export function KeywordBreakdown({ results }: Props) {
                             <div className="flex items-center gap-2 pb-2 border-b border-border">
                               <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color || '0 0% 50%'})` }} />
                               <span className="text-xs font-semibold">{r.variant.name || 'Sem nome'}</span>
+                              {kr.rawResponse && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setViewingResponse({ payload: kr.rawResponse!, title: `${r.variant.name} — "${keyword}"` }); }}
+                                  className="p-0.5 rounded hover:bg-muted/40 transition-colors"
+                                  title="Ver response completo"
+                                >
+                                  <Code2 className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                                </button>
+                              )}
                               <Badge variant={(kr.hitRate ?? 0) === 1 ? 'default' : 'secondary'} className="text-[9px] ml-auto">
                                 {((kr.hitRate ?? 0) * 100).toFixed(0)}% hit rate
                               </Badge>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="grid grid-cols-3 gap-2 text-xs">
                               <div className="flex items-center gap-1">
                                 <span className="text-muted-foreground">MRR:</span>
                                 <span className="font-mono-data font-medium">{(kr.mrr ?? 0).toFixed(3)}</span>
@@ -205,6 +220,12 @@ export function KeywordBreakdown({ results }: Props) {
                                 <span className="text-muted-foreground">Pos. Média:</span>
                                 <span className="font-mono-data font-medium">{kr.avgPosition?.toFixed(1) || 'N/A'}</span>
                               </div>
+                              {typeof kr.took === 'number' && (
+                                <div className="flex items-center gap-1">
+                                  <span className="text-muted-foreground">Tempo:</span>
+                                  <span className="font-mono-data font-medium text-muted-foreground/70">{kr.took}ms</span>
+                                </div>
+                              )}
                             </div>
 
                             <div className="space-y-1">
@@ -262,5 +283,15 @@ export function KeywordBreakdown({ results }: Props) {
         </div>
       </CardContent>
     </Card>
+
+    {viewingResponse && (
+      <PayloadViewerDialog
+        open={!!viewingResponse}
+        onOpenChange={(open) => !open && setViewingResponse(null)}
+        payload={viewingResponse.payload}
+        title={viewingResponse.title}
+      />
+    )}
+    </>
   );
 }

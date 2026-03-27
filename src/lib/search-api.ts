@@ -1,6 +1,12 @@
 import { SearchHit, DEFAULT_BASELINE_ENDPOINT } from '@/types/experiment';
 
-export async function searchBaseline(keyword: string): Promise<SearchHit[]> {
+export interface SearchResponse {
+  hits: SearchHit[];
+  took?: number;
+  rawResponse?: Record<string, any>;
+}
+
+export async function searchBaseline(keyword: string): Promise<SearchResponse> {
   const formData = new FormData();
   formData.append('imagesUrl', '//media3.ubook.com/catalog/book-cover-image/replaced_product_id/400x600/');
   formData.append('ebookImagesUrl', '//media3.ubook.com/catalog/ebook-cover-image/replaced_product_id/400x600/');
@@ -13,7 +19,7 @@ export async function searchBaseline(keyword: string): Promise<SearchHit[]> {
   if (!response.ok) throw new Error(`Baseline API error: ${response.status}`);
 
   const data = await response.json();
-  return parseBaselineResponse(data);
+  return { hits: parseBaselineResponse(data), took: data?.took, rawResponse: data };
 }
 
 function parseBaselineResponse(data: any): SearchHit[] {
@@ -66,7 +72,7 @@ function parseBaselineResponse(data: any): SearchHit[] {
   });
 }
 
-export async function searchElasticsearch(keyword: string, endpoint: string, payloadTemplate: string): Promise<SearchHit[]> {
+export async function searchElasticsearch(keyword: string, endpoint: string, payloadTemplate: string): Promise<SearchResponse> {
   const payload = payloadTemplate.replace(/\{\{keyword\}\}/g, keyword);
 
   // Try via Edge Function proxy first
@@ -82,7 +88,7 @@ export async function searchElasticsearch(keyword: string, endpoint: string, pay
       throw new Error(`Proxy error ${response.status}: ${errBody}`);
     }
     const data = await response.json();
-    return parseEsResponse(data);
+    return { hits: parseEsResponse(data), took: data?.took, rawResponse: data };
   }
 
   // Direct call (may fail due to CORS/VPC)
@@ -94,7 +100,7 @@ export async function searchElasticsearch(keyword: string, endpoint: string, pay
   if (!response.ok) throw new Error(`ES API error: ${response.status}`);
 
   const data = await response.json();
-  return parseEsResponse(data);
+  return { hits: parseEsResponse(data), took: data?.took, rawResponse: data };
 }
 
 function parseEsResponse(data: any): SearchHit[] {

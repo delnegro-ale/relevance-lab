@@ -7,7 +7,8 @@ import { ExportSearchPdfButton } from '@/components/benchmark/ExportSearchPdfBut
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Loader2, Clock, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { Search, Loader2, Clock, X, ChevronDown, ChevronRight, Code2 } from 'lucide-react';
+import { PayloadViewerDialog } from '@/components/benchmark/PayloadViewerDialog';
 import { SearchHeartFill } from '@/components/icons/BootstrapIcons';
 import { NavLink } from '@/components/NavLink';
 import { Textarea } from '@/components/ui/textarea';
@@ -31,6 +32,8 @@ interface VariantSearchResult {
   hits: SearchHit[];
   loading: boolean;
   error?: string;
+  took?: number;
+  rawResponse?: Record<string, any>;
 }
 
 export interface KeywordSearchGroup {
@@ -45,6 +48,7 @@ export default function SearchPreview() {
   const [variants, setVariants] = useState<VariantConfig[]>([]);
   const [searchGroups, setSearchGroups] = useState<KeywordSearchGroup[]>([]);
   const [expandedKeyword, setExpandedKeyword] = useState<string | null>(null);
+  const [viewingResponse, setViewingResponse] = useState<{ payload: Record<string, any>; title: string } | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [wasMultiSearch, setWasMultiSearch] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -63,13 +67,13 @@ export default function SearchPreview() {
     const results: VariantSearchResult[] = await Promise.all(
       variants.map(async (variant) => {
         try {
-          let hits: SearchHit[];
+          let res;
           if (variant.type === 'baseline') {
-            hits = await searchBaseline(keyword);
+            res = await searchBaseline(keyword);
           } else {
-            hits = await searchElasticsearch(keyword, variant.endpoint, variant.payload || '');
+            res = await searchElasticsearch(keyword, variant.endpoint, variant.payload || '');
           }
-          return { variant, hits, loading: false };
+          return { variant, hits: res.hits, loading: false, took: res.took, rawResponse: res.rawResponse };
         } catch (err: any) {
           return { variant, hits: [], loading: false, error: err?.message || 'Erro desconhecido' };
         }
@@ -305,8 +309,22 @@ export default function SearchPreview() {
                             <div className="flex items-center gap-2 pb-2 border-b border-border">
                               <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color || '0 0% 50%'})` }} />
                               <span className="text-xs font-semibold">{r.variant.name}</span>
+                              {!r.loading && !r.error && r.rawResponse && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setViewingResponse({ payload: r.rawResponse!, title: `${r.variant.name} — "${group.keyword}"` }); }}
+                                  className="p-0.5 rounded hover:bg-muted/40 transition-colors"
+                                  title="Ver response completo"
+                                >
+                                  <Code2 className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                                </button>
+                              )}
                               {!r.loading && !r.error && (
-                                <Badge variant="secondary" className="text-[9px] ml-auto">{r.hits.length} resultados</Badge>
+                                <div className="flex items-center gap-2 ml-auto">
+                                  {typeof r.took === 'number' && (
+                                    <span className="text-[9px] font-mono-data text-muted-foreground/60">{r.took}ms</span>
+                                  )}
+                                  <Badge variant="secondary" className="text-[9px]">{r.hits.length} resultados</Badge>
+                                </div>
                               )}
                             </div>
 
@@ -345,6 +363,15 @@ export default function SearchPreview() {
           </div>
         )}
       </main>
+
+      {viewingResponse && (
+        <PayloadViewerDialog
+          open={!!viewingResponse}
+          onOpenChange={(open) => !open && setViewingResponse(null)}
+          payload={viewingResponse.payload}
+          title={viewingResponse.title}
+        />
+      )}
     </div>
   );
 }

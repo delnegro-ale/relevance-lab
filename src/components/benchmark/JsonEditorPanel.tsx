@@ -55,6 +55,27 @@ export function JsonEditorPanel({ open, onOpenChange, value, onChange, defaultVa
   const [localValue, setLocalValue] = useState(value);
   const [isValid, setIsValid] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+  const [panelWidth, setPanelWidth] = useState(720);
+
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = panelWidth;
+    const onMouseMove = (e: MouseEvent) => {
+      const diff = startX - e.clientX;
+      setPanelWidth(Math.max(400, Math.min(window.innerWidth * 0.9, startWidth + diff)));
+    };
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, [panelWidth]);
 
   useEffect(() => {
     setLocalValue(value);
@@ -108,7 +129,16 @@ export function JsonEditorPanel({ open, onOpenChange, value, onChange, defaultVa
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-2xl lg:max-w-3xl p-0 flex flex-col">
+      <SheetContent 
+        side="right" 
+        className="p-0 flex flex-col border-l border-border"
+        style={{ width: panelWidth, maxWidth: '90vw', minWidth: 400 }}
+      >
+        {/* Resize handle */}
+        <div
+          className="absolute left-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-primary/20 active:bg-primary/30 transition-colors z-50"
+          onMouseDown={handleResizeStart}
+        />
         <SheetHeader className="p-4 pb-3 border-b border-border shrink-0">
           <SheetTitle className="text-sm flex items-center gap-2">
             Editor de Payload JSON

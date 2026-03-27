@@ -126,6 +126,11 @@ export function ExecutiveDashboard({ results }: Props) {
                   <p className="text-xs text-muted-foreground mt-2">
                     {hitCount} de {totalCount} keywords com hits
                   </p>
+                  {typeof r.metrics.avgResponseTime === 'number' && (
+                    <p className="text-[10px] text-muted-foreground/60 mt-1 font-mono-data">
+                      ~{Math.round(r.metrics.avgResponseTime)}ms avg
+                    </p>
+                  )}
                   {/* Progress bar */}
                   <div className="mt-3 h-2 rounded-full bg-muted overflow-hidden">
                     <div
