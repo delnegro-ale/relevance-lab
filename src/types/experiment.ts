@@ -35,6 +35,8 @@ export interface KeywordResult {
   avgPosition: number | null;
   perfectMatch: boolean;
   error?: string;
+  took?: number;
+  rawResponse?: Record<string, any>;
 }
 
 export interface VariantMetrics {
