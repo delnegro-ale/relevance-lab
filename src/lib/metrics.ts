@@ -5,7 +5,8 @@ export function calculateKeywordMetrics(expectedIds: string[], hits: SearchHit[]
   const hitIds = topHits.map(h => h.productId);
   const foundIds = expectedIds.filter(id => hitIds.includes(id));
   const missingIds = expectedIds.filter(id => !hitIds.includes(id));
-  const hitRate = expectedIds.length > 0 ? foundIds.length / expectedIds.length : 0;
+  const maxExpected = Math.min(expectedIds.length, topK);
+  const hitRate = maxExpected > 0 ? foundIds.length / maxExpected : 0;
 
   let mrr = 0;
   for (const id of expectedIds) {
@@ -15,7 +16,7 @@ export function calculateKeywordMetrics(expectedIds: string[], hits: SearchHit[]
 
   const positions = foundIds.map(id => hitIds.indexOf(id) + 1);
   const avgPosition = positions.length > 0 ? positions.reduce((a, b) => a + b, 0) / positions.length : null;
-  const perfectMatch = missingIds.length === 0 && expectedIds.length > 0;
+  const perfectMatch = foundIds.length >= maxExpected && maxExpected > 0;
 
   return { foundIds, missingIds, hitRate, mrr, avgPosition, perfectMatch };
 }
