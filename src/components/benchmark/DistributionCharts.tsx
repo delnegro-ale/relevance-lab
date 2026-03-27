@@ -1,7 +1,10 @@
 import { useMemo } from 'react';
 import { VariantResult } from '@/types/experiment';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
+} from 'recharts';
 import { Building2, FileType, CreditCard, Clock } from 'lucide-react';
 
 interface Props {
@@ -10,7 +13,7 @@ interface Props {
 
 interface DistEntry {
   name: string;
-  [variantName: string]: string | number;
+  value: number;
 }
 
 function extractField(hit: any, field: string): string {
@@ -40,46 +43,162 @@ function extractField(hit: any, field: string): string {
   return 'Desconhecido';
 }
 
-function buildDistribution(results: VariantResult[], field: string, topN = 8): DistEntry[] {
-  // Count per variant
-  const variantCounts: Record<string, Record<string, number>> = {};
-  for (const r of results) {
-    const counts: Record<string, number> = {};
-    for (const kr of r.keywordResults) {
-      for (const hit of kr.hits.slice(0, 10)) {
-        const val = extractField(hit, field);
-        counts[val] = (counts[val] || 0) + 1;
-      }
-    }
-    variantCounts[r.variant.name] = counts;
-  }
-
-  // Get top N values across all variants
-  const globalCounts: Record<string, number> = {};
-  for (const counts of Object.values(variantCounts)) {
-    for (const [k, v] of Object.entries(counts)) {
-      globalCounts[k] = (globalCounts[k] || 0) + v;
+function buildDistForVariant(result: VariantResult, field: string, topN = 5): DistEntry[] {
+  const counts: Record<string, number> = {};
+  for (const kr of result.keywordResults) {
+    for (const hit of kr.hits.slice(0, 10)) {
+      const val = extractField(hit, field);
+      counts[val] = (counts[val] || 0) + 1;
     }
   }
-  const topKeys = Object.entries(globalCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, topN)
-    .map(([k]) => k);
 
-  return topKeys.map(key => {
-    const entry: DistEntry = { name: key };
-    for (const r of results) {
-      entry[r.variant.name] = variantCounts[r.variant.name]?.[key] || 0;
-    }
-    return entry;
-  });
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const top = sorted.slice(0, topN);
+  const rest = sorted.slice(topN);
+  const othersSum = rest.reduce((sum, [, v]) => sum + v, 0);
+
+  const entries: DistEntry[] = top.map(([name, value]) => ({ name, value }));
+  if (othersSum > 0) {
+    entries.push({ name: 'Outros', value: othersSum });
+  }
+  return entries;
+}
+
+const PIE_COLORS = ['hsl(var(--primary))', 'hsl(38 92% 50%)', 'hsl(200 80% 55%)', 'hsl(142 70% 45%)', 'hsl(350 80% 60%)', 'hsl(var(--muted-foreground))'];
+
+function VariantSection({ result }: { result: VariantResult }) {
+  const publisherData = useMemo(() => buildDistForVariant(result, 'publisher'), [result]);
+  const formatData = useMemo(() => buildDistForVariant(result, 'type'), [result]);
+  const planData = useMemo(() => buildDistForVariant(result, 'catalog_plus'), [result]);
+
+  const variantColor = `hsl(${result.variant.color})`;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 px-1">
+        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: variantColor }} />
+        <h3 className="text-sm font-semibold text-foreground">{result.variant.name}</h3>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        {/* Editoras - bar chart */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+              <CardTitle className="text-xs">Editoras</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {publisherData.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-4">Sem dados</p>
+            ) : (
+              <div className="h-44">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={publisherData} layout="vertical" barCategoryGap="20%">
+                    <XAxis type="number" tick={{ fontSize: 10, fill: 'hsl(215 15% 50%)' }} axisLine={false} tickLine={false} />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      tick={{ fontSize: 9, fill: 'hsl(215 15% 50%)' }}
+                      axisLine={false}
+                      tickLine={false}
+                      width={90}
+                    />
+                    <Tooltip contentStyle={{ backgroundColor: 'hsl(225 20% 9%)', border: '1px solid hsl(225 15% 16%)', borderRadius: '8px', fontSize: '11px' }} />
+                    <Bar dataKey="value" radius={[0, 3, 3, 0]}>
+                      {publisherData.map((entry, i) => (
+                        <Cell key={i} fill={entry.name === 'Outros' ? 'hsl(215 15% 35%)' : variantColor} opacity={entry.name === 'Outros' ? 0.5 : 1} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Formatos - bar chart */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <FileType className="h-3.5 w-3.5 text-muted-foreground" />
+              <CardTitle className="text-xs">Formatos</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {formatData.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-4">Sem dados</p>
+            ) : (
+              <div className="h-44">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={formatData} layout="vertical" barCategoryGap="20%">
+                    <XAxis type="number" tick={{ fontSize: 10, fill: 'hsl(215 15% 50%)' }} axisLine={false} tickLine={false} />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      tick={{ fontSize: 9, fill: 'hsl(215 15% 50%)' }}
+                      axisLine={false}
+                      tickLine={false}
+                      width={70}
+                    />
+                    <Tooltip contentStyle={{ backgroundColor: 'hsl(225 20% 9%)', border: '1px solid hsl(225 15% 16%)', borderRadius: '8px', fontSize: '11px' }} />
+                    <Bar dataKey="value" radius={[0, 3, 3, 0]}>
+                      {formatData.map((entry, i) => (
+                        <Cell key={i} fill={entry.name === 'Outros' ? 'hsl(215 15% 35%)' : variantColor} opacity={entry.name === 'Outros' ? 0.5 : 1} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Planos - pie chart */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+              <CardTitle className="text-xs">Plano</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {planData.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-4">Sem dados</p>
+            ) : (
+              <div className="h-44 flex items-center justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={planData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={55}
+                      innerRadius={30}
+                      paddingAngle={2}
+                      label={({ name, value }) => `${name}: ${value}`}
+                      labelLine={{ stroke: 'hsl(215 15% 40%)', strokeWidth: 0.5 }}
+                    >
+                      {planData.map((_, i) => (
+                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ backgroundColor: 'hsl(225 20% 9%)', border: '1px solid hsl(225 15% 16%)', borderRadius: '8px', fontSize: '11px' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 }
 
 export function DistributionCharts({ results }: Props) {
-  const publisherData = useMemo(() => buildDistribution(results, 'publisher'), [results]);
-  const formatData = useMemo(() => buildDistribution(results, 'type'), [results]);
-  const planData = useMemo(() => buildDistribution(results, 'catalog_plus'), [results]);
-
   const avgResponseTimes = useMemo(() => {
     return results.map(r => {
       const times = r.keywordResults
@@ -90,55 +209,13 @@ export function DistributionCharts({ results }: Props) {
     });
   }, [results]);
 
-  const charts = [
-    { title: 'Editoras mais frequentes', icon: Building2, data: publisherData },
-    { title: 'Formatos', icon: FileType, data: formatData },
-    { title: 'Plano', icon: CreditCard, data: planData },
-  ];
-
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {charts.map(chart => (
-          <Card key={chart.title}>
-            <CardHeader className="pb-2">
-              <div className="flex items-center gap-2">
-                <chart.icon className="h-4 w-4 text-muted-foreground" />
-                <CardTitle className="text-xs">{chart.title}</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {chart.data.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">Sem dados disponíveis</p>
-              ) : (
-                <div className="h-48">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chart.data} layout="vertical" barCategoryGap="15%">
-                      <XAxis type="number" tick={{ fontSize: 10, fill: 'hsl(215 15% 50%)' }} axisLine={false} tickLine={false} />
-                      <YAxis
-                        type="category"
-                        dataKey="name"
-                        tick={{ fontSize: 10, fill: 'hsl(215 15% 50%)' }}
-                        axisLine={false}
-                        tickLine={false}
-                        width={80}
-                      />
-                      <Tooltip
-                        contentStyle={{ backgroundColor: 'hsl(225 20% 9%)', border: '1px solid hsl(225 15% 16%)', borderRadius: '8px', fontSize: '11px' }}
-                      />
-                      {results.map(r => (
-                        <Bar key={r.variant.id} dataKey={r.variant.name} fill={`hsl(${r.variant.color})`} radius={[0, 3, 3, 0]} />
-                      ))}
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+    <div className="space-y-6">
+      {results.map(r => (
+        <VariantSection key={r.variant.id} result={r} />
+      ))}
 
-      {/* Response time - discrete technical info */}
+      {/* Response time */}
       <Card className="border-border/50">
         <CardHeader className="pb-1 pt-3 px-4">
           <div className="flex items-center gap-2">
