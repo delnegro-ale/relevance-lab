@@ -363,6 +363,15 @@ export default function SearchPreview() {
           </div>
         )}
       </main>
+
+      {viewingResponse && (
+        <PayloadViewerDialog
+          open={!!viewingResponse}
+          onOpenChange={(open) => !open && setViewingResponse(null)}
+          payload={viewingResponse.payload}
+          title={viewingResponse.title}
+        />
+      )}
     </div>
   );
 }
