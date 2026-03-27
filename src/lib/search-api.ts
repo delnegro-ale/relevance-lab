@@ -6,7 +6,7 @@ export interface SearchResponse {
   rawResponse?: Record<string, any>;
 }
 
-export async function searchBaseline(keyword: string): Promise<SearchHit[]> {
+export async function searchBaseline(keyword: string): Promise<SearchResponse> {
   const formData = new FormData();
   formData.append('imagesUrl', '//media3.ubook.com/catalog/book-cover-image/replaced_product_id/400x600/');
   formData.append('ebookImagesUrl', '//media3.ubook.com/catalog/ebook-cover-image/replaced_product_id/400x600/');
@@ -19,7 +19,7 @@ export async function searchBaseline(keyword: string): Promise<SearchHit[]> {
   if (!response.ok) throw new Error(`Baseline API error: ${response.status}`);
 
   const data = await response.json();
-  return parseBaselineResponse(data);
+  return { hits: parseBaselineResponse(data), took: data?.took, rawResponse: data };
 }
 
 function parseBaselineResponse(data: any): SearchHit[] {
