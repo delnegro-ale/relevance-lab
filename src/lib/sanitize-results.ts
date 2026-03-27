@@ -61,6 +61,7 @@ function sanitizeKeywordResult(kr: any): KeywordResult | null {
     avgPosition: typeof kr.avgPosition === 'number' && !isNaN(kr.avgPosition) ? kr.avgPosition : null,
     perfectMatch: Boolean(kr.perfectMatch),
     error: kr.error ? String(kr.error) : undefined,
+    responseTimeMs: typeof kr.responseTimeMs === 'number' ? kr.responseTimeMs : undefined,
   };
 }
 
