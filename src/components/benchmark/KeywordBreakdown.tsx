@@ -3,7 +3,7 @@ import { VariantResult } from '@/types/experiment';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronRight, X, Search, AlertTriangle, ArrowUp, ArrowDown, ArrowUpDown, ExternalLink, Clock } from 'lucide-react';
+import { ChevronDown, ChevronRight, X, Search, AlertTriangle, ArrowUp, ArrowDown, ArrowUpDown, ExternalLink } from 'lucide-react';
 import { MetricTooltip } from './MetricTooltip';
 import { ProductCardSimple } from './ProductCardSimple';
 import { buildProductUrl } from '@/lib/product-url';
@@ -155,11 +155,6 @@ export function KeywordBreakdown({ results }: Props) {
                         <span className="text-[10px] text-muted-foreground ml-1">
                           ({(kr.foundIds || []).length}/{(kr.expectedIds || []).length})
                         </span>
-                        {kr.responseTimeMs !== undefined && (
-                          <span className="text-[9px] text-muted-foreground/50 font-mono-data ml-1" title="Tempo de resposta">
-                            {kr.responseTimeMs}ms
-                          </span>
-                        )}
                       </div>
                     );
                   })}
@@ -199,11 +194,6 @@ export function KeywordBreakdown({ results }: Props) {
                               <Badge variant={(kr.hitRate ?? 0) === 1 ? 'default' : 'secondary'} className="text-[9px] ml-auto">
                                 {((kr.hitRate ?? 0) * 100).toFixed(0)}% hit rate
                               </Badge>
-                              {kr.responseTimeMs !== undefined && (
-                                <span className="text-[9px] font-mono-data text-muted-foreground/50 flex items-center gap-0.5" title="Tempo de resposta">
-                                  <Clock className="h-2.5 w-2.5" />{kr.responseTimeMs}ms
-                                </span>
-                              )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-2 text-xs">

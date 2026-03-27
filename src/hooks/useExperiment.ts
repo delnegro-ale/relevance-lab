@@ -93,15 +93,12 @@ export function useExperiment() {
 
         let hits: import('@/types/experiment').SearchHit[] = [];
         let error: string | undefined;
-        let responseTimeMs: number | undefined;
         try {
-          const t0 = performance.now();
           if (variant.type === 'baseline') {
             hits = await searchBaseline(tc.keyword);
           } else {
             hits = await searchElasticsearch(tc.keyword, variant.endpoint, variant.payload || '');
           }
-          responseTimeMs = Math.round(performance.now() - t0);
         } catch (err: any) {
           error = err?.message || 'Erro desconhecido';
           errorCount++;
@@ -113,7 +110,7 @@ export function useExperiment() {
           keyword: tc.keyword, expectedIds: tc.expectedIds, hits,
           foundIds: m.foundIds, missingIds: m.missingIds, hitRate: m.hitRate,
           mrr: m.mrr, avgPosition: m.avgPosition, perfectMatch: m.perfectMatch,
-          error, responseTimeMs,
+          error,
         });
 
         await new Promise(r => setTimeout(r, 150));
