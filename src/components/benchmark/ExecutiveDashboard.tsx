@@ -6,6 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } fro
 import { Trophy, Target, Crosshair, TrendingUp, Award, Percent, AlertTriangle, Crown, Code2 } from 'lucide-react';
 import { MetricTooltip, METRIC_EXPLANATIONS } from './MetricTooltip';
 import { HowToReadReport } from './HowToReadReport';
+import { DistributionCharts } from './DistributionCharts';
 
 interface Props {
   results: VariantResult[];
