@@ -309,6 +309,15 @@ export default function SearchPreview() {
                             <div className="flex items-center gap-2 pb-2 border-b border-border">
                               <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: `hsl(${r.variant.color || '0 0% 50%'})` }} />
                               <span className="text-xs font-semibold">{r.variant.name}</span>
+                              {!r.loading && !r.error && r.rawResponse && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setViewingResponse({ payload: r.rawResponse!, title: `${r.variant.name} — "${group.keyword}"` }); }}
+                                  className="p-0.5 rounded hover:bg-muted/40 transition-colors"
+                                  title="Ver response completo"
+                                >
+                                  <Code2 className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                                </button>
+                              )}
                               {!r.loading && !r.error && (
                                 <div className="flex items-center gap-2 ml-auto">
                                   {typeof r.took === 'number' && (
