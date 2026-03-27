@@ -72,7 +72,7 @@ function parseBaselineResponse(data: any): SearchHit[] {
   });
 }
 
-export async function searchElasticsearch(keyword: string, endpoint: string, payloadTemplate: string): Promise<SearchHit[]> {
+export async function searchElasticsearch(keyword: string, endpoint: string, payloadTemplate: string): Promise<SearchResponse> {
   const payload = payloadTemplate.replace(/\{\{keyword\}\}/g, keyword);
 
   // Try via Edge Function proxy first
@@ -88,7 +88,7 @@ export async function searchElasticsearch(keyword: string, endpoint: string, pay
       throw new Error(`Proxy error ${response.status}: ${errBody}`);
     }
     const data = await response.json();
-    return parseEsResponse(data);
+    return { hits: parseEsResponse(data), took: data?.took, rawResponse: data };
   }
 
   // Direct call (may fail due to CORS/VPC)
@@ -100,7 +100,7 @@ export async function searchElasticsearch(keyword: string, endpoint: string, pay
   if (!response.ok) throw new Error(`ES API error: ${response.status}`);
 
   const data = await response.json();
-  return parseEsResponse(data);
+  return { hits: parseEsResponse(data), took: data?.took, rawResponse: data };
 }
 
 function parseEsResponse(data: any): SearchHit[] {
