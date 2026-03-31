@@ -112,12 +112,7 @@ function ExplainTable({ entry, onShowRaw, defaultOpen = true }: { entry: Explain
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   if (!result) return null;
 
-  const textRows = result.rows.filter(r => r.grupo === 'texto');
-  const funcRows = result.rows.filter(r => r.grupo === 'função');
-  const filterRows = result.rows.filter(r => r.grupo === 'filtro_com_peso');
-  const multRows = result.rows.filter(r => r.grupo === 'multiplicador');
-
-  const hasFormula = result.formula && result.formula.operands.length >= 2;
+  const formula = result.formula;
 
   const toggleRow = (idx: number) => {
     setExpandedRows(prev => {
