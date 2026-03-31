@@ -87,6 +87,8 @@ function classifyGrupo(desc: string): ExplainRow['grupo'] {
 
 function classifyTipo(desc: string): ExplainRow['tipo'] {
   if (/^weight\(/.test(desc)) {
+    // Check for prefix: weight(PrefixQuery(...))
+    if (/^weight\(PrefixQuery\(/.test(desc)) return 'prefix';
     // Check for match_phrase: weight(field:"phrase" ...)
     if (/^weight\([^:]+:"/.test(desc)) return 'match_phrase';
     return 'match';
