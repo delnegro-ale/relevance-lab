@@ -99,6 +99,10 @@ function classifyTipo(desc: string): ExplainRow['tipo'] {
 }
 
 function extractCampoETermo(desc: string): { campo: string; termo: string } {
+  // weight(campo:"phrase" in N) - match_phrase with quoted term
+  const phraseMatch = desc.match(/^weight\((?:Synonym\(|BlendedTermQuery\()?([^:^()]+)(?:\^[^:]+)?:"([^"]+)"/);
+  if (phraseMatch) return { campo: phraseMatch[1], termo: `"${phraseMatch[2]}"` };
+
   // weight(campo:termo in N) [PerFieldSimilarity], result of:
   // Also handles weight(campo^boost:termo in N) and weight(Synonym(campo:termo) in N)
   const weightMatch = desc.match(/^weight\((?:Synonym\(|BlendedTermQuery\()?([^:^()]+)(?:\^[^:]+)?:([^ )]+)/);
