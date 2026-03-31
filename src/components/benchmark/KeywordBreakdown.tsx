@@ -24,6 +24,10 @@ export function KeywordBreakdown({ results }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>('keyword');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [viewingResponse, setViewingResponse] = useState<{ payload: Record<string, any>; title: string } | null>(null);
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareSelection, setCompareSelection] = useState<Map<string, { productId: string; productTitle?: string; variantId: string; keyword: string }>>(new Map());
+  const [compareExplain, setCompareExplain] = useState<{ endpoint: string; payloadTemplate: string; keyword: string; targets: { productId: string; productTitle?: string }[] } | null>(null);
+  const [missingExplain, setMissingExplain] = useState<{ productId: string; endpoint: string; payloadTemplate: string; keyword: string } | null>(null);
 
   const safeResults = results.filter(r => r && r.variant && Array.isArray(r.keywordResults));
 
