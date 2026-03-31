@@ -196,7 +196,7 @@ function ExplainTable({ entry, onShowRaw, defaultOpen = true }: { entry: Explain
               <span key={i} className="flex items-center gap-1.5">
                 <span className="text-muted-foreground">×</span>
                 <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 rounded border border-emerald-500/20">
-                  weight: {mr.valor.toLocaleString('pt-BR', { maximumFractionDigits: 4 })}
+                  weight: {mr.valor.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
                 </span>
               </span>
             ))}
