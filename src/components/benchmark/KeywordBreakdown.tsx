@@ -406,6 +406,7 @@ export function KeywordBreakdown({ results }: Props) {
         open={!!missingExplain}
         onOpenChange={(o) => !o && setMissingExplain(null)}
         productId={missingExplain.productId}
+        variantName={missingExplain.variantName}
         endpoint={missingExplain.endpoint}
         payloadTemplate={missingExplain.payloadTemplate}
         keyword={missingExplain.keyword}
