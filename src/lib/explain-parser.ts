@@ -8,7 +8,7 @@ export interface ExplainRow {
   grupo: 'texto' | 'função' | 'filtro_com_peso' | 'multiplicador' | 'outro';
   campo: string;
   termo_ou_regra: string;
-  tipo: 'match' | 'match_phrase' | 'field_value_factor' | 'weight' | 'constant_score' | 'unknown';
+  tipo: 'match' | 'match_phrase' | 'prefix' | 'field_value_factor' | 'weight' | 'constant_score' | 'unknown';
   descricao_original: string;
   /** Raw node from the _explain JSON for drill-down */
   rawNode?: any;
@@ -87,6 +87,8 @@ function classifyGrupo(desc: string): ExplainRow['grupo'] {
 
 function classifyTipo(desc: string): ExplainRow['tipo'] {
   if (/^weight\(/.test(desc)) {
+    // Check for prefix: weight(PrefixQuery(...))
+    if (/^weight\(PrefixQuery\(/.test(desc)) return 'prefix';
     // Check for match_phrase: weight(field:"phrase" ...)
     if (/^weight\([^:]+:"/.test(desc)) return 'match_phrase';
     return 'match';
@@ -99,6 +101,10 @@ function classifyTipo(desc: string): ExplainRow['tipo'] {
 }
 
 function extractCampoETermo(desc: string): { campo: string; termo: string } {
+  // weight(PrefixQuery(campo:termo) in N) - prefix query with full term
+  const prefixWeightMatch = desc.match(/^weight\(PrefixQuery\(([^:]+):([^)]+)\)\s+in\b/);
+  if (prefixWeightMatch) return { campo: prefixWeightMatch[1].trim(), termo: prefixWeightMatch[2].trim() };
+
   // weight(campo:"phrase" in N) - match_phrase with quoted term
   const phraseMatch = desc.match(/^weight\((?:Synonym\(|BlendedTermQuery\()?([^:^()]+)(?:\^[^:]+)?:"([^"]+)"/);
   if (phraseMatch) return { campo: phraseMatch[1], termo: `"${phraseMatch[2]}"` };
