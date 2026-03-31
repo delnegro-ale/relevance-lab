@@ -11,6 +11,12 @@ export interface HistoryEntry {
   variants: VariantConfig[];
 }
 
+export interface HistorySaveResult {
+  ok: boolean;
+  error?: string;
+  warning?: string;
+}
+
 const STORAGE_KEY = 'search-lab-history';
 const MAX_ENTRIES = 20;
 
@@ -24,25 +30,27 @@ export function loadHistory(): HistoryEntry[] {
   }
 }
 
-export function saveToHistory(entry: HistoryEntry) {
-  const history = loadHistory();
-  history.unshift(entry);
+export function saveToHistory(entry: HistoryEntry): HistorySaveResult {
+  const history = loadHistory().map(compactHistoryEntry);
+  history.unshift(compactHistoryEntry(entry));
   if (history.length > MAX_ENTRIES) history.length = MAX_ENTRIES;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+  return persistHistory(history, true);
 }
 
 export function renameHistoryEntry(id: string, name: string) {
-  const history = loadHistory();
+  const history = loadHistory().map(compactHistoryEntry);
   const entry = history.find(e => e.id === id);
   if (entry) {
     entry.name = name;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    persistHistory(history, false);
   }
 }
 
 export function deleteHistoryEntry(id: string) {
-  const history = loadHistory().filter(e => e.id !== id);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+  const history = loadHistory()
+    .map(compactHistoryEntry)
+    .filter(e => e.id !== id);
+  persistHistory(history, false);
 }
 
 export function createHistoryEntry(
@@ -60,4 +68,78 @@ export function createHistoryEntry(
     testCases,
     variants,
   };
+}
+
+function compactHistoryEntry(entry: HistoryEntry): HistoryEntry {
+  return {
+    ...entry,
+    results: Array.isArray(entry.results)
+      ? entry.results.map(result => ({
+          ...result,
+          keywordResults: Array.isArray(result.keywordResults)
+            ? result.keywordResults.map(kr => ({
+                ...kr,
+                rawResponse: undefined,
+                hits: Array.isArray(kr.hits)
+                  ? kr.hits.map(hit => ({
+                      ...hit,
+                      rawPayload: undefined,
+                    }))
+                  : [],
+              }))
+            : [],
+        }))
+      : [],
+  };
+}
+
+function persistHistory(history: HistoryEntry[], reportWarnings: boolean): HistorySaveResult {
+  const entries = history.slice(0, MAX_ENTRIES);
+  let removedEntries = 0;
+
+  while (entries.length > 0) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+      if (reportWarnings && removedEntries > 0) {
+        return {
+          ok: true,
+          warning: `O benchmark foi concluído, mas o histórico precisou ser reduzido para caber no armazenamento local. ${removedEntries} execução(ões) antiga(s) foram removidas.`,
+        };
+      }
+      return { ok: true };
+    } catch (error) {
+      console.error('[History] Failed to persist history:', error);
+
+      if (!isQuotaExceeded(error) || entries.length === 1) {
+        return {
+          ok: false,
+          error: isQuotaExceeded(error)
+            ? 'O benchmark foi concluído, mas não foi possível salvar esta execução no histórico porque o volume de dados excedeu o limite de armazenamento local do navegador.'
+            : `O benchmark foi concluído, mas houve uma falha ao salvar o histórico: ${formatError(error)}`,
+        };
+      }
+
+      entries.pop();
+      removedEntries++;
+    }
+  }
+
+  return {
+    ok: false,
+    error: 'O benchmark foi concluído, mas não foi possível salvar o histórico desta execução.',
+  };
+}
+
+function isQuotaExceeded(error: unknown): boolean {
+  if (error instanceof DOMException) {
+    return error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED';
+  }
+
+  const message = formatError(error).toLowerCase();
+  return message.includes('quota') || message.includes('storage') || message.includes('exceeded');
+}
+
+function formatError(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error || 'erro desconhecido');
 }
