@@ -245,7 +245,7 @@ export function ExportPdfButton({ results }: Props) {
 
             pdf.setFont('helvetica', 'bold');
             pdf.setFontSize(8);
-            pdf.text(`${(hitRate * 100).toFixed(0)}%`, x + 4, rowY + 5);
+            pdf.text(pdf.text(`${(hitRate * 100).toFixed(2)}%`, x + 4, rowY + 5);, x + 4, rowY + 5);
 
             pdf.setFont('helvetica', 'normal');
             pdf.setTextColor(PDF_COLORS.textMuted);
