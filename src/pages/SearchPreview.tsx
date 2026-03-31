@@ -410,6 +410,7 @@ export default function SearchPreview() {
                                           endpoint: r.variant.endpoint,
                                           payloadTemplate: r.variant.payload || '',
                                           keyword: group.keyword,
+                                          variantName: r.variant.name,
                                         } : undefined}
                                       />
                                     </div>
