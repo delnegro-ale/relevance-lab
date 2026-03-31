@@ -150,6 +150,23 @@ function collectContributions(node: any, results: ExplainRow[]): void {
   const value = typeof node.value === 'number' ? node.value : 0;
   const details = Array.isArray(node.details) ? node.details : [];
 
+  // Special case: "function score, product of:" with filter + weight = single multiplicador
+  if (isFunctionScoreMultiplier(node)) {
+    const filterChild = details[0];
+    const filterDesc = (filterChild.description || '').trim();
+    const { campo, termo } = extractCampoETermo(filterDesc);
+    results.push({
+      valor: value,
+      grupo: 'multiplicador',
+      campo,
+      termo_ou_regra: termo,
+      tipo: 'weight',
+      descricao_original: desc,
+      rawNode: node,
+    });
+    return;
+  }
+
   if (isStructural(desc)) {
     // Recurse into children
     for (const child of details) {
