@@ -8,7 +8,7 @@ export interface ExplainRow {
   grupo: 'texto' | 'função' | 'filtro_com_peso' | 'multiplicador' | 'outro';
   campo: string;
   termo_ou_regra: string;
-  tipo: 'match' | 'field_value_factor' | 'weight' | 'constant_score' | 'unknown';
+  tipo: 'match' | 'match_phrase' | 'field_value_factor' | 'weight' | 'constant_score' | 'unknown';
   descricao_original: string;
   /** Raw node from the _explain JSON for drill-down */
   rawNode?: any;
