@@ -14,11 +14,24 @@ export interface ExplainRow {
   rawNode?: any;
 }
 
+export interface FormulaOperand {
+  value: number;
+  description: string;
+  operation: 'sum' | 'max' | 'min' | 'product' | 'leaf';
+}
+
+export interface TopLevelFormula {
+  operation: 'product' | 'sum' | 'max' | 'min' | 'leaf';
+  operands: FormulaOperand[];
+  result: number;
+}
+
 export interface ExplainResult {
   documentId: string;
   scoreFinal: number;
   matched: boolean;
   rows: ExplainRow[];
+  formula?: TopLevelFormula;
 }
 
 const STRUCTURAL_DESCRIPTIONS = new Set([
@@ -138,6 +151,38 @@ function collectContributions(node: any, results: ExplainRow[]): void {
   }
 }
 
+function detectOperation(desc: string): TopLevelFormula['operation'] | null {
+  if (/product of:/.test(desc)) return 'product';
+  if (/sum of:/.test(desc)) return 'sum';
+  if (/max of:/.test(desc)) return 'max';
+  if (/min of:/.test(desc)) return 'min';
+  return null;
+}
+
+function buildFormula(node: any): TopLevelFormula | undefined {
+  if (!node || typeof node !== 'object') return undefined;
+  const desc = (node.description || '').trim();
+  const details = Array.isArray(node.details) ? node.details : [];
+  const op = detectOperation(desc);
+  if (!op || details.length < 2) return undefined;
+
+  const operands: FormulaOperand[] = details.map((child: any) => {
+    const childDesc = (child.description || '').trim();
+    const childOp = detectOperation(childDesc);
+    return {
+      value: typeof child.value === 'number' ? child.value : 0,
+      description: childDesc,
+      operation: childOp || 'leaf',
+    };
+  });
+
+  return {
+    operation: op,
+    operands,
+    result: typeof node.value === 'number' ? node.value : 0,
+  };
+}
+
 export function parseExplainResponse(documentId: string, json: any): ExplainResult {
   if (!json || !json.explanation) {
     throw new Error('JSON inválido: campo "explanation" ausente');
@@ -149,10 +194,13 @@ export function parseExplainResponse(documentId: string, json: any): ExplainResu
   // Sort by value descending
   rows.sort((a, b) => b.valor - a.valor);
 
+  const formula = buildFormula(json.explanation);
+
   return {
     documentId: documentId || json._id || '',
     scoreFinal: json.explanation.value ?? 0,
     matched: json.matched ?? false,
     rows,
+    formula,
   };
 }
