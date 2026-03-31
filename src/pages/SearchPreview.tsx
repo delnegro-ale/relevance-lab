@@ -194,7 +194,41 @@ export default function SearchPreview() {
           </form>
 
           {searchGroups.length > 0 && !isSearching && (
-            <ExportSearchPdfButton searchGroups={searchGroups} />
+            <>
+              <Button
+                variant={compareMode ? 'default' : 'outline'}
+                size="sm"
+                className="text-[10px] h-8 gap-1"
+                onClick={() => {
+                  setCompareMode(!compareMode);
+                  if (compareMode) setCompareSelection(new Map());
+                }}
+              >
+                <GitCompare className="h-3 w-3" />
+                {compareMode ? 'Cancelar' : 'Comparar'}
+              </Button>
+              {compareMode && compareSelection.size > 0 && (
+                <Button
+                  size="sm"
+                  className="text-[10px] h-8 gap-1"
+                  onClick={() => {
+                    const items = Array.from(compareSelection.values());
+                    if (items.length === 0) return;
+                    const firstVariant = variants.find(v => v.id === items[0].variantId);
+                    if (!firstVariant || firstVariant.type !== 'elasticsearch') return;
+                    setCompareExplain({
+                      endpoint: firstVariant.endpoint,
+                      payloadTemplate: firstVariant.payload || '',
+                      keyword: items[0].keyword,
+                      targets: items.map(i => ({ productId: i.productId, productTitle: i.productTitle })),
+                    });
+                  }}
+                >
+                  Inspecionar {compareSelection.size}
+                </Button>
+              )}
+              <ExportSearchPdfButton searchGroups={searchGroups} />
+            </>
           )}
 
           {multiMode && keywordCount > 1 && (
