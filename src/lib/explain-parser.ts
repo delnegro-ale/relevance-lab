@@ -10,6 +10,8 @@ export interface ExplainRow {
   termo_ou_regra: string;
   tipo: 'match' | 'field_value_factor' | 'weight' | 'constant_score' | 'unknown';
   descricao_original: string;
+  /** Raw node from the _explain JSON for drill-down */
+  rawNode?: any;
 }
 
 export interface ExplainResult {
