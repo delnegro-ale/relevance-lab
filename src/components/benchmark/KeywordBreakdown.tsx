@@ -116,7 +116,6 @@ export function KeywordBreakdown({ results }: Props) {
                 onClick={() => {
                   const items = Array.from(compareSelection.values());
                   if (items.length === 0) return;
-                  // Use first item's variant for endpoint
                   const firstVariant = safeResults.find(r => r.variant.id === items[0].variantId);
                   if (!firstVariant || firstVariant.variant.type !== 'elasticsearch') return;
                   setCompareExplain({
@@ -125,7 +124,7 @@ export function KeywordBreakdown({ results }: Props) {
                     keyword: items[0].keyword,
                     targets: items.map(i => {
                       const vr = safeResults.find(r => r.variant.id === i.variantId);
-                      return { productId: i.productId, productTitle: i.productTitle, variantName: vr?.variant.name };
+                      return { productId: i.productId, productTitle: i.productTitle, variantName: vr?.variant.name, endpoint: vr?.variant.endpoint, payloadTemplate: vr?.variant.payload || '' };
                     }),
                   });
                 }}

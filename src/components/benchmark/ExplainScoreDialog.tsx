@@ -295,8 +295,10 @@ export function ExplainScoreDialog({ open, onOpenChange, productId, productTitle
 
   const fetchExplain = useCallback(async (target: ExplainTarget): Promise<ExplainEntry> => {
     try {
-      const explainEndpoint = endpoint.replace(/\/_search\s*$/, `/_explain/${target.productId}`);
-      const payload = payloadTemplate.replace(/\{\{keyword\}\}/g, keyword);
+      const targetEndpoint = target.endpoint || endpoint;
+      const targetPayloadTemplate = target.payloadTemplate || payloadTemplate;
+      const explainEndpoint = targetEndpoint.replace(/\/_search\s*$/, `/_explain/${target.productId}`);
+      const payload = targetPayloadTemplate.replace(/\{\{keyword\}\}/g, keyword);
 
       let payloadObj: any;
       try {
