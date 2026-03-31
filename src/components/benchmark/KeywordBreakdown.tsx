@@ -248,7 +248,7 @@ export function KeywordBreakdown({ results }: Props) {
                                 </button>
                               )}
                               <Badge variant={(kr.hitRate ?? 0) === 1 ? 'default' : 'secondary'} className="text-[9px] ml-auto">
-                                {((kr.hitRate ?? 0) * 100).toFixed(0)}% hit rate
+                                {((kr.hitRate ?? 0) * 100).toFixed(2)}% hit rate
                               </Badge>
                             </div>
 
