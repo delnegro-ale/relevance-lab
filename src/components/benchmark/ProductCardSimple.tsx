@@ -94,7 +94,7 @@ export function ProductCardSimple({ hit, isExpected = false, explainContext }: P
               </span>
             )}
             {typeof hit.score === 'number' && !isNaN(hit.score) && (
-              <span className="text-[10px] font-mono-data text-muted-foreground/50">score: {hit.score.toFixed(1)}</span>
+              <span className="text-[10px] font-mono-data text-muted-foreground/50"><span className="text-[10px] font-mono-data text-muted-foreground/50">score: {hit.score.toFixed(2)}</span></span>
             )}
           </div>
         </div>

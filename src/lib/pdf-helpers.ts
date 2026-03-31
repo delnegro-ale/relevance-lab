@@ -237,5 +237,5 @@ export function drawProductHit(
 }
 
 export function fmt(val: number, pct: boolean) {
-  return pct ? `${(val * 100).toFixed(1)}%` : val.toFixed(2);
+  return pct ? `${(val * 100).toFixed(2)}%` : val.toFixed(2);
 }

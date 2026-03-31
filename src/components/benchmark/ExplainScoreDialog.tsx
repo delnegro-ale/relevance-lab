@@ -93,7 +93,7 @@ function DrillDownPanel({ row }: { row: ExplainRow }) {
           {subDetails.map((d, i) => (
             <tr key={i} className="border-t border-border/50">
               <td className="text-right px-3 py-1 font-mono-data whitespace-nowrap">
-                {d.value.toLocaleString('pt-BR', { maximumFractionDigits: 6 })}
+                {d.value.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
               </td>
               <td className="px-3 py-1 font-mono-data text-muted-foreground whitespace-nowrap">
                 <span style={{ paddingLeft: `${d.depth * 12}px` }}>{d.description}</span>
@@ -173,14 +173,14 @@ function ExplainTable({ entry, onShowRaw, defaultOpen = true }: { entry: Explain
           <div className="flex items-center gap-1.5 text-xs font-mono-data flex-wrap">
             {textSum > 0 && (
               <span className="px-2 py-0.5 bg-blue-500/10 text-blue-600 rounded border border-blue-500/20">
-                texto: {textSum.toLocaleString('pt-BR', { maximumFractionDigits: 4 })}
+                texto: {textSum.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
               </span>
             )}
             {funcProduct !== null && funcRows.map((fr, i) => (
               <span key={i} className="flex items-center gap-1.5">
                 <span className="text-muted-foreground">×</span>
                 <span className="px-2 py-0.5 bg-purple-500/10 text-purple-600 rounded border border-purple-500/20">
-                  {fr.campo || 'função'}: {fr.valor.toLocaleString('pt-BR', { maximumFractionDigits: 4 })}
+                  {fr.campo || 'função'}: {fr.valor.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
                 </span>
               </span>
             ))}
@@ -188,7 +188,7 @@ function ExplainTable({ entry, onShowRaw, defaultOpen = true }: { entry: Explain
               <span className="flex items-center gap-1.5">
                 <span className="text-muted-foreground">+</span>
                 <span className="px-2 py-0.5 bg-amber-500/10 text-amber-600 rounded border border-amber-500/20">
-                  filtros: {filterSum.toLocaleString('pt-BR', { maximumFractionDigits: 4 })}
+                  filtros: {filterSum.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
                 </span>
               </span>
             )}
@@ -196,7 +196,7 @@ function ExplainTable({ entry, onShowRaw, defaultOpen = true }: { entry: Explain
               <span key={i} className="flex items-center gap-1.5">
                 <span className="text-muted-foreground">×</span>
                 <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 rounded border border-emerald-500/20">
-                  weight: {mr.valor.toLocaleString('pt-BR', { maximumFractionDigits: 4 })}
+                  weight: {mr.valor.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
                 </span>
               </span>
             ))}
@@ -246,7 +246,7 @@ function ExplainTable({ entry, onShowRaw, defaultOpen = true }: { entry: Explain
                         )}
                       </td>
                       <td className="text-right px-3 py-2 font-mono-data font-semibold whitespace-nowrap">
-                        {row.valor.toLocaleString('pt-BR', { maximumFractionDigits: 4 })}
+                        {row.valor.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap">
                         <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium border ${GRUPO_COLORS[row.grupo] || GRUPO_COLORS.outro}`}>

@@ -194,7 +194,7 @@ export function KeywordBreakdown({ results }: Props) {
                     return (
                       <div key={r.variant.id} className="text-center">
                         <span className={`font-mono-data text-sm font-semibold ${hitRate === 1 ? 'text-success' : hitRate > 0 ? 'text-warning' : 'text-destructive'}`}>
-                          {(hitRate * 100).toFixed(0)}%
+                          {(hitRate * 100).toFixed(2)}%
                         </span>
                         <span className="text-[10px] text-muted-foreground ml-1">
                           ({(kr.foundIds || []).length}/{(kr.expectedIds || []).length})
@@ -248,18 +248,18 @@ export function KeywordBreakdown({ results }: Props) {
                                 </button>
                               )}
                               <Badge variant={(kr.hitRate ?? 0) === 1 ? 'default' : 'secondary'} className="text-[9px] ml-auto">
-                                {((kr.hitRate ?? 0) * 100).toFixed(0)}% hit rate
+                                {((kr.hitRate ?? 0) * 100).toFixed(2)}% hit rate
                               </Badge>
                             </div>
 
                             <div className="grid grid-cols-3 gap-2 text-xs">
                               <div className="flex items-center gap-1">
                                 <span className="text-muted-foreground">MRR:</span>
-                                <span className="font-mono-data font-medium">{(kr.mrr ?? 0).toFixed(3)}</span>
+                                <span className="font-mono-data font-medium"><span className="font-mono-data font-medium">{(kr.mrr ?? 0).toFixed(2)}</span></span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <span className="text-muted-foreground">Pos. Média:</span>
-                                <span className="font-mono-data font-medium">{kr.avgPosition?.toFixed(1) || 'N/A'}</span>
+                                <span className="font-mono-data font-medium"><span className="font-mono-data font-medium">{kr.avgPosition?.toFixed(2) || 'N/A'}</span></span>
                               </div>
                               {typeof kr.took === 'number' && (
                                 <div className="flex items-center gap-1">

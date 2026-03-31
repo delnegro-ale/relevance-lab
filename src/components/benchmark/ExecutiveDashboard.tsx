@@ -19,7 +19,7 @@ const METRIC_DEFS = [
 ];
 
 function fmt(val: number, pct: boolean) {
-  return pct ? `${(val * 100).toFixed(1)}%` : val.toFixed(2);
+  return pct ? `${(val * 100).toFixed(2)}%` : val.toFixed(2);
 }
 
 export function ExecutiveDashboard({ results }: Props) {
@@ -39,7 +39,7 @@ export function ExecutiveDashboard({ results }: Props) {
 
   const chartData = METRIC_DEFS.filter(m => m.key !== 'avgPosition').map(m => ({
     name: m.label,
-    ...Object.fromEntries(results.map(r => [r.variant.name, parseFloat((r.metrics[m.key] * 100).toFixed(1))])),
+    ...Object.fromEntries(results.map(r => [r.variant.name, parseFloat((r.metrics[m.key] * 100).toFixed(2))])),
   }));
 
   return (
@@ -87,7 +87,7 @@ export function ExecutiveDashboard({ results }: Props) {
           <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {results.map(r => {
               const isWinner = r === hitRateWinner;
-              const pct = (r.metrics.hitRate * 100).toFixed(1);
+              const pct = (r.metrics.hitRate * 100).toFixed(2);
               const hitCount = r.keywordResults.filter(kr => kr.hitRate > 0).length;
               const totalCount = r.keywordResults.length;
 
@@ -181,7 +181,7 @@ export function ExecutiveDashboard({ results }: Props) {
                           <span className="text-sm font-mono-data font-semibold">{fmt(val, m.pct)}</span>
                           {!isBaseline && Math.abs(delta) > 0.001 && (
                             <span className={`text-[10px] font-mono-data ${isPositive ? 'text-success' : 'text-danger'}`}>
-                              {delta > 0 ? '+' : ''}{m.pct ? `${(delta * 100).toFixed(1)}` : delta.toFixed(2)}
+                              {delta > 0 ? '+' : ''}{m.pct ? `${(delta * 100).toFixed(2)}` : delta.toFixed(2)}
                             </span>
                           )}
                         </div>

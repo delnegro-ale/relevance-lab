@@ -98,7 +98,7 @@ export function ExportPdfButton({ results }: Props) {
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(22);
         pdf.setTextColor(isWinner ? PDF_COLORS.accent : PDF_COLORS.text);
-        pdf.text(`${(r.metrics.hitRate * 100).toFixed(1)}%`, x + cardW / 2, cardY + 30, { align: 'center' });
+        pdf.text(`${(r.metrics.hitRate * 100).toFixed(2)}%`, x + cardW / 2, cardY + 30, { align: 'center' });
 
         // Hit count
         const hitCount = r.keywordResults.filter(kr => kr.hitRate > 0).length;
@@ -175,7 +175,7 @@ export function ExportPdfButton({ results }: Props) {
             const isPositive = m.higherBetter ? delta > 0 : delta < 0;
             pdf.setFontSize(7);
             pdf.setTextColor(isPositive ? PDF_COLORS.success : PDF_COLORS.danger);
-            const deltaStr = `${delta > 0 ? '+' : ''}${m.pct ? (delta * 100).toFixed(1) : delta.toFixed(2)}`;
+            const deltaStr = `${delta > 0 ? '+' : ''}${m.pct ? (delta * 100).toFixed(2) : delta.toFixed(2)}`;
             pdf.text(deltaStr, x + metricCardW - 6, rowY + 4.5, { align: 'right' });
           }
         });
@@ -245,7 +245,7 @@ export function ExportPdfButton({ results }: Props) {
 
             pdf.setFont('helvetica', 'bold');
             pdf.setFontSize(8);
-            pdf.text(`${(hitRate * 100).toFixed(0)}%`, x + 4, rowY + 5);
+            pdf.text(`${(hitRate * 100).toFixed(2)}%`, x + 4, rowY + 5);
 
             pdf.setFont('helvetica', 'normal');
             pdf.setTextColor(PDF_COLORS.textMuted);
@@ -291,7 +291,7 @@ export function ExportPdfButton({ results }: Props) {
           }
 
           // Hit rate badge
-          const hitPct = `${(kr.hitRate * 100).toFixed(0)}% hit rate (${kr.foundIds.length}/${kr.expectedIds.length})`;
+          const hitPct = `${(kr.hitRate * 100).toFixed(2)}% hit rate (${kr.foundIds.length}/${kr.expectedIds.length})`;
           pdf.setFont('helvetica', 'normal');
           pdf.setFontSize(8);
           pdf.setTextColor(PDF_COLORS.textMuted);
