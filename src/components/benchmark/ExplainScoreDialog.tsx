@@ -11,6 +11,8 @@ interface ExplainTarget {
   productId: string;
   productTitle?: string;
   variantName?: string;
+  endpoint?: string;
+  payloadTemplate?: string;
 }
 
 interface Props {
