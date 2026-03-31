@@ -86,7 +86,11 @@ function classifyGrupo(desc: string): ExplainRow['grupo'] {
 }
 
 function classifyTipo(desc: string): ExplainRow['tipo'] {
-  if (/^weight\(/.test(desc)) return 'match';
+  if (/^weight\(/.test(desc)) {
+    // Check for match_phrase: weight(field:"phrase" ...)
+    if (/^weight\([^:]+:"/.test(desc)) return 'match_phrase';
+    return 'match';
+  }
   if (/field value function:/.test(desc)) return 'field_value_factor';
   if (/match filter:/.test(desc)) return 'weight';
   if (/ConstantScore\(/.test(desc)) return 'constant_score';
