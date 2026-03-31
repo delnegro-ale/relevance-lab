@@ -123,7 +123,10 @@ export function KeywordBreakdown({ results }: Props) {
                     endpoint: firstVariant.variant.endpoint,
                     payloadTemplate: firstVariant.variant.payload || '',
                     keyword: items[0].keyword,
-                    targets: items.map(i => ({ productId: i.productId, productTitle: i.productTitle })),
+                    targets: items.map(i => {
+                      const vr = safeResults.find(r => r.variant.id === i.variantId);
+                      return { productId: i.productId, productTitle: i.productTitle, variantName: vr?.variant.name };
+                    }),
                   });
                 }}
               >

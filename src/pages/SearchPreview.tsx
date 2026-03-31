@@ -220,7 +220,10 @@ export default function SearchPreview() {
                       endpoint: firstVariant.endpoint,
                       payloadTemplate: firstVariant.payload || '',
                       keyword: items[0].keyword,
-                      targets: items.map(i => ({ productId: i.productId, productTitle: i.productTitle })),
+                    targets: items.map(i => {
+                      const v = variants.find(vv => vv.id === i.variantId);
+                      return { productId: i.productId, productTitle: i.productTitle, variantName: v?.name };
+                    }),
                     });
                   }}
                 >
