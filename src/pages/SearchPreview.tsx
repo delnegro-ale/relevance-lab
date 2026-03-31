@@ -52,6 +52,9 @@ export default function SearchPreview() {
   const [viewingResponse, setViewingResponse] = useState<{ payload: Record<string, any>; title: string } | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [wasMultiSearch, setWasMultiSearch] = useState(false);
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareSelection, setCompareSelection] = useState<Map<string, { productId: string; productTitle?: string; variantId: string; keyword: string }>>(new Map());
+  const [compareExplain, setCompareExplain] = useState<{ endpoint: string; payloadTemplate: string; keyword: string; targets: { productId: string; productTitle?: string }[] } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
