@@ -382,15 +382,35 @@ export default function SearchPreview() {
                             {!r.loading && !r.error && (
                               <div className="space-y-1">
                                 {r.hits.slice(0, 10).map((hit, i) => (
-                                  <ProductCardSimple
-                                    key={i}
-                                    hit={hit}
-                                    explainContext={r.variant.type === 'elasticsearch' ? {
-                                      endpoint: r.variant.endpoint,
-                                      payloadTemplate: r.variant.payload || '',
-                                      keyword: group.keyword,
-                                    } : undefined}
-                                  />
+                                  <div key={i} className="flex items-start gap-1">
+                                    {compareMode && r.variant.type === 'elasticsearch' && (
+                                      <input
+                                        type="checkbox"
+                                        checked={compareSelection.has(`${r.variant.id}-${hit.productId}`)}
+                                        onChange={(e) => {
+                                          const key = `${r.variant.id}-${hit.productId}`;
+                                          const next = new Map(compareSelection);
+                                          if (e.target.checked) {
+                                            next.set(key, { productId: hit.productId, productTitle: hit.title, variantId: r.variant.id, keyword: group.keyword });
+                                          } else {
+                                            next.delete(key);
+                                          }
+                                          setCompareSelection(next);
+                                        }}
+                                        className="h-3 w-3 shrink-0 mt-3"
+                                      />
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <ProductCardSimple
+                                        hit={hit}
+                                        explainContext={r.variant.type === 'elasticsearch' ? {
+                                          endpoint: r.variant.endpoint,
+                                          payloadTemplate: r.variant.payload || '',
+                                          keyword: group.keyword,
+                                        } : undefined}
+                                      />
+                                    </div>
+                                  </div>
                                 ))}
                                 {r.hits.length === 0 && (
                                   <p className="text-xs text-muted-foreground text-center py-4">Nenhum resultado</p>
