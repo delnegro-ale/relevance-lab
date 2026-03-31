@@ -236,6 +236,11 @@ export function KeywordBreakdown({ results }: Props) {
                                     key={i}
                                     hit={hit}
                                     isExpected={expectedIds.includes(hit.productId)}
+                                    explainContext={r.variant.type === 'elasticsearch' ? {
+                                      endpoint: r.variant.endpoint,
+                                      payloadTemplate: r.variant.payload || '',
+                                      keyword,
+                                    } : undefined}
                                   />
                                 ))}
                               </div>

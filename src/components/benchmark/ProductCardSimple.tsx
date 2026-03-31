@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { BookOpen, Headphones, FileText as FileIcon, ImageOff, ExternalLink, Code2 } from 'lucide-react';
+import { BookOpen, Headphones, FileText as FileIcon, ImageOff, ExternalLink, Code2, Search } from 'lucide-react';
 import { buildProductUrl } from '@/lib/product-url';
 import { PayloadViewerDialog } from './PayloadViewerDialog';
+import { ExplainScoreDialog } from './ExplainScoreDialog';
 
 function getFormatIcon(format: string) {
   const f = (format || '').toLowerCase();
@@ -25,10 +26,17 @@ interface Hit {
 interface Props {
   hit: Hit;
   isExpected?: boolean;
+  /** If provided, enables the "explain" inspect button (only for ES variants) */
+  explainContext?: {
+    endpoint: string;
+    payloadTemplate: string;
+    keyword: string;
+  };
 }
 
-export function ProductCardSimple({ hit, isExpected = false }: Props) {
+export function ProductCardSimple({ hit, isExpected = false, explainContext }: Props) {
   const [showPayload, setShowPayload] = useState(false);
+  const [showExplain, setShowExplain] = useState(false);
   const coverUrl = hit.coverUrl || `https://media3.ubook.com/catalog/book-cover-image/${hit.productId}/200x300/`;
   const FormatIcon = getFormatIcon(hit.format || '');
   const fullTitle = hit.title || 'Sem título';
@@ -92,6 +100,15 @@ export function ProductCardSimple({ hit, isExpected = false }: Props) {
 
         {/* Action icons - visible on hover */}
         <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+          {explainContext && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowExplain(true); }}
+              className="p-1 rounded hover:bg-muted/40 transition-colors"
+              title="Inspecionar score (_explain)"
+            >
+              <Search className="h-3.5 w-3.5 text-muted-foreground" />
+            </button>
+          )}
           {hit.rawPayload && (
             <button
               onClick={(e) => { e.stopPropagation(); setShowPayload(true); }}
@@ -120,6 +137,18 @@ export function ProductCardSimple({ hit, isExpected = false }: Props) {
           onOpenChange={setShowPayload}
           payload={hit.rawPayload}
           title={`${fullTitle} (ID: ${hit.productId})`}
+        />
+      )}
+
+      {explainContext && (
+        <ExplainScoreDialog
+          open={showExplain}
+          onOpenChange={setShowExplain}
+          productId={hit.productId}
+          productTitle={fullTitle}
+          endpoint={explainContext.endpoint}
+          payloadTemplate={explainContext.payloadTemplate}
+          keyword={explainContext.keyword}
         />
       )}
     </>

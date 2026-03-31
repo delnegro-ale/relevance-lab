@@ -344,7 +344,15 @@ export default function SearchPreview() {
                             {!r.loading && !r.error && (
                               <div className="space-y-1">
                                 {r.hits.slice(0, 10).map((hit, i) => (
-                                  <ProductCardSimple key={i} hit={hit} />
+                                  <ProductCardSimple
+                                    key={i}
+                                    hit={hit}
+                                    explainContext={r.variant.type === 'elasticsearch' ? {
+                                      endpoint: r.variant.endpoint,
+                                      payloadTemplate: r.variant.payload || '',
+                                      keyword: group.keyword,
+                                    } : undefined}
+                                  />
                                 ))}
                                 {r.hits.length === 0 && (
                                   <p className="text-xs text-muted-foreground text-center py-4">Nenhum resultado</p>
