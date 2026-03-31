@@ -271,16 +271,36 @@ export function KeywordBreakdown({ results }: Props) {
                               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Top 10 resultados</p>
                               <div className="space-y-1">
                                 {hits.slice(0, 10).map((hit, i) => (
-                                  <ProductCardSimple
-                                    key={i}
-                                    hit={hit}
-                                    isExpected={expectedIds.includes(hit.productId)}
-                                    explainContext={r.variant.type === 'elasticsearch' ? {
-                                      endpoint: r.variant.endpoint,
-                                      payloadTemplate: r.variant.payload || '',
-                                      keyword,
-                                    } : undefined}
-                                  />
+                                  <div key={i} className="flex items-start gap-1">
+                                    {compareMode && r.variant.type === 'elasticsearch' && (
+                                      <input
+                                        type="checkbox"
+                                        checked={compareSelection.has(`${r.variant.id}-${hit.productId}`)}
+                                        onChange={(e) => {
+                                          const key = `${r.variant.id}-${hit.productId}`;
+                                          const next = new Map(compareSelection);
+                                          if (e.target.checked) {
+                                            next.set(key, { productId: hit.productId, productTitle: hit.title, variantId: r.variant.id, keyword });
+                                          } else {
+                                            next.delete(key);
+                                          }
+                                          setCompareSelection(next);
+                                        }}
+                                        className="h-3 w-3 shrink-0 mt-3"
+                                      />
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <ProductCardSimple
+                                        hit={hit}
+                                        isExpected={expectedIds.includes(hit.productId)}
+                                        explainContext={r.variant.type === 'elasticsearch' ? {
+                                          endpoint: r.variant.endpoint,
+                                          payloadTemplate: r.variant.payload || '',
+                                          keyword,
+                                        } : undefined}
+                                      />
+                                    </div>
+                                  </div>
                                 ))}
                               </div>
                             </div>
