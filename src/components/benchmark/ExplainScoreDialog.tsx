@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Loader2, Code2, ArrowDown, ChevronDown, ChevronRight, Layers } from 'lucide-react';
+import { Loader2, Code2, ArrowDown, ChevronDown, ChevronRight, Layers, List, LayoutGrid } from 'lucide-react';
 import { parseExplainResponse, ExplainResult, ExplainRow } from '@/lib/explain-parser';
 import { PayloadViewerDialog } from './PayloadViewerDialog';
 
