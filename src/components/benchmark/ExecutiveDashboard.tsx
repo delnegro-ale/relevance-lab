@@ -19,7 +19,7 @@ const METRIC_DEFS = [
 ];
 
 function fmt(val: number, pct: boolean) {
-  return pct ? `${(val * 100).toFixed(1)}%` : val.toFixed(2);
+  return pct ? `${(val * 100).toFixed(2)}%` : val.toFixed(2);
 }
 
 export function ExecutiveDashboard({ results }: Props) {
