@@ -188,7 +188,7 @@ function ExplainTable({ entry, onShowRaw, defaultOpen = true }: { entry: Explain
               <span className="flex items-center gap-1.5">
                 <span className="text-muted-foreground">+</span>
                 <span className="px-2 py-0.5 bg-amber-500/10 text-amber-600 rounded border border-amber-500/20">
-                  filtros: {filterSum.toLocaleString('pt-BR', { maximumFractionDigits: 4 })}
+                  filtros: {filterSum.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
                 </span>
               </span>
             )}
