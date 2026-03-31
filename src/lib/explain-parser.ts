@@ -83,19 +83,39 @@ function classifyTipo(desc: string): ExplainRow['tipo'] {
 
 function extractCampoETermo(desc: string): { campo: string; termo: string } {
   // weight(campo:termo in N) [PerFieldSimilarity], result of:
-  const weightMatch = desc.match(/^weight\(([^:]+):([^ ]+)\s+in\s+/);
+  // Also handles weight(campo^boost:termo in N) and weight(Synonym(campo:termo) in N)
+  const weightMatch = desc.match(/^weight\((?:Synonym\(|BlendedTermQuery\()?([^:^()]+)(?:\^[^:]+)?:([^ )]+)/);
   if (weightMatch) return { campo: weightMatch[1], termo: weightMatch[2] };
 
   // doc['campo'].value
   const docMatch = desc.match(/doc\['([^']+)'\]/);
-  
-  // match filter: ConstantScore(campo:valor) or match filter: campo:valor
-  const filterMatch = desc.match(/match filter:\s*(?:\(?ConstantScore\()?([^:)]+):([^)]+)\)?/);
-  if (filterMatch) return { campo: filterMatch[1].trim(), termo: filterMatch[2].trim() };
 
-  // ConstantScore(campo:valor)
+  // match filter: ConstantScore(campo:valor) or match filter: campo:valor
+  // Handle nested parens: ConstantScore(campo:valor)
+  const filterCsMatch = desc.match(/match filter:\s*(?:\(?ConstantScore\()([^:)]+):([^)]+)\)/);
+  if (filterCsMatch) return { campo: filterCsMatch[1].trim(), termo: filterCsMatch[2].trim() };
+
+  // match filter: campo:valor (bare, no ConstantScore)
+  const filterBareMatch = desc.match(/match filter:\s*([^:\s(]+):(\S+)/);
+  if (filterBareMatch) return { campo: filterBareMatch[1].trim(), termo: filterBareMatch[2].trim() };
+
+  // ConstantScore(campo:valor) standalone
   const csMatch = desc.match(/ConstantScore\(([^:]+):([^)]+)\)/);
   if (csMatch) return { campo: csMatch[1].trim(), termo: csMatch[2].trim() };
+
+  // Prefix query: PrefixQuery(campo:valor)
+  const prefixMatch = desc.match(/PrefixQuery\(([^:]+):([^)]+)\)/);
+  if (prefixMatch) return { campo: prefixMatch[1].trim(), termo: prefixMatch[2].trim() };
+
+  // Generic campo:termo pattern in parentheses (fallback)
+  const genericParenMatch = desc.match(/\(([a-zA-Z_][a-zA-Z0-9_.]*):([^)]+)\)/);
+  if (genericParenMatch) return { campo: genericParenMatch[1].trim(), termo: genericParenMatch[2].trim() };
+
+  // Generic campo:termo pattern (last resort fallback)
+  const genericMatch = desc.match(/([a-zA-Z_][a-zA-Z0-9_.]+):(\S+)/);
+  if (genericMatch && !genericMatch[1].match(/^(sum|max|min|product|score|result|boost|idf|tf|freq)$/)) {
+    return { campo: genericMatch[1].trim(), termo: genericMatch[2].trim() };
+  }
 
   if (docMatch) return { campo: docMatch[1], termo: '' };
 

@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Loader2, Code2, ArrowDown, ChevronDown, ChevronRight, Layers } from 'lucide-react';
+import { Loader2, Code2, ArrowDown, ChevronDown, ChevronRight, Layers, List, LayoutGrid } from 'lucide-react';
 import { parseExplainResponse, ExplainResult, ExplainRow } from '@/lib/explain-parser';
 import { PayloadViewerDialog } from './PayloadViewerDialog';
 
@@ -106,13 +106,47 @@ function DrillDownPanel({ row }: { row: ExplainRow }) {
   );
 }
 
+interface GroupedRow {
+  key: string;
+  campo: string;
+  tipo: ExplainRow['tipo'];
+  grupo: ExplainRow['grupo'];
+  valorTotal: number;
+  count: number;
+}
+
+function groupRows(rows: ExplainRow[]): GroupedRow[] {
+  const map = new Map<string, GroupedRow>();
+  for (const row of rows) {
+    const key = `${row.campo || '(vazio)'}::${row.tipo}`;
+    const existing = map.get(key);
+    if (existing) {
+      existing.valorTotal += row.valor;
+      existing.count++;
+    } else {
+      map.set(key, {
+        key,
+        campo: row.campo || '(vazio)',
+        tipo: row.tipo,
+        grupo: row.grupo,
+        valorTotal: row.valor,
+        count: 1,
+      });
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => b.valorTotal - a.valorTotal);
+}
+
 function ExplainTable({ entry, onShowRaw, defaultOpen = true }: { entry: ExplainEntry; onShowRaw: () => void; defaultOpen?: boolean }) {
   const { result } = entry;
   const [tableOpen, setTableOpen] = useState(defaultOpen);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const [viewMode, setViewMode] = useState<'grouped' | 'detailed'>('grouped');
   if (!result) return null;
 
   const formula = result.formula;
+  const grouped = groupRows(result.rows);
+
 
   const toggleRow = (idx: number) => {
     setExpandedRows(prev => {
@@ -192,74 +226,133 @@ function ExplainTable({ entry, onShowRaw, defaultOpen = true }: { entry: Explain
 
       {/* Collapsible detail table */}
       <Collapsible open={tableOpen} onOpenChange={setTableOpen}>
-        <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer w-full">
-          {tableOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-          <span className="font-medium">Tabela detalhada ({result.rows.length} critérios)</span>
-        </CollapsibleTrigger>
+        <div className="flex items-center gap-2">
+          <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+            {tableOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+            <span className="font-medium">Tabela detalhada ({result.rows.length} critérios)</span>
+          </CollapsibleTrigger>
+          {tableOpen && (
+            <div className="flex items-center gap-0.5 ml-auto border border-border rounded-md p-0.5">
+              <button
+                onClick={() => setViewMode('grouped')}
+                className={`p-1 rounded text-xs flex items-center gap-1 transition-colors ${viewMode === 'grouped' ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                title="Agrupado por campo"
+              >
+                <LayoutGrid className="h-3 w-3" />
+                <span className="text-[10px]">Agrupado</span>
+              </button>
+              <button
+                onClick={() => setViewMode('detailed')}
+                className={`p-1 rounded text-xs flex items-center gap-1 transition-colors ${viewMode === 'detailed' ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                title="Detalhado"
+              >
+                <List className="h-3 w-3" />
+                <span className="text-[10px]">Detalhado</span>
+              </button>
+            </div>
+          )}
+        </div>
         <CollapsibleContent>
-          <div className="border border-border rounded-md overflow-x-auto mt-2">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="bg-muted/50 text-muted-foreground">
-                  <th className="w-6 px-1 py-2"></th>
-                  <th className="text-right px-3 py-2 font-medium whitespace-nowrap">
-                    <span className="flex items-center justify-end gap-1">Valor <ArrowDown className="h-3 w-3" /></span>
-                  </th>
-                  <th className="text-left px-3 py-2 font-medium whitespace-nowrap">Grupo</th>
-                  <th className="text-left px-3 py-2 font-medium whitespace-nowrap">Campo</th>
-                  <th className="text-left px-3 py-2 font-medium whitespace-nowrap">Termo / Regra</th>
-                  <th className="text-left px-3 py-2 font-medium whitespace-nowrap">Tipo</th>
-                  <th className="text-left px-3 py-2 font-medium whitespace-nowrap">Descrição Original</th>
-                </tr>
-              </thead>
-              <tbody>
-                {result.rows.map((row, i) => (
-                  <>
-                    <tr key={`row-${i}`} className="border-t border-border hover:bg-muted/20 transition-colors">
-                      <td className="px-1 py-2 text-center">
-                        {hasSubDetails(row) && (
-                          <button
-                            onClick={() => toggleRow(i)}
-                            className="p-0.5 rounded hover:bg-muted/40 transition-colors"
-                            title="Ver sub-detalhes"
-                          >
-                            <Layers className="h-3 w-3 text-muted-foreground" />
-                          </button>
-                        )}
-                      </td>
+          {viewMode === 'grouped' ? (
+            <div className="border border-border rounded-md overflow-x-auto mt-2">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-muted/50 text-muted-foreground">
+                    <th className="text-right px-3 py-2 font-medium whitespace-nowrap">
+                      <span className="flex items-center justify-end gap-1">Valor <ArrowDown className="h-3 w-3" /></span>
+                    </th>
+                    <th className="text-left px-3 py-2 font-medium whitespace-nowrap">Grupo</th>
+                    <th className="text-left px-3 py-2 font-medium whitespace-nowrap">Campo :: Tipo</th>
+                    <th className="text-right px-3 py-2 font-medium whitespace-nowrap">Ocorrências</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {grouped.map((g) => (
+                    <tr key={g.key} className="border-t border-border hover:bg-muted/20 transition-colors">
                       <td className="text-right px-3 py-2 font-mono-data font-semibold whitespace-nowrap">
-                        {row.valor.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
+                        {g.valorTotal.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap">
-                        <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium border ${GRUPO_COLORS[row.grupo] || GRUPO_COLORS.outro}`}>
-                          {row.grupo}
+                        <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium border ${GRUPO_COLORS[g.grupo] || GRUPO_COLORS.outro}`}>
+                          {g.grupo}
                         </span>
                       </td>
-                      <td className="px-3 py-2 font-mono-data text-foreground whitespace-nowrap" title={row.campo}>
-                        {row.campo || '—'}
+                      <td className="px-3 py-2 font-mono-data text-foreground whitespace-nowrap">
+                        {g.campo} <span className="text-muted-foreground">::</span> <span className="text-muted-foreground">{g.tipo}</span>
                       </td>
-                      <td className="px-3 py-2 font-mono-data text-muted-foreground whitespace-nowrap" title={row.termo_ou_regra}>
-                        {row.termo_ou_regra || '—'}
-                      </td>
-                      <td className="px-3 py-2 whitespace-nowrap">
-                        <span className="text-[10px] text-muted-foreground">{row.tipo}</span>
-                      </td>
-                      <td className="px-3 py-2 text-muted-foreground whitespace-nowrap font-mono-data" title={row.descricao_original}>
-                        {row.descricao_original}
+                      <td className="text-right px-3 py-2 font-mono-data text-muted-foreground whitespace-nowrap">
+                        {g.count}
                       </td>
                     </tr>
-                    {expandedRows.has(i) && (
-                      <tr key={`detail-${i}`}>
-                        <td colSpan={7} className="p-0">
-                          <DrillDownPanel row={row} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="border border-border rounded-md overflow-x-auto mt-2">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-muted/50 text-muted-foreground">
+                    <th className="w-6 px-1 py-2"></th>
+                    <th className="text-right px-3 py-2 font-medium whitespace-nowrap">
+                      <span className="flex items-center justify-end gap-1">Valor <ArrowDown className="h-3 w-3" /></span>
+                    </th>
+                    <th className="text-left px-3 py-2 font-medium whitespace-nowrap">Grupo</th>
+                    <th className="text-left px-3 py-2 font-medium whitespace-nowrap">Campo</th>
+                    <th className="text-left px-3 py-2 font-medium whitespace-nowrap">Termo / Regra</th>
+                    <th className="text-left px-3 py-2 font-medium whitespace-nowrap">Tipo</th>
+                    <th className="text-left px-3 py-2 font-medium whitespace-nowrap">Descrição Original</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {result.rows.map((row, i) => (
+                    <>
+                      <tr key={`row-${i}`} className="border-t border-border hover:bg-muted/20 transition-colors">
+                        <td className="px-1 py-2 text-center">
+                          {hasSubDetails(row) && (
+                            <button
+                              onClick={() => toggleRow(i)}
+                              className="p-0.5 rounded hover:bg-muted/40 transition-colors"
+                              title="Ver sub-detalhes"
+                            >
+                              <Layers className="h-3 w-3 text-muted-foreground" />
+                            </button>
+                          )}
+                        </td>
+                        <td className="text-right px-3 py-2 font-mono-data font-semibold whitespace-nowrap">
+                          {row.valor.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium border ${GRUPO_COLORS[row.grupo] || GRUPO_COLORS.outro}`}>
+                            {row.grupo}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 font-mono-data text-foreground whitespace-nowrap" title={row.campo}>
+                          {row.campo || '—'}
+                        </td>
+                        <td className="px-3 py-2 font-mono-data text-muted-foreground whitespace-nowrap" title={row.termo_ou_regra}>
+                          {row.termo_ou_regra || '—'}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          <span className="text-[10px] text-muted-foreground">{row.tipo}</span>
+                        </td>
+                        <td className="px-3 py-2 text-muted-foreground whitespace-nowrap font-mono-data" title={row.descricao_original}>
+                          {row.descricao_original}
                         </td>
                       </tr>
-                    )}
-                  </>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      {expandedRows.has(i) && (
+                        <tr key={`detail-${i}`}>
+                          <td colSpan={7} className="p-0">
+                            <DrillDownPanel row={row} />
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CollapsibleContent>
       </Collapsible>
     </div>
