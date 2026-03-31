@@ -7,7 +7,7 @@ import { ExportSearchPdfButton } from '@/components/benchmark/ExportSearchPdfBut
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Loader2, Clock, X, ChevronDown, ChevronRight, Code2 } from 'lucide-react';
+import { Search, Loader2, Clock, X, ChevronDown, ChevronRight, Code2, GitCompare } from 'lucide-react';
 import { PayloadViewerDialog } from '@/components/benchmark/PayloadViewerDialog';
 import { SearchHeartFill } from '@/components/icons/BootstrapIcons';
 import { NavLink } from '@/components/NavLink';
