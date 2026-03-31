@@ -31,6 +31,7 @@ interface Props {
     endpoint: string;
     payloadTemplate: string;
     keyword: string;
+    variantName?: string;
   };
 }
 
