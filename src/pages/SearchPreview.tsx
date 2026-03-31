@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, Loader2, Clock, X, ChevronDown, ChevronRight, Code2, GitCompare } from 'lucide-react';
 import { PayloadViewerDialog } from '@/components/benchmark/PayloadViewerDialog';
+import { ExplainScoreDialog } from '@/components/benchmark/ExplainScoreDialog';
 import { SearchHeartFill } from '@/components/icons/BootstrapIcons';
 import { NavLink } from '@/components/NavLink';
 import { Textarea } from '@/components/ui/textarea';
