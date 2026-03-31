@@ -8,7 +8,7 @@ export interface ExplainRow {
   grupo: 'texto' | 'função' | 'filtro_com_peso' | 'multiplicador' | 'outro';
   campo: string;
   termo_ou_regra: string;
-  tipo: 'match' | 'field_value_factor' | 'weight' | 'constant_score' | 'unknown';
+  tipo: 'match' | 'match_phrase' | 'field_value_factor' | 'weight' | 'constant_score' | 'unknown';
   descricao_original: string;
   /** Raw node from the _explain JSON for drill-down */
   rawNode?: any;
@@ -39,15 +39,28 @@ const STRUCTURAL_DESCRIPTIONS = new Set([
   'max of:',
   'min of:',
   'product of:',
-  'function score, product of:',
   'match on required clause, product of:',
   '# clause',
 ]);
 
+/** Detect "function score, product of:" nodes that are filter+weight multipliers */
+function isFunctionScoreMultiplier(node: any): boolean {
+  const desc = (node.description || '').trim();
+  if (desc !== 'function score, product of:') return false;
+  const details = Array.isArray(node.details) ? node.details : [];
+  if (details.length !== 2) return false;
+  const d0 = (details[0].description || '').trim();
+  const d1 = (details[1].description || '').trim();
+  // Pattern: filter + product(constant_score + weight)
+  const hasFilter = /match filter:/.test(d0) || /ConstantScore\(/.test(d0);
+  const hasProduct = /product of:/.test(d1);
+  return hasFilter && hasProduct;
+}
+
 function isStructural(desc: string): boolean {
   if (STRUCTURAL_DESCRIPTIONS.has(desc)) return true;
+  if (desc === 'function score, product of:') return true;
   if (desc === 'maxBoost') return true;
-  // Skip BM25 sub-components (boost, idf, tf, freq, k1, b, dl, avgdl, N, n)
   if (/^(boost|idf|tf|freq|k1|b|dl|avgdl|N|n),?\s/.test(desc)) return true;
   if (/^score\(freq=/.test(desc)) return true;
   if (/^constant score .* - no function provided$/.test(desc)) return true;
@@ -73,7 +86,11 @@ function classifyGrupo(desc: string): ExplainRow['grupo'] {
 }
 
 function classifyTipo(desc: string): ExplainRow['tipo'] {
-  if (/^weight\(/.test(desc)) return 'match';
+  if (/^weight\(/.test(desc)) {
+    // Check for match_phrase: weight(field:"phrase" ...)
+    if (/^weight\([^:]+:"/.test(desc)) return 'match_phrase';
+    return 'match';
+  }
   if (/field value function:/.test(desc)) return 'field_value_factor';
   if (/match filter:/.test(desc)) return 'weight';
   if (/ConstantScore\(/.test(desc)) return 'constant_score';
@@ -82,6 +99,10 @@ function classifyTipo(desc: string): ExplainRow['tipo'] {
 }
 
 function extractCampoETermo(desc: string): { campo: string; termo: string } {
+  // weight(campo:"phrase" in N) - match_phrase with quoted term
+  const phraseMatch = desc.match(/^weight\((?:Synonym\(|BlendedTermQuery\()?([^:^()]+)(?:\^[^:]+)?:"([^"]+)"/);
+  if (phraseMatch) return { campo: phraseMatch[1], termo: `"${phraseMatch[2]}"` };
+
   // weight(campo:termo in N) [PerFieldSimilarity], result of:
   // Also handles weight(campo^boost:termo in N) and weight(Synonym(campo:termo) in N)
   const weightMatch = desc.match(/^weight\((?:Synonym\(|BlendedTermQuery\()?([^:^()]+)(?:\^[^:]+)?:([^ )]+)/);
@@ -128,6 +149,23 @@ function collectContributions(node: any, results: ExplainRow[]): void {
   const desc = (node.description || '').trim();
   const value = typeof node.value === 'number' ? node.value : 0;
   const details = Array.isArray(node.details) ? node.details : [];
+
+  // Special case: "function score, product of:" with filter + weight = single multiplicador
+  if (isFunctionScoreMultiplier(node)) {
+    const filterChild = details[0];
+    const filterDesc = (filterChild.description || '').trim();
+    const { campo, termo } = extractCampoETermo(filterDesc);
+    results.push({
+      valor: value,
+      grupo: 'multiplicador',
+      campo,
+      termo_ou_regra: termo,
+      tipo: 'weight',
+      descricao_original: desc,
+      rawNode: node,
+    });
+    return;
+  }
 
   if (isStructural(desc)) {
     // Recurse into children
