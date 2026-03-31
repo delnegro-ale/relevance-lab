@@ -78,24 +78,28 @@ export function useExperiment() {
     const { testCases, variants } = stateRef.current;
     const total = testCases.length * variants.length;
     let current = 0;
+    let currentVariantName = '';
+    let currentKeyword = '';
+    const allResults: VariantResult[] = [];
 
     setExperiment(e => ({ ...e, status: 'running', progress: { current: 0, total, keyword: '' }, results: [] }));
 
     try {
-      const allResults: VariantResult[] = [];
-
       for (const variant of variants) {
+        currentVariantName = variant.name;
         const keywordResults: KeywordResult[] = [];
         let errorCount = 0;
 
         for (const tc of testCases) {
           current++;
+          currentKeyword = tc.keyword;
           setExperiment(e => ({ ...e, progress: { current, total, keyword: tc.keyword } }));
 
           let hits: import('@/types/experiment').SearchHit[] = [];
           let error: string | undefined;
           let took: number | undefined;
           let rawResponse: Record<string, any> | undefined;
+
           try {
             if (variant.type === 'baseline') {
               const res = await searchBaseline(tc.keyword);
@@ -116,10 +120,18 @@ export function useExperiment() {
 
           const m = calculateKeywordMetrics(tc.expectedIds, hits);
           keywordResults.push({
-            keyword: tc.keyword, expectedIds: tc.expectedIds, hits,
-            foundIds: m.foundIds, missingIds: m.missingIds, hitRate: m.hitRate,
-            mrr: m.mrr, avgPosition: m.avgPosition, perfectMatch: m.perfectMatch,
-            error, took, rawResponse,
+            keyword: tc.keyword,
+            expectedIds: tc.expectedIds,
+            hits,
+            foundIds: m.foundIds,
+            missingIds: m.missingIds,
+            hitRate: m.hitRate,
+            mrr: m.mrr,
+            avgPosition: m.avgPosition,
+            perfectMatch: m.perfectMatch,
+            error,
+            took,
+            rawResponse,
           });
 
           await new Promise(r => setTimeout(r, 150));
@@ -130,8 +142,28 @@ export function useExperiment() {
 
       setExperiment(e => ({ ...e, status: 'complete', results: sanitizeResults(allResults) }));
     } catch (err: any) {
-      console.error('[Benchmark] Fatal error:', err);
-      setExperiment(e => ({ ...e, status: 'complete', results: [] }));
+      const detail = err?.message || 'Erro desconhecido';
+      const context = [
+        currentVariantName ? `motor "${currentVariantName}"` : '',
+        currentKeyword ? `keyword "${currentKeyword}"` : '',
+      ].filter(Boolean).join(' / ');
+      const fatalMessage = `Falha fatal no benchmark${context ? ` ao processar ${context}` : ''}: ${detail}`;
+
+      console.error('[Benchmark] Fatal error:', {
+        error: err,
+        currentVariantName,
+        currentKeyword,
+        partialResults: allResults.length,
+      });
+
+      setExperiment(e => ({
+        ...e,
+        status: 'error',
+        progress: { current, total, keyword: currentKeyword },
+        results: sanitizeResults(allResults),
+      }));
+
+      throw new Error(fatalMessage);
     }
   }, []);
 

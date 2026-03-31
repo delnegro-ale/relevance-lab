@@ -14,7 +14,7 @@ import { VARIANT_COLORS } from '@/types/experiment';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Play, RotateCcw, Loader2, Clock, Search } from 'lucide-react';
+import { Play, RotateCcw, Loader2, Clock, Search, AlertTriangle } from 'lucide-react';
 import { SearchHeartFill, InputCursorText, BracesAsterisk } from '@/components/icons/BootstrapIcons';
 import { NavLink } from '@/components/NavLink';
 
@@ -22,19 +22,29 @@ export default function Index() {
   const { experiment, setTestCases, addVariant, updateVariant, removeVariant, duplicateVariant, reorderVariants, runBenchmark, setExperiment } = useExperiment();
   const [activeView, setActiveView] = useState<'setup' | 'results'>('setup');
   const [showHistory, setShowHistory] = useState(false);
+  const [uiError, setUiError] = useState<string | null>(null);
   const prevStatusRef = useRef(experiment.status);
 
   const canRun = experiment.testCases.length > 0 && experiment.variants.length > 0 && experiment.status !== 'running';
 
   useEffect(() => {
-    if (experiment.status === 'complete' && prevStatusRef.current === 'running' && experiment.results.length > 0) {
+    const shouldPersistHistory = experiment.status === 'complete' && prevStatusRef.current === 'running' && experiment.results.length > 0;
+
+    if (shouldPersistHistory) {
       const entry = createHistoryEntry(experiment.results, experiment.testCases, experiment.variants);
-      saveToHistory(entry);
+      const saveResult = saveToHistory(entry);
+      if (!saveResult.ok && saveResult.error) {
+        setUiError(saveResult.error);
+      } else if (saveResult.warning) {
+        setUiError(saveResult.warning);
+      }
     }
+
     prevStatusRef.current = experiment.status;
   }, [experiment.status, experiment.results, experiment.testCases, experiment.variants]);
 
   const handleRun = async () => {
+    setUiError(null);
     setExperiment(prev => ({
       ...prev,
       variants: prev.variants.map((v, i) => ({
@@ -43,10 +53,16 @@ export default function Index() {
       })),
     }));
     setActiveView('results');
-    await runBenchmark();
+
+    try {
+      await runBenchmark();
+    } catch (err: any) {
+      setUiError(err?.message || 'Falha inesperada ao executar o benchmark.');
+    }
   };
 
   const handleLoadHistory = (entry: HistoryEntry) => {
+    setUiError(null);
     const safeResults = sanitizeResults(entry.results);
     setExperiment(prev => ({
       ...prev,
@@ -60,6 +76,7 @@ export default function Index() {
   };
 
   const handleNewTest = () => {
+    setUiError(null);
     setExperiment(prev => ({
       ...prev,
       results: [],
@@ -70,6 +87,7 @@ export default function Index() {
   };
 
   const handleClearConfig = () => {
+    setUiError(null);
     setExperiment(prev => ({
       ...prev,
       variants: [prev.variants[0]],
@@ -97,6 +115,7 @@ export default function Index() {
   };
 
   const progress = experiment.progress.total > 0 ? (experiment.progress.current / experiment.progress.total) * 100 : 0;
+  const hasRenderableResults = experiment.results.length > 0 && (experiment.status === 'complete' || experiment.status === 'error');
 
   return (
     <div className="min-h-screen bg-background">
@@ -124,7 +143,7 @@ export default function Index() {
             </Button>
             {activeView === 'results' && (
               <>
-                <ExportPdfButton results={experiment.results} />
+                {experiment.results.length > 0 && <ExportPdfButton results={experiment.results} />}
                 <Button variant="outline" size="sm" onClick={handleNewTest}>
                   <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Novo Teste
                 </Button>
@@ -144,6 +163,18 @@ export default function Index() {
           <div className="mb-6">
             <HistoryPanel onLoad={handleLoadHistory} />
           </div>
+        )}
+
+        {uiError && (
+          <Card className="mb-6 border-danger/30 bg-danger/5">
+            <CardContent className="p-4 flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-danger mt-0.5 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-danger">Erro detectado durante a execução</p>
+                <p className="text-xs text-muted-foreground whitespace-pre-wrap mt-1">{uiError}</p>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {activeView === 'setup' && (
@@ -209,7 +240,7 @@ export default function Index() {
           </Card>
         )}
 
-        {activeView === 'results' && experiment.status === 'complete' && (
+        {hasRenderableResults && (
           <div className="space-y-6">
             <ErrorBoundary fallbackTitle="Erro ao renderizar o dashboard de resultados">
               <ExecutiveDashboard results={experiment.results} />
@@ -218,6 +249,22 @@ export default function Index() {
               <KeywordBreakdown results={experiment.results} />
             </ErrorBoundary>
           </div>
+        )}
+
+        {activeView === 'results' && experiment.status === 'error' && experiment.results.length === 0 && (
+          <Card className="max-w-2xl mx-auto mt-12 border-danger/30 bg-danger/5">
+            <CardContent className="p-6 space-y-2">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-danger mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-danger">O benchmark falhou antes de gerar resultados</p>
+                  <p className="text-xs text-muted-foreground whitespace-pre-wrap mt-1">
+                    {uiError || 'Veja a mensagem acima para identificar em que etapa a execução falhou.'}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
       </main>
     </div>
