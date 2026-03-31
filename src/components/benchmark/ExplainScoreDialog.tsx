@@ -117,9 +117,7 @@ function ExplainTable({ entry, onShowRaw, defaultOpen = true }: { entry: Explain
   const filterRows = result.rows.filter(r => r.grupo === 'filtro_com_peso');
   const multRows = result.rows.filter(r => r.grupo === 'multiplicador');
 
-  const textSum = textRows.reduce((s, r) => s + r.valor, 0);
-  const funcProduct = funcRows.length > 0 ? funcRows.reduce((p, r) => p * r.valor, 1) : null;
-  const filterSum = filterRows.reduce((s, r) => s + r.valor, 0);
+  const hasFormula = result.formula && result.formula.operands.length >= 2;
 
   const toggleRow = (idx: number) => {
     setExpandedRows(prev => {
