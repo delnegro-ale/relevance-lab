@@ -194,7 +194,7 @@ export function KeywordBreakdown({ results }: Props) {
                     return (
                       <div key={r.variant.id} className="text-center">
                         <span className={`font-mono-data text-sm font-semibold ${hitRate === 1 ? 'text-success' : hitRate > 0 ? 'text-warning' : 'text-destructive'}`}>
-                          {(hitRate * 100).toFixed(0)}%
+                          {(hitRate * 100).toFixed(2)}%
                         </span>
                         <span className="text-[10px] text-muted-foreground ml-1">
                           ({(kr.foundIds || []).length}/{(kr.expectedIds || []).length})
