@@ -259,13 +259,27 @@ export function KeywordBreakdown({ results }: Props) {
                                 </p>
                                 <div className="space-y-1">
                                 {missingIds.map(id => (
-                                    <a
+                                    <div
                                       key={id}
-                                      href={buildProductUrl(id)}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="group flex items-center gap-2 p-1.5 rounded bg-destructive/5 hover:bg-destructive/10 transition-colors no-underline"
+                                      className="group flex items-center gap-2 p-1.5 rounded bg-destructive/5 hover:bg-destructive/10 transition-colors"
                                     >
+                                      {compareMode && r.variant.type === 'elasticsearch' && (
+                                        <input
+                                          type="checkbox"
+                                          checked={compareSelection.has(`${r.variant.id}-${id}`)}
+                                          onChange={(e) => {
+                                            const key = `${r.variant.id}-${id}`;
+                                            const next = new Map(compareSelection);
+                                            if (e.target.checked) {
+                                              next.set(key, { productId: id, variantId: r.variant.id, keyword });
+                                            } else {
+                                              next.delete(key);
+                                            }
+                                            setCompareSelection(next);
+                                          }}
+                                          className="h-3 w-3 shrink-0"
+                                        />
+                                      )}
                                       <div className="w-6 h-9 rounded overflow-hidden bg-muted/50 shrink-0 relative">
                                         <img
                                           src={`https://media3.ubook.com/catalog/book-cover-image/${id}/200x300/`}
@@ -275,9 +289,37 @@ export function KeywordBreakdown({ results }: Props) {
                                           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                         />
                                       </div>
-                                      <span className="text-xs font-mono-data text-destructive/70">{id}</span>
-                                      <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity ml-auto shrink-0" />
-                                    </a>
+                                      <span className="text-xs font-mono-data text-destructive/70 flex-1">{id}</span>
+                                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        {r.variant.type === 'elasticsearch' && (
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setMissingExplain({
+                                                productId: id,
+                                                endpoint: r.variant.endpoint,
+                                                payloadTemplate: r.variant.payload || '',
+                                                keyword,
+                                              });
+                                            }}
+                                            className="p-1 rounded hover:bg-muted/40 transition-colors"
+                                            title="Inspecionar score (_explain)"
+                                          >
+                                            <Search className="h-3 w-3 text-muted-foreground" />
+                                          </button>
+                                        )}
+                                        <a
+                                          href={buildProductUrl(id)}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          onClick={(e) => e.stopPropagation()}
+                                          className="p-1 rounded hover:bg-muted/40 transition-colors"
+                                          title="Abrir página do produto"
+                                        >
+                                          <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                                        </a>
+                                      </div>
+                                    </div>
                                   ))}
                                 </div>
                               </div>
