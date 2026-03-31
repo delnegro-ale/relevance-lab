@@ -39,15 +39,28 @@ const STRUCTURAL_DESCRIPTIONS = new Set([
   'max of:',
   'min of:',
   'product of:',
-  'function score, product of:',
   'match on required clause, product of:',
   '# clause',
 ]);
 
+/** Detect "function score, product of:" nodes that are filter+weight multipliers */
+function isFunctionScoreMultiplier(node: any): boolean {
+  const desc = (node.description || '').trim();
+  if (desc !== 'function score, product of:') return false;
+  const details = Array.isArray(node.details) ? node.details : [];
+  if (details.length !== 2) return false;
+  const d0 = (details[0].description || '').trim();
+  const d1 = (details[1].description || '').trim();
+  // Pattern: filter + product(constant_score + weight)
+  const hasFilter = /match filter:/.test(d0) || /ConstantScore\(/.test(d0);
+  const hasProduct = /product of:/.test(d1);
+  return hasFilter && hasProduct;
+}
+
 function isStructural(desc: string): boolean {
   if (STRUCTURAL_DESCRIPTIONS.has(desc)) return true;
+  if (desc === 'function score, product of:') return true;
   if (desc === 'maxBoost') return true;
-  // Skip BM25 sub-components (boost, idf, tf, freq, k1, b, dl, avgdl, N, n)
   if (/^(boost|idf|tf|freq|k1|b|dl|avgdl|N|n),?\s/.test(desc)) return true;
   if (/^score\(freq=/.test(desc)) return true;
   if (/^constant score .* - no function provided$/.test(desc)) return true;
