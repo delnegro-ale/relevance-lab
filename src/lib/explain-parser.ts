@@ -133,6 +133,7 @@ function collectContributions(node: any, results: ExplainRow[]): void {
       termo_ou_regra: termo,
       tipo: classifyTipo(desc),
       descricao_original: desc,
+      rawNode: node,
     });
   }
 }
