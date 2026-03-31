@@ -354,6 +354,7 @@ export function KeywordBreakdown({ results }: Props) {
                                                 endpoint: r.variant.endpoint,
                                                 payloadTemplate: r.variant.payload || '',
                                                 keyword,
+                                                variantName: r.variant.name,
                                               });
                                             }}
                                             className="p-1 rounded hover:bg-muted/40 transition-colors"

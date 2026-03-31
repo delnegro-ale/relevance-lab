@@ -147,6 +147,7 @@ export function ProductCardSimple({ hit, isExpected = false, explainContext }: P
           onOpenChange={setShowExplain}
           productId={hit.productId}
           productTitle={fullTitle}
+          variantName={explainContext.variantName}
           endpoint={explainContext.endpoint}
           payloadTemplate={explainContext.payloadTemplate}
           keyword={explainContext.keyword}
