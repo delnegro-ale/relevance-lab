@@ -106,11 +106,46 @@ function DrillDownPanel({ row }: { row: ExplainRow }) {
   );
 }
 
+interface GroupedRow {
+  key: string;
+  campo: string;
+  tipo: ExplainRow['tipo'];
+  grupo: ExplainRow['grupo'];
+  valorTotal: number;
+  count: number;
+}
+
+function groupRows(rows: ExplainRow[]): GroupedRow[] {
+  const map = new Map<string, GroupedRow>();
+  for (const row of rows) {
+    const key = `${row.campo || '(vazio)'}::${row.tipo}`;
+    const existing = map.get(key);
+    if (existing) {
+      existing.valorTotal += row.valor;
+      existing.count++;
+    } else {
+      map.set(key, {
+        key,
+        campo: row.campo || '(vazio)',
+        tipo: row.tipo,
+        grupo: row.grupo,
+        valorTotal: row.valor,
+        count: 1,
+      });
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => b.valorTotal - a.valorTotal);
+}
+
 function ExplainTable({ entry, onShowRaw, defaultOpen = true }: { entry: ExplainEntry; onShowRaw: () => void; defaultOpen?: boolean }) {
   const { result } = entry;
   const [tableOpen, setTableOpen] = useState(defaultOpen);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const [viewMode, setViewMode] = useState<'grouped' | 'detailed'>('grouped');
   if (!result) return null;
+
+  const formula = result.formula;
+  const grouped = groupRows(result.rows);
 
   const formula = result.formula;
 
