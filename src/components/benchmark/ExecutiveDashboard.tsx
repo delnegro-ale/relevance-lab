@@ -87,7 +87,7 @@ export function ExecutiveDashboard({ results }: Props) {
           <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {results.map(r => {
               const isWinner = r === hitRateWinner;
-              const pct = (r.metrics.hitRate * 100).toFixed(1);
+              const pct = (r.metrics.hitRate * 100).toFixed(2);
               const hitCount = r.keywordResults.filter(kr => kr.hitRate > 0).length;
               const totalCount = r.keywordResults.length;
 
