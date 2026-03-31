@@ -180,7 +180,7 @@ function ExplainTable({ entry, onShowRaw, defaultOpen = true }: { entry: Explain
               <span key={i} className="flex items-center gap-1.5">
                 <span className="text-muted-foreground">×</span>
                 <span className="px-2 py-0.5 bg-purple-500/10 text-purple-600 rounded border border-purple-500/20">
-                  {fr.campo || 'função'}: {fr.valor.toLocaleString('pt-BR', { maximumFractionDigits: 4 })}
+                  {fr.campo || 'função'}: {fr.valor.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
                 </span>
               </span>
             ))}
