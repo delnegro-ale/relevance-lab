@@ -293,10 +293,11 @@ export function KeywordBreakdown({ results }: Props) {
                                       <ProductCardSimple
                                         hit={hit}
                                         isExpected={expectedIds.includes(hit.productId)}
-                                        explainContext={r.variant.type === 'elasticsearch' ? {
+                                      explainContext={r.variant.type === 'elasticsearch' ? {
                                           endpoint: r.variant.endpoint,
                                           payloadTemplate: r.variant.payload || '',
                                           keyword,
+                                          variantName: r.variant.name,
                                         } : undefined}
                                       />
                                     </div>
