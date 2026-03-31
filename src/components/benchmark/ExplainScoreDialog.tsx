@@ -147,7 +147,6 @@ function ExplainTable({ entry, onShowRaw, defaultOpen = true }: { entry: Explain
   const formula = result.formula;
   const grouped = groupRows(result.rows);
 
-  const formula = result.formula;
 
   const toggleRow = (idx: number) => {
     setExpandedRows(prev => {
