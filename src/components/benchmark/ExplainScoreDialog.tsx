@@ -160,39 +160,28 @@ function ExplainTable({ entry, onShowRaw, defaultOpen = true }: { entry: Explain
       </div>
 
       {/* Subtotal */}
-      {(textSum > 0 || funcProduct !== null) && (
+      {formula && formula.operands.length >= 2 && (
         <div className="px-3 py-2 bg-primary/5 border border-primary/10 rounded-md">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-1.5">Composição do score</p>
           <div className="flex items-center gap-1.5 text-xs font-mono-data flex-wrap">
-            {textSum > 0 && (
-              <span className="px-2 py-0.5 bg-blue-500/10 text-blue-600 rounded border border-blue-500/20">
-                texto: {textSum.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
-              </span>
-            )}
-            {funcProduct !== null && funcRows.map((fr, i) => (
-              <span key={i} className="flex items-center gap-1.5">
-                <span className="text-muted-foreground">×</span>
-                <span className="px-2 py-0.5 bg-purple-500/10 text-purple-600 rounded border border-purple-500/20">
-                  {fr.campo || 'função'}: {fr.valor.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
+            {formula.operands.map((op, i) => {
+              const opSymbol = formula.operation === 'product' ? '×' : formula.operation === 'sum' ? '+' : formula.operation === 'max' ? 'max' : 'min';
+              const colors = [
+                'bg-blue-500/10 text-blue-600 border-blue-500/20',
+                'bg-purple-500/10 text-purple-600 border-purple-500/20',
+                'bg-amber-500/10 text-amber-600 border-amber-500/20',
+                'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+              ];
+              const label = op.description.replace(/:$/, '').trim();
+              return (
+                <span key={i} className="flex items-center gap-1.5">
+                  {i > 0 && <span className="text-muted-foreground">{opSymbol}</span>}
+                  <span className={`px-2 py-0.5 rounded border ${colors[i % colors.length]}`}>
+                    {label}: {op.value.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
+                  </span>
                 </span>
-              </span>
-            ))}
-            {filterSum > 0 && (
-              <span className="flex items-center gap-1.5">
-                <span className="text-muted-foreground">+</span>
-                <span className="px-2 py-0.5 bg-amber-500/10 text-amber-600 rounded border border-amber-500/20">
-                  filtros: {filterSum.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
-                </span>
-              </span>
-            )}
-            {multRows.length > 0 && multRows.map((mr, i) => (
-              <span key={i} className="flex items-center gap-1.5">
-                <span className="text-muted-foreground">×</span>
-                <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 rounded border border-emerald-500/20">
-                  weight: {mr.valor.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
-                </span>
-              </span>
-            ))}
+              );
+            })}
             <span className="flex items-center gap-1.5">
               <span className="text-muted-foreground">=</span>
               <span className="font-semibold text-foreground">{result.scoreFinal.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}</span>
