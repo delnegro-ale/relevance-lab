@@ -76,6 +76,8 @@ function sanitizeHit(hit: any): SearchHit | null {
     publisher: hit.publisher != null ? String(hit.publisher) : undefined,
     format: hit.format != null ? String(hit.format) : undefined,
     coverUrl: hit.coverUrl != null ? String(hit.coverUrl) : undefined,
+    isSeries: hit.isSeries != null ? Boolean(hit.isSeries) : undefined,
+    rawPayload: hit.rawPayload && typeof hit.rawPayload === 'object' ? hit.rawPayload : undefined,
   };
 }
 
