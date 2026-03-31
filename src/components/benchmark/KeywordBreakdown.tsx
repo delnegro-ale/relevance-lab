@@ -97,6 +97,39 @@ export function KeywordBreakdown({ results }: Props) {
             />
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant={compareMode ? 'default' : 'outline'}
+              size="sm"
+              className="text-[10px] h-7 gap-1"
+              onClick={() => {
+                setCompareMode(!compareMode);
+                if (compareMode) setCompareSelection(new Map());
+              }}
+            >
+              <GitCompare className="h-3 w-3" />
+              {compareMode ? 'Cancelar' : 'Comparar'}
+            </Button>
+            {compareMode && compareSelection.size > 0 && (
+              <Button
+                size="sm"
+                className="text-[10px] h-7 gap-1"
+                onClick={() => {
+                  const items = Array.from(compareSelection.values());
+                  if (items.length === 0) return;
+                  // Use first item's variant for endpoint
+                  const firstVariant = safeResults.find(r => r.variant.id === items[0].variantId);
+                  if (!firstVariant || firstVariant.variant.type !== 'elasticsearch') return;
+                  setCompareExplain({
+                    endpoint: firstVariant.variant.endpoint,
+                    payloadTemplate: firstVariant.variant.payload || '',
+                    keyword: items[0].keyword,
+                    targets: items.map(i => ({ productId: i.productId, productTitle: i.productTitle })),
+                  });
+                }}
+              >
+                Inspecionar {compareSelection.size} selecionados
+              </Button>
+            )}
             <Badge variant="secondary" className="text-[10px]">{filtered.length} keywords</Badge>
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
