@@ -259,7 +259,7 @@ export function KeywordBreakdown({ results }: Props) {
                               </div>
                               <div className="flex items-center gap-1">
                                 <span className="text-muted-foreground">Pos. Média:</span>
-                                <span className="font-mono-data font-medium">{kr.avgPosition?.toFixed(1) || 'N/A'}</span>
+                                <span className="font-mono-data font-medium"><span className="font-mono-data font-medium">{kr.avgPosition?.toFixed(2) || 'N/A'}</span></span>
                               </div>
                               {typeof kr.took === 'number' && (
                                 <div className="flex items-center gap-1">

@@ -181,7 +181,7 @@ export function ExecutiveDashboard({ results }: Props) {
                           <span className="text-sm font-mono-data font-semibold">{fmt(val, m.pct)}</span>
                           {!isBaseline && Math.abs(delta) > 0.001 && (
                             <span className={`text-[10px] font-mono-data ${isPositive ? 'text-success' : 'text-danger'}`}>
-                              {delta > 0 ? '+' : ''}{m.pct ? `${(delta * 100).toFixed(1)}` : delta.toFixed(2)}
+                              {delta > 0 ? '+' : ''}{m.pct ? `${(delta * 100).toFixed(2)}` : delta.toFixed(2)}
                             </span>
                           )}
                         </div>

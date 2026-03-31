@@ -291,7 +291,7 @@ export function ExportPdfButton({ results }: Props) {
           }
 
           // Hit rate badge
-          const hitPct = `${(kr.hitRate * 100).toFixed(0)}% hit rate (${kr.foundIds.length}/${kr.expectedIds.length})`;
+          const hitPct = const hitPct = `${(kr.hitRate * 100).toFixed(2)}% hit rate (${kr.foundIds.length}/${kr.expectedIds.length})`;;
           pdf.setFont('helvetica', 'normal');
           pdf.setFontSize(8);
           pdf.setTextColor(PDF_COLORS.textMuted);

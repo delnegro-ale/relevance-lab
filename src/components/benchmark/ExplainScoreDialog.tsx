@@ -246,7 +246,7 @@ function ExplainTable({ entry, onShowRaw, defaultOpen = true }: { entry: Explain
                         )}
                       </td>
                       <td className="text-right px-3 py-2 font-mono-data font-semibold whitespace-nowrap">
-                        {row.valor.toLocaleString('pt-BR', { maximumFractionDigits: 4 })}
+                        {row.valor.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap">
                         <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium border ${GRUPO_COLORS[row.grupo] || GRUPO_COLORS.outro}`}>
