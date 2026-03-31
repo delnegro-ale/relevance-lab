@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,13 @@ export function ExplainScoreDialog({ open, onOpenChange, productId, productTitle
   const [rawResponse, setRawResponse] = useState<Record<string, any> | null>(null);
   const [showRaw, setShowRaw] = useState(false);
 
+  // Fetch when dialog opens
+  useEffect(() => {
+    if (open && !result && !loading && !error) {
+      fetchExplain();
+    }
+  }, [open]);
+
   const fetchExplain = async () => {
     setLoading(true);
     setError(null);
@@ -69,7 +76,10 @@ export function ExplainScoreDialog({ open, onOpenChange, productId, productTitle
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ endpoint: explainEndpoint, payload: finalPayload }),
         });
-        if (!response.ok) throw new Error(`Proxy error ${response.status}`);
+        if (!response.ok) {
+          const errorBody = await response.text().catch(() => '');
+          throw new Error(`Proxy error ${response.status}${errorBody ? `: ${errorBody}` : ''}`);
+        }
         data = await response.json();
       } else {
         const response = await fetch(explainEndpoint, {
@@ -77,31 +87,33 @@ export function ExplainScoreDialog({ open, onOpenChange, productId, productTitle
           headers: { 'Content-Type': 'application/json' },
           body: finalPayload,
         });
-        if (!response.ok) throw new Error(`API error ${response.status}`);
+        if (!response.ok) {
+          const errorBody = await response.text().catch(() => '');
+          throw new Error(`API error ${response.status}${errorBody ? `: ${errorBody}` : ''}`);
+        }
         data = await response.json();
+      }
+
+      // Validate response has explanation
+      if (!data || !data.explanation) {
+        console.warn('[ExplainScore] Response sem campo explanation:', data);
+        throw new Error('Resposta da API não contém o campo "explanation". Endpoint: ' + explainEndpoint);
       }
 
       setRawResponse(data);
       const parsed = parseExplainResponse(productId, data);
       setResult(parsed);
     } catch (e: any) {
+      console.error('[ExplainScore] Erro:', e);
       setError(e.message || 'Erro ao consultar _explain');
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch on open if no result yet
-  const handleOpenChange = (isOpen: boolean) => {
-    if (isOpen && !result && !loading) {
-      fetchExplain();
-    }
-    onOpenChange(isOpen);
-  };
-
   return (
     <>
-      <Dialog open={open} onOpenChange={handleOpenChange}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="text-sm flex items-center gap-2 flex-wrap">
