@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Loader2, Code2, ArrowDown, ChevronDown, ChevronRight, Layers } from 'lucide-react';
-import { parseExplainResponse, ExplainResult, ExplainRow } from '@/lib/explain-parser';
+import { parseExplainResponse, ExplainResult, ExplainRow, TopLevelFormula } from '@/lib/explain-parser';
 import { PayloadViewerDialog } from './PayloadViewerDialog';
 
 interface ExplainTarget {
