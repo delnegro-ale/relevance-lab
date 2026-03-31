@@ -173,7 +173,7 @@ function ExplainTable({ entry, onShowRaw, defaultOpen = true }: { entry: Explain
           <div className="flex items-center gap-1.5 text-xs font-mono-data flex-wrap">
             {textSum > 0 && (
               <span className="px-2 py-0.5 bg-blue-500/10 text-blue-600 rounded border border-blue-500/20">
-                texto: {textSum.toLocaleString('pt-BR', { maximumFractionDigits: 4 })}
+                texto: {textSum.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
               </span>
             )}
             {funcProduct !== null && funcRows.map((fr, i) => (
