@@ -113,6 +113,7 @@ function collectContributions(node: any, results: ExplainRow[]): void {
       termo_ou_regra: termo,
       tipo: classifyTipo(desc),
       descricao_original: desc,
+      rawNode: node,
     });
     // Don't recurse into children of leaf contributions (they're BM25 details)
     return;
