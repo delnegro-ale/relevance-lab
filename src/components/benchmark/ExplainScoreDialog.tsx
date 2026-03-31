@@ -93,7 +93,7 @@ function DrillDownPanel({ row }: { row: ExplainRow }) {
           {subDetails.map((d, i) => (
             <tr key={i} className="border-t border-border/50">
               <td className="text-right px-3 py-1 font-mono-data whitespace-nowrap">
-                {d.value.toLocaleString('pt-BR', { maximumFractionDigits: 6 })}
+                {d.value.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
               </td>
               <td className="px-3 py-1 font-mono-data text-muted-foreground whitespace-nowrap">
                 <span style={{ paddingLeft: `${d.depth * 12}px` }}>{d.description}</span>
