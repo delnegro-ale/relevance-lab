@@ -175,7 +175,7 @@ export function ExportPdfButton({ results }: Props) {
             const isPositive = m.higherBetter ? delta > 0 : delta < 0;
             pdf.setFontSize(7);
             pdf.setTextColor(isPositive ? PDF_COLORS.success : PDF_COLORS.danger);
-            const deltaStr = `${delta > 0 ? '+' : ''}${m.pct ? (delta * 100).toFixed(1) : delta.toFixed(2)}`;
+            const deltaStr = `${delta > 0 ? '+' : ''}${m.pct ? (delta * 100).toFixed(2) : delta.toFixed(2)}`;
             pdf.text(deltaStr, x + metricCardW - 6, rowY + 4.5, { align: 'right' });
           }
         });
