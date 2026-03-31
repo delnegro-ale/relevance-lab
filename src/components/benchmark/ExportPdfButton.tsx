@@ -98,7 +98,7 @@ export function ExportPdfButton({ results }: Props) {
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(22);
         pdf.setTextColor(isWinner ? PDF_COLORS.accent : PDF_COLORS.text);
-        pdf.text(`${(r.metrics.hitRate * 100).toFixed(1)}%`, x + cardW / 2, cardY + 30, { align: 'center' });
+        pdf.text(pdf.text(`${(r.metrics.hitRate * 100).toFixed(2)}%`, x + cardW / 2, cardY + 30, { align: 'center' });, x + cardW / 2, cardY + 30, { align: 'center' });
 
         // Hit count
         const hitCount = r.keywordResults.filter(kr => kr.hitRate > 0).length;
