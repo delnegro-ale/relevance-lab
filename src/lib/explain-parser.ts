@@ -101,6 +101,10 @@ function classifyTipo(desc: string): ExplainRow['tipo'] {
 }
 
 function extractCampoETermo(desc: string): { campo: string; termo: string } {
+  // weight(PrefixQuery(campo:termo) in N) - prefix query with full term
+  const prefixWeightMatch = desc.match(/^weight\(PrefixQuery\(([^:]+):([^)]+)\)\s+in\b/);
+  if (prefixWeightMatch) return { campo: prefixWeightMatch[1].trim(), termo: prefixWeightMatch[2].trim() };
+
   // weight(campo:"phrase" in N) - match_phrase with quoted term
   const phraseMatch = desc.match(/^weight\((?:Synonym\(|BlendedTermQuery\()?([^:^()]+)(?:\^[^:]+)?:"([^"]+)"/);
   if (phraseMatch) return { campo: phraseMatch[1], termo: `"${phraseMatch[2]}"` };
