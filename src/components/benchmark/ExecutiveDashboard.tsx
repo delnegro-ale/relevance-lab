@@ -39,7 +39,7 @@ export function ExecutiveDashboard({ results }: Props) {
 
   const chartData = METRIC_DEFS.filter(m => m.key !== 'avgPosition').map(m => ({
     name: m.label,
-    ...Object.fromEntries(results.map(r => [r.variant.name, parseFloat((r.metrics[m.key] * 100).toFixed(1))])),
+    ...Object.fromEntries(results.map(r => [r.variant.name, parseFloat((r.metrics[m.key] * 100).toFixed(2))])),
   }));
 
   return (
