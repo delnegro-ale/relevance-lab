@@ -3,11 +3,13 @@ import { VariantResult } from '@/types/experiment';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronRight, X, Search, AlertTriangle, ArrowUp, ArrowDown, ArrowUpDown, ExternalLink, Code2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ChevronDown, ChevronRight, X, Search, AlertTriangle, ArrowUp, ArrowDown, ArrowUpDown, ExternalLink, Code2, GitCompare } from 'lucide-react';
 import { MetricTooltip } from './MetricTooltip';
 import { ProductCardSimple } from './ProductCardSimple';
 import { buildProductUrl } from '@/lib/product-url';
 import { PayloadViewerDialog } from './PayloadViewerDialog';
+import { ExplainScoreDialog } from './ExplainScoreDialog';
 
 interface Props {
   results: VariantResult[];
@@ -22,6 +24,10 @@ export function KeywordBreakdown({ results }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>('keyword');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [viewingResponse, setViewingResponse] = useState<{ payload: Record<string, any>; title: string } | null>(null);
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareSelection, setCompareSelection] = useState<Map<string, { productId: string; productTitle?: string; variantId: string; keyword: string }>>(new Map());
+  const [compareExplain, setCompareExplain] = useState<{ endpoint: string; payloadTemplate: string; keyword: string; targets: { productId: string; productTitle?: string }[] } | null>(null);
+  const [missingExplain, setMissingExplain] = useState<{ productId: string; endpoint: string; payloadTemplate: string; keyword: string } | null>(null);
 
   const safeResults = results.filter(r => r && r.variant && Array.isArray(r.keywordResults));
 
@@ -91,6 +97,39 @@ export function KeywordBreakdown({ results }: Props) {
             />
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant={compareMode ? 'default' : 'outline'}
+              size="sm"
+              className="text-[10px] h-7 gap-1"
+              onClick={() => {
+                setCompareMode(!compareMode);
+                if (compareMode) setCompareSelection(new Map());
+              }}
+            >
+              <GitCompare className="h-3 w-3" />
+              {compareMode ? 'Cancelar' : 'Comparar'}
+            </Button>
+            {compareMode && compareSelection.size > 0 && (
+              <Button
+                size="sm"
+                className="text-[10px] h-7 gap-1"
+                onClick={() => {
+                  const items = Array.from(compareSelection.values());
+                  if (items.length === 0) return;
+                  // Use first item's variant for endpoint
+                  const firstVariant = safeResults.find(r => r.variant.id === items[0].variantId);
+                  if (!firstVariant || firstVariant.variant.type !== 'elasticsearch') return;
+                  setCompareExplain({
+                    endpoint: firstVariant.variant.endpoint,
+                    payloadTemplate: firstVariant.variant.payload || '',
+                    keyword: items[0].keyword,
+                    targets: items.map(i => ({ productId: i.productId, productTitle: i.productTitle })),
+                  });
+                }}
+              >
+                Inspecionar {compareSelection.size} selecionados
+              </Button>
+            )}
             <Badge variant="secondary" className="text-[10px]">{filtered.length} keywords</Badge>
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -232,16 +271,36 @@ export function KeywordBreakdown({ results }: Props) {
                               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Top 10 resultados</p>
                               <div className="space-y-1">
                                 {hits.slice(0, 10).map((hit, i) => (
-                                  <ProductCardSimple
-                                    key={i}
-                                    hit={hit}
-                                    isExpected={expectedIds.includes(hit.productId)}
-                                    explainContext={r.variant.type === 'elasticsearch' ? {
-                                      endpoint: r.variant.endpoint,
-                                      payloadTemplate: r.variant.payload || '',
-                                      keyword,
-                                    } : undefined}
-                                  />
+                                  <div key={i} className="flex items-start gap-1">
+                                    {compareMode && r.variant.type === 'elasticsearch' && (
+                                      <input
+                                        type="checkbox"
+                                        checked={compareSelection.has(`${r.variant.id}-${hit.productId}`)}
+                                        onChange={(e) => {
+                                          const key = `${r.variant.id}-${hit.productId}`;
+                                          const next = new Map(compareSelection);
+                                          if (e.target.checked) {
+                                            next.set(key, { productId: hit.productId, productTitle: hit.title, variantId: r.variant.id, keyword });
+                                          } else {
+                                            next.delete(key);
+                                          }
+                                          setCompareSelection(next);
+                                        }}
+                                        className="h-3 w-3 shrink-0 mt-3"
+                                      />
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <ProductCardSimple
+                                        hit={hit}
+                                        isExpected={expectedIds.includes(hit.productId)}
+                                        explainContext={r.variant.type === 'elasticsearch' ? {
+                                          endpoint: r.variant.endpoint,
+                                          payloadTemplate: r.variant.payload || '',
+                                          keyword,
+                                        } : undefined}
+                                      />
+                                    </div>
+                                  </div>
                                 ))}
                               </div>
                             </div>
@@ -253,13 +312,27 @@ export function KeywordBreakdown({ results }: Props) {
                                 </p>
                                 <div className="space-y-1">
                                 {missingIds.map(id => (
-                                    <a
+                                    <div
                                       key={id}
-                                      href={buildProductUrl(id)}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="group flex items-center gap-2 p-1.5 rounded bg-destructive/5 hover:bg-destructive/10 transition-colors no-underline"
+                                      className="group flex items-center gap-2 p-1.5 rounded bg-destructive/5 hover:bg-destructive/10 transition-colors"
                                     >
+                                      {compareMode && r.variant.type === 'elasticsearch' && (
+                                        <input
+                                          type="checkbox"
+                                          checked={compareSelection.has(`${r.variant.id}-${id}`)}
+                                          onChange={(e) => {
+                                            const key = `${r.variant.id}-${id}`;
+                                            const next = new Map(compareSelection);
+                                            if (e.target.checked) {
+                                              next.set(key, { productId: id, variantId: r.variant.id, keyword });
+                                            } else {
+                                              next.delete(key);
+                                            }
+                                            setCompareSelection(next);
+                                          }}
+                                          className="h-3 w-3 shrink-0"
+                                        />
+                                      )}
                                       <div className="w-6 h-9 rounded overflow-hidden bg-muted/50 shrink-0 relative">
                                         <img
                                           src={`https://media3.ubook.com/catalog/book-cover-image/${id}/200x300/`}
@@ -269,9 +342,37 @@ export function KeywordBreakdown({ results }: Props) {
                                           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                         />
                                       </div>
-                                      <span className="text-xs font-mono-data text-destructive/70">{id}</span>
-                                      <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity ml-auto shrink-0" />
-                                    </a>
+                                      <span className="text-xs font-mono-data text-destructive/70 flex-1">{id}</span>
+                                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        {r.variant.type === 'elasticsearch' && (
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setMissingExplain({
+                                                productId: id,
+                                                endpoint: r.variant.endpoint,
+                                                payloadTemplate: r.variant.payload || '',
+                                                keyword,
+                                              });
+                                            }}
+                                            className="p-1 rounded hover:bg-muted/40 transition-colors"
+                                            title="Inspecionar score (_explain)"
+                                          >
+                                            <Search className="h-3 w-3 text-muted-foreground" />
+                                          </button>
+                                        )}
+                                        <a
+                                          href={buildProductUrl(id)}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          onClick={(e) => e.stopPropagation()}
+                                          className="p-1 rounded hover:bg-muted/40 transition-colors"
+                                          title="Abrir página do produto"
+                                        >
+                                          <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                                        </a>
+                                      </div>
+                                    </div>
                                   ))}
                                 </div>
                               </div>
@@ -295,6 +396,36 @@ export function KeywordBreakdown({ results }: Props) {
         onOpenChange={(open) => !open && setViewingResponse(null)}
         payload={viewingResponse.payload}
         title={viewingResponse.title}
+      />
+    )}
+
+    {missingExplain && (
+      <ExplainScoreDialog
+        open={!!missingExplain}
+        onOpenChange={(o) => !o && setMissingExplain(null)}
+        productId={missingExplain.productId}
+        endpoint={missingExplain.endpoint}
+        payloadTemplate={missingExplain.payloadTemplate}
+        keyword={missingExplain.keyword}
+      />
+    )}
+
+    {compareExplain && (
+      <ExplainScoreDialog
+        open={!!compareExplain}
+        onOpenChange={(o) => {
+          if (!o) {
+            setCompareExplain(null);
+            setCompareSelection(new Map());
+            setCompareMode(false);
+          }
+        }}
+        productId={compareExplain.targets[0].productId}
+        productTitle={compareExplain.targets[0].productTitle}
+        endpoint={compareExplain.endpoint}
+        payloadTemplate={compareExplain.payloadTemplate}
+        keyword={compareExplain.keyword}
+        compareTargets={compareExplain.targets.slice(1)}
       />
     )}
     </>

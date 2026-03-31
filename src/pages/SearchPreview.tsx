@@ -7,8 +7,9 @@ import { ExportSearchPdfButton } from '@/components/benchmark/ExportSearchPdfBut
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Loader2, Clock, X, ChevronDown, ChevronRight, Code2 } from 'lucide-react';
+import { Search, Loader2, Clock, X, ChevronDown, ChevronRight, Code2, GitCompare } from 'lucide-react';
 import { PayloadViewerDialog } from '@/components/benchmark/PayloadViewerDialog';
+import { ExplainScoreDialog } from '@/components/benchmark/ExplainScoreDialog';
 import { SearchHeartFill } from '@/components/icons/BootstrapIcons';
 import { NavLink } from '@/components/NavLink';
 import { Textarea } from '@/components/ui/textarea';
@@ -51,6 +52,9 @@ export default function SearchPreview() {
   const [viewingResponse, setViewingResponse] = useState<{ payload: Record<string, any>; title: string } | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [wasMultiSearch, setWasMultiSearch] = useState(false);
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareSelection, setCompareSelection] = useState<Map<string, { productId: string; productTitle?: string; variantId: string; keyword: string }>>(new Map());
+  const [compareExplain, setCompareExplain] = useState<{ endpoint: string; payloadTemplate: string; keyword: string; targets: { productId: string; productTitle?: string }[] } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -190,7 +194,41 @@ export default function SearchPreview() {
           </form>
 
           {searchGroups.length > 0 && !isSearching && (
-            <ExportSearchPdfButton searchGroups={searchGroups} />
+            <>
+              <Button
+                variant={compareMode ? 'default' : 'outline'}
+                size="sm"
+                className="text-[10px] h-8 gap-1"
+                onClick={() => {
+                  setCompareMode(!compareMode);
+                  if (compareMode) setCompareSelection(new Map());
+                }}
+              >
+                <GitCompare className="h-3 w-3" />
+                {compareMode ? 'Cancelar' : 'Comparar'}
+              </Button>
+              {compareMode && compareSelection.size > 0 && (
+                <Button
+                  size="sm"
+                  className="text-[10px] h-8 gap-1"
+                  onClick={() => {
+                    const items = Array.from(compareSelection.values());
+                    if (items.length === 0) return;
+                    const firstVariant = variants.find(v => v.id === items[0].variantId);
+                    if (!firstVariant || firstVariant.type !== 'elasticsearch') return;
+                    setCompareExplain({
+                      endpoint: firstVariant.endpoint,
+                      payloadTemplate: firstVariant.payload || '',
+                      keyword: items[0].keyword,
+                      targets: items.map(i => ({ productId: i.productId, productTitle: i.productTitle })),
+                    });
+                  }}
+                >
+                  Inspecionar {compareSelection.size}
+                </Button>
+              )}
+              <ExportSearchPdfButton searchGroups={searchGroups} />
+            </>
           )}
 
           {multiMode && keywordCount > 1 && (
@@ -344,15 +382,35 @@ export default function SearchPreview() {
                             {!r.loading && !r.error && (
                               <div className="space-y-1">
                                 {r.hits.slice(0, 10).map((hit, i) => (
-                                  <ProductCardSimple
-                                    key={i}
-                                    hit={hit}
-                                    explainContext={r.variant.type === 'elasticsearch' ? {
-                                      endpoint: r.variant.endpoint,
-                                      payloadTemplate: r.variant.payload || '',
-                                      keyword: group.keyword,
-                                    } : undefined}
-                                  />
+                                  <div key={i} className="flex items-start gap-1">
+                                    {compareMode && r.variant.type === 'elasticsearch' && (
+                                      <input
+                                        type="checkbox"
+                                        checked={compareSelection.has(`${r.variant.id}-${hit.productId}`)}
+                                        onChange={(e) => {
+                                          const key = `${r.variant.id}-${hit.productId}`;
+                                          const next = new Map(compareSelection);
+                                          if (e.target.checked) {
+                                            next.set(key, { productId: hit.productId, productTitle: hit.title, variantId: r.variant.id, keyword: group.keyword });
+                                          } else {
+                                            next.delete(key);
+                                          }
+                                          setCompareSelection(next);
+                                        }}
+                                        className="h-3 w-3 shrink-0 mt-3"
+                                      />
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <ProductCardSimple
+                                        hit={hit}
+                                        explainContext={r.variant.type === 'elasticsearch' ? {
+                                          endpoint: r.variant.endpoint,
+                                          payloadTemplate: r.variant.payload || '',
+                                          keyword: group.keyword,
+                                        } : undefined}
+                                      />
+                                    </div>
+                                  </div>
                                 ))}
                                 {r.hits.length === 0 && (
                                   <p className="text-xs text-muted-foreground text-center py-4">Nenhum resultado</p>
@@ -378,6 +436,25 @@ export default function SearchPreview() {
           onOpenChange={(open) => !open && setViewingResponse(null)}
           payload={viewingResponse.payload}
           title={viewingResponse.title}
+        />
+      )}
+
+      {compareExplain && (
+        <ExplainScoreDialog
+          open={!!compareExplain}
+          onOpenChange={(o) => {
+            if (!o) {
+              setCompareExplain(null);
+              setCompareSelection(new Map());
+              setCompareMode(false);
+            }
+          }}
+          productId={compareExplain.targets[0].productId}
+          productTitle={compareExplain.targets[0].productTitle}
+          endpoint={compareExplain.endpoint}
+          payloadTemplate={compareExplain.payloadTemplate}
+          keyword={compareExplain.keyword}
+          compareTargets={compareExplain.targets.slice(1)}
         />
       )}
     </div>
