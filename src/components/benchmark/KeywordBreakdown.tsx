@@ -398,6 +398,36 @@ export function KeywordBreakdown({ results }: Props) {
         title={viewingResponse.title}
       />
     )}
+
+    {missingExplain && (
+      <ExplainScoreDialog
+        open={!!missingExplain}
+        onOpenChange={(o) => !o && setMissingExplain(null)}
+        productId={missingExplain.productId}
+        endpoint={missingExplain.endpoint}
+        payloadTemplate={missingExplain.payloadTemplate}
+        keyword={missingExplain.keyword}
+      />
+    )}
+
+    {compareExplain && (
+      <ExplainScoreDialog
+        open={!!compareExplain}
+        onOpenChange={(o) => {
+          if (!o) {
+            setCompareExplain(null);
+            setCompareSelection(new Map());
+            setCompareMode(false);
+          }
+        }}
+        productId={compareExplain.targets[0].productId}
+        productTitle={compareExplain.targets[0].productTitle}
+        endpoint={compareExplain.endpoint}
+        payloadTemplate={compareExplain.payloadTemplate}
+        keyword={compareExplain.keyword}
+        compareTargets={compareExplain.targets.slice(1)}
+      />
+    )}
     </>
   );
 }
