@@ -90,6 +90,7 @@ function sanitizeMetrics(m: any, keywordResults: KeywordResult[]): VariantMetric
       coverage: typeof m.coverage === 'number' && !isNaN(m.coverage) ? m.coverage : 0,
       avgPosition: typeof m.avgPosition === 'number' && !isNaN(m.avgPosition) ? m.avgPosition : 0,
       perfectMatchRate: typeof m.perfectMatchRate === 'number' && !isNaN(m.perfectMatchRate) ? m.perfectMatchRate : 0,
+      avgResponseTime: typeof m.avgResponseTime === 'number' && !isNaN(m.avgResponseTime) ? m.avgResponseTime : undefined,
     };
   }
 
