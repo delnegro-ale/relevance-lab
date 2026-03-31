@@ -14,11 +14,24 @@ export interface ExplainRow {
   rawNode?: any;
 }
 
+export interface FormulaOperand {
+  value: number;
+  description: string;
+  operation: 'sum' | 'max' | 'min' | 'product' | 'leaf';
+}
+
+export interface TopLevelFormula {
+  operation: 'product' | 'sum' | 'max' | 'min' | 'leaf';
+  operands: FormulaOperand[];
+  result: number;
+}
+
 export interface ExplainResult {
   documentId: string;
   scoreFinal: number;
   matched: boolean;
   rows: ExplainRow[];
+  formula?: TopLevelFormula;
 }
 
 const STRUCTURAL_DESCRIPTIONS = new Set([
