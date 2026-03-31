@@ -222,7 +222,7 @@ export default function SearchPreview() {
                       keyword: items[0].keyword,
                     targets: items.map(i => {
                       const v = variants.find(vv => vv.id === i.variantId);
-                      return { productId: i.productId, productTitle: i.productTitle, variantName: v?.name };
+                      return { productId: i.productId, productTitle: i.productTitle, variantName: v?.name, endpoint: v?.endpoint, payloadTemplate: v?.payload || '' };
                     }),
                     });
                   }}
