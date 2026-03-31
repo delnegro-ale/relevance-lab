@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, Code2, ArrowDown, X } from 'lucide-react';
-import { parseExplainResponse, ExplainResult, ExplainRow } from '@/lib/explain-parser';
+import { Loader2, Code2, ArrowDown } from 'lucide-react';
+import { parseExplainResponse, ExplainResult } from '@/lib/explain-parser';
 import { PayloadViewerDialog } from './PayloadViewerDialog';
 
 interface ExplainTarget {
