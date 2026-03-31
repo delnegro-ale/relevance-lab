@@ -10,6 +10,8 @@ export interface ExplainRow {
   termo_ou_regra: string;
   tipo: 'match' | 'field_value_factor' | 'weight' | 'constant_score' | 'unknown';
   descricao_original: string;
+  /** Raw node from the _explain JSON for drill-down */
+  rawNode?: any;
 }
 
 export interface ExplainResult {
@@ -111,6 +113,7 @@ function collectContributions(node: any, results: ExplainRow[]): void {
       termo_ou_regra: termo,
       tipo: classifyTipo(desc),
       descricao_original: desc,
+      rawNode: node,
     });
     // Don't recurse into children of leaf contributions (they're BM25 details)
     return;
@@ -130,6 +133,7 @@ function collectContributions(node: any, results: ExplainRow[]): void {
       termo_ou_regra: termo,
       tipo: classifyTipo(desc),
       descricao_original: desc,
+      rawNode: node,
     });
   }
 }

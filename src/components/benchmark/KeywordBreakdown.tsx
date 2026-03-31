@@ -26,8 +26,8 @@ export function KeywordBreakdown({ results }: Props) {
   const [viewingResponse, setViewingResponse] = useState<{ payload: Record<string, any>; title: string } | null>(null);
   const [compareMode, setCompareMode] = useState(false);
   const [compareSelection, setCompareSelection] = useState<Map<string, { productId: string; productTitle?: string; variantId: string; keyword: string }>>(new Map());
-  const [compareExplain, setCompareExplain] = useState<{ endpoint: string; payloadTemplate: string; keyword: string; targets: { productId: string; productTitle?: string }[] } | null>(null);
-  const [missingExplain, setMissingExplain] = useState<{ productId: string; endpoint: string; payloadTemplate: string; keyword: string } | null>(null);
+  const [compareExplain, setCompareExplain] = useState<{ endpoint: string; payloadTemplate: string; keyword: string; targets: { productId: string; productTitle?: string; variantName?: string }[] } | null>(null);
+  const [missingExplain, setMissingExplain] = useState<{ productId: string; endpoint: string; payloadTemplate: string; keyword: string; variantName?: string } | null>(null);
 
   const safeResults = results.filter(r => r && r.variant && Array.isArray(r.keywordResults));
 
@@ -123,7 +123,10 @@ export function KeywordBreakdown({ results }: Props) {
                     endpoint: firstVariant.variant.endpoint,
                     payloadTemplate: firstVariant.variant.payload || '',
                     keyword: items[0].keyword,
-                    targets: items.map(i => ({ productId: i.productId, productTitle: i.productTitle })),
+                    targets: items.map(i => {
+                      const vr = safeResults.find(r => r.variant.id === i.variantId);
+                      return { productId: i.productId, productTitle: i.productTitle, variantName: vr?.variant.name };
+                    }),
                   });
                 }}
               >
@@ -293,10 +296,11 @@ export function KeywordBreakdown({ results }: Props) {
                                       <ProductCardSimple
                                         hit={hit}
                                         isExpected={expectedIds.includes(hit.productId)}
-                                        explainContext={r.variant.type === 'elasticsearch' ? {
+                                      explainContext={r.variant.type === 'elasticsearch' ? {
                                           endpoint: r.variant.endpoint,
                                           payloadTemplate: r.variant.payload || '',
                                           keyword,
+                                          variantName: r.variant.name,
                                         } : undefined}
                                       />
                                     </div>
@@ -353,6 +357,7 @@ export function KeywordBreakdown({ results }: Props) {
                                                 endpoint: r.variant.endpoint,
                                                 payloadTemplate: r.variant.payload || '',
                                                 keyword,
+                                                variantName: r.variant.name,
                                               });
                                             }}
                                             className="p-1 rounded hover:bg-muted/40 transition-colors"
@@ -404,6 +409,7 @@ export function KeywordBreakdown({ results }: Props) {
         open={!!missingExplain}
         onOpenChange={(o) => !o && setMissingExplain(null)}
         productId={missingExplain.productId}
+        variantName={missingExplain.variantName}
         endpoint={missingExplain.endpoint}
         payloadTemplate={missingExplain.payloadTemplate}
         keyword={missingExplain.keyword}

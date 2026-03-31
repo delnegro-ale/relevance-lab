@@ -54,7 +54,7 @@ export default function SearchPreview() {
   const [wasMultiSearch, setWasMultiSearch] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
   const [compareSelection, setCompareSelection] = useState<Map<string, { productId: string; productTitle?: string; variantId: string; keyword: string }>>(new Map());
-  const [compareExplain, setCompareExplain] = useState<{ endpoint: string; payloadTemplate: string; keyword: string; targets: { productId: string; productTitle?: string }[] } | null>(null);
+  const [compareExplain, setCompareExplain] = useState<{ endpoint: string; payloadTemplate: string; keyword: string; targets: { productId: string; productTitle?: string; variantName?: string }[] } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -220,7 +220,10 @@ export default function SearchPreview() {
                       endpoint: firstVariant.endpoint,
                       payloadTemplate: firstVariant.payload || '',
                       keyword: items[0].keyword,
-                      targets: items.map(i => ({ productId: i.productId, productTitle: i.productTitle })),
+                    targets: items.map(i => {
+                      const v = variants.find(vv => vv.id === i.variantId);
+                      return { productId: i.productId, productTitle: i.productTitle, variantName: v?.name };
+                    }),
                     });
                   }}
                 >
@@ -407,6 +410,7 @@ export default function SearchPreview() {
                                           endpoint: r.variant.endpoint,
                                           payloadTemplate: r.variant.payload || '',
                                           keyword: group.keyword,
+                                          variantName: r.variant.name,
                                         } : undefined}
                                       />
                                     </div>
